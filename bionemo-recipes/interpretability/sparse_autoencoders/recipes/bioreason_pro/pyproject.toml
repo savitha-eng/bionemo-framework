@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bioreason-pro-sae"
+version = "0.1.0"
+description = "Sparse Autoencoders for the BioReason-Pro multimodal protein reasoning model (Qwen3-4B + ESM3 + GO graph encoder)"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    { name = "NVIDIA Clara Discovery" },
+]
+keywords = ["machine learning", "biology", "proteins", "multimodal", "interpretability", "sparse autoencoders"]
+
+# NOTE: extraction additionally requires the BioReason-Pro package (`bioreason2`, ESM3) which is
+# NOT a PyPI dependency — it is provided by Env A (bioreason-pro/.venv). Train/eval here are pure-sae.
+dependencies = [
+    "sae",
+    "torch>=2.0",
+    "numpy>=1.20",
+    "tqdm>=4.60",
+    "pyarrow>=23.0.0",
+]
+
+[project.optional-dependencies]
+eval = [
+    "scikit-learn>=1.3",
+    "pandas>=1.5",
+]
+viz = [
+    "umap-learn>=0.5",
+    "hdbscan>=0.8",
+    "matplotlib>=3.6",
+]
+tracking = [
+    "wandb>=0.24.0",
+]
+dev = [
+    "pytest>=7.0",
+    "ruff>=0.1",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.uv.sources]
+sae = { workspace = true }
