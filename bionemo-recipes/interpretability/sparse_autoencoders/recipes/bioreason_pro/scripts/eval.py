@@ -48,7 +48,13 @@ def parse_args():  # noqa: D103
     p.add_argument("--store", required=True, help="Eval activation store (layer<L>/ + sidecars) — held-out split")
     p.add_argument("--layer", type=int, required=True)
     p.add_argument("--top-k-go", type=int, default=30)
+    p.add_argument("--go-min-prev", type=float, default=0.02,
+                   help="Min protein-prevalence for a GO term to be probed (drops ultra-rare)")
+    p.add_argument("--go-max-prev", type=float, default=0.5,
+                   help="Max prevalence (drops near-ubiquitous ontology roots that inflate F1)")
     p.add_argument("--recon-sample", type=int, default=200_000, help="Tokens sampled for recon/sparsity metrics")
+    p.add_argument("--encode-batch", type=int, default=8192,
+                   help="Mini-batch for SAE encode/decode (a dense [n,hidden] code tensor is large)")
     p.add_argument("--fire-threshold", type=float, default=0.0, help="Feature activation > thr counts as 'fires'")
     p.add_argument("--device", default="cuda")
     p.add_argument("--seed", type=int, default=23)
@@ -103,32 +109,34 @@ def main():  # noqa: D103
     pmax = {b: np.zeros((n_prot, H), dtype=np.float32) for b in BANDS}
     ever_fired = np.zeros(H, dtype=bool)
     recon_chunks, recon_orig = [], []
+    l0_sum, l0_count = 0.0, 0
     row0 = 0
 
+    bs = args.encode_batch
     with torch.no_grad():
         for sp in _shard_paths(layer_dir):
             acts = _read_shard(sp)
             n = acts.shape[0]
-            x = torch.from_numpy(acts).to(dev)
-            codes = sae.encode(x)  # (n, H), sparse
-            recon = sae.decode(codes)
-            codes_np = codes.float().cpu().numpy()
-            ever_fired |= (codes_np > args.fire_threshold).any(axis=0)
-
             pt = pos_type[row0:row0 + n]
             pidx = protein_index[row0:row0 + n]
-            for b in BANDS:
-                m = pt == b
-                if m.any():
-                    # per-protein max activation within this band
-                    np.maximum.at(pmax[b], pidx[m], codes_np[m])
-
-            # reservoir-ish recon sample
-            if sum(c.shape[0] for c in recon_chunks) < args.recon_sample:
-                take = min(n, max(1, args.recon_sample // 8))
-                sel = rng.choice(n, size=take, replace=False)
-                recon_chunks.append(recon[sel].float().cpu().numpy())
-                recon_orig.append(acts[sel])
+            # Encode/decode in mini-batches: a dense [n, H] code tensor is huge (n*H*4 bytes).
+            for s in range(0, n, bs):
+                e = min(n, s + bs)
+                x = torch.from_numpy(acts[s:e]).to(dev)
+                codes = sae.encode(x)
+                recon = sae.decode(codes)
+                codes_np = codes.float().cpu().numpy()
+                ever_fired |= (codes_np > args.fire_threshold).any(axis=0)
+                l0_sum += float((codes_np > 0).sum())
+                l0_count += codes_np.shape[0]
+                pt_c, pidx_c = pt[s:e], pidx[s:e]
+                for b in BANDS:
+                    m = pt_c == b
+                    if m.any():
+                        np.maximum.at(pmax[b], pidx_c[m], codes_np[m])
+                if sum(c.shape[0] for c in recon_chunks) < args.recon_sample:
+                    recon_chunks.append(recon.float().cpu().numpy())
+                    recon_orig.append(acts[s:e])
             row0 += n
 
     # ---- reconstruction R^2 / normalized MSE + sparsity ----
@@ -138,47 +146,86 @@ def main():  # noqa: D103
     ss_tot = float(((X - X.mean(axis=0)) ** 2).sum())
     r2 = 1.0 - ss_res / (ss_tot + 1e-8)
     nmse = ss_res / (float((X ** 2).sum()) + 1e-8)
-    with torch.no_grad():
-        codes_s = sae.encode(torch.from_numpy(X).to(dev))
-        mean_l0 = float((codes_s > 0).float().sum(dim=1).mean().item())
+    mean_l0 = round(l0_sum / max(1, l0_count), 2)
     pct_dead = round(100.0 * float((~ever_fired).mean()), 3)
 
     # ---- GO-feature F1 (per-protein, best single feature per top-K GO term) ----
-    from sklearn.metrics import f1_score
-
+    # Select INFORMATIVE GO terms: most-frequent terms whose protein-prevalence is in
+    # [go_min_prev, go_max_prev]. This drops the ontology roots (present in ~all proteins) whose
+    # F1 is dominated by base rate rather than feature selectivity.
     freq = Counter(t for terms in go_ids for t in terms)
-    top = [t for t, _ in freq.most_common(args.top_k_go)]
-    has_term = {t: np.array([1 if t in set(g) else 0 for g in go_ids]) for t in top}
+    sets = [set(g) for g in go_ids]
+    top = []
+    for t, _ in freq.most_common():
+        prev = sum(t in s for s in sets) / n_prot
+        if args.go_min_prev <= prev <= args.go_max_prev:
+            top.append(t)
+        if len(top) >= args.top_k_go:
+            break
+    has_term = {t: np.array([1 if t in s else 0 for s in sets]) for t in top}
+    print(f"[eval] probing {len(top)} informative GO terms (prevalence in "
+          f"[{args.go_min_prev},{args.go_max_prev}])")
 
-    def best_feature_f1(activation_matrix):
-        """For each top GO term, best single feature's F1 (feature fires == activation>thr)."""
-        fires = (activation_matrix > args.fire_threshold)  # (P, H) bool
+    # Honest selection: pick the best feature per term on a TRAIN protein split, report its metric
+    # on a held-out TEST split. Primary metric is ROC-AUC (prevalence-robust; random ~ 0.5);
+    # F1 kept for the go/no-go language.
+    rng_sel = np.random.default_rng(args.seed)
+    perm = rng_sel.permutation(n_prot)
+    n_te = max(1, int(0.4 * n_prot))
+    test_idx = np.zeros(n_prot, dtype=bool)
+    test_idx[perm[:n_te]] = True
+    train_idx = ~test_idx
+
+    def _auc_vec(A, y):
+        """Per-feature ROC-AUC (Mann-Whitney, ordinal ranks). A:(P,H) scores, y:(P,) 0/1 -> (H,)."""
+        P = A.shape[0]
+        pos = y.astype(bool)
+        n_pos, n_neg = int(pos.sum()), P - int(pos.sum())
+        if n_pos == 0 or n_neg == 0:
+            return np.full(A.shape[1], 0.5)
+        order = np.argsort(A, axis=0)
+        ranks = np.empty_like(order, dtype=np.float64)
+        np.put_along_axis(ranks, order, (np.arange(P, dtype=np.float64) + 1.0)[:, None], axis=0)
+        r_pos = ranks[pos].sum(axis=0)
+        return (r_pos - n_pos * (n_pos + 1) / 2.0) / (n_pos * n_neg)
+
+    def _f1_of_feature(act_col, y):
+        fires = act_col > args.fire_threshold
+        yb = y.astype(bool)
+        tp = int((fires & yb).sum()); fp = int((fires & ~yb).sum()); fn = int((~fires & yb).sum())
+        d = 2 * tp + fp + fn
+        return (2 * tp / d) if d > 0 else 0.0
+
+    def best_feature_metrics(activation_matrix):
+        """Best feature chosen on train by AUC; AUC + F1 reported on held-out test."""
         out = {}
         for t in top:
             y = has_term[t]
-            if y.sum() < 3:
+            if y[train_idx].sum() < 3 or y[test_idx].sum() < 1:
                 continue
-            # F1 of each feature vs y; take best. Vectorized over features.
-            tp = (fires & y[:, None].astype(bool)).sum(axis=0)
-            fp = (fires & ~y[:, None].astype(bool)).sum(axis=0)
-            fn = (~fires & y[:, None].astype(bool)).sum(axis=0)
-            denom = 2 * tp + fp + fn
-            f1 = np.where(denom > 0, 2 * tp / denom, 0.0)
-            j = int(f1.argmax())
-            out[t] = {"best_feature": j, "f1": round(float(f1[j]), 4), "n_pos": int(y.sum())}
+            auc_tr = _auc_vec(activation_matrix[train_idx], y[train_idx])
+            j = int(auc_tr.argmax())
+            auc_te = float(_auc_vec(activation_matrix[test_idx][:, j:j + 1], y[test_idx])[0])
+            f1_te = _f1_of_feature(activation_matrix[test_idx][:, j], y[test_idx])
+            out[t] = {"best_feature": j, "auc": round(auc_te, 4), "f1": round(f1_te, 4),
+                      "auc_train": round(float(auc_tr[j]), 4), "n_pos": int(y.sum())}
         return out
 
     go_f1 = {"overall": {}, "by_band": {}}
     # overall = max activation across all bands
     allmax = np.maximum.reduce([pmax[b] for b in BANDS])
-    go_f1["overall"] = best_feature_f1(allmax)
+    go_f1["overall"] = best_feature_metrics(allmax)
     for b in BANDS:
-        go_f1["by_band"][b] = best_feature_f1(pmax[b])
+        go_f1["by_band"][b] = best_feature_metrics(pmax[b])
 
     def summarize(d):
-        vals = [v["f1"] for v in d.values()]
-        return {"n_terms": len(vals), "mean_best_f1": round(float(np.mean(vals)), 4) if vals else None,
-                "n_f1_gt_0.5": int(sum(v > 0.5 for v in vals))}
+        f1s = [v["f1"] for v in d.values()]
+        aucs = [v["auc"] for v in d.values()]
+        return {"n_terms": len(f1s),
+                "mean_best_f1": round(float(np.mean(f1s)), 4) if f1s else None,
+                "mean_best_auc": round(float(np.mean(aucs)), 4) if aucs else None,
+                "n_f1_gt_0.5": int(sum(v > 0.5 for v in f1s)),
+                "n_auc_gt_0.7": int(sum(v > 0.7 for v in aucs))}
 
     # ---- cross-position_type features (fire in >1 band somewhere in the corpus) ----
     band_fire = {b: (pmax[b] > args.fire_threshold).any(axis=0) for b in BANDS}
