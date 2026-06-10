@@ -54,7 +54,34 @@ def parse_args():  # noqa: D103
     p.add_argument("--out-json", default=None)
     p.add_argument("--fig-dir", default=None)
     p.add_argument("--seed", type=int, default=23)
+    p.add_argument("--wandb", action="store_true", help="Log diagnostic metrics + Fig1H to W&B")
+    p.add_argument("--wandb-project", default="bioreason-pro-sae")
+    p.add_argument("--wandb-run-name", default=None)
     return p.parse_args()
+
+
+def log_to_wandb(report, args):
+    """Log per-layer Tier1/Tier2 metrics, the recommendation, and the Fig-1H image to W&B."""
+    import wandb
+
+    run = wandb.init(project=args.wandb_project, name=args.wandb_run_name or "layer-diagnostic",
+                     job_type="layer-diagnostic", config={"store": report["store"], "layers": args.layers,
+                                                          "probe_band": args.probe_band, "top_k_go": args.top_k_go})
+    rows = []
+    for L, v in report["layers"].items():
+        rec = {"layer": int(L), "go_probe_macro_f1": v["go_probe"].get("macro_f1")}
+        for band, t in v["tier1"].items():
+            rec[f"{band}/mean_l2_norm"] = t["mean_l2_norm"]
+            rec[f"{band}/mean_density"] = t["mean_density"]
+            rec[f"{band}/pct_dead_dims"] = t["pct_dead_dims"]
+        rows.append(rec)
+        wandb.log(rec)
+    wandb.summary["recommended_layer"] = report["recommended_layer"]
+    if "fig1h" in report:
+        wandb.summary["fig1h_n_clusters"] = report["fig1h"]["n_clusters"]
+        if report["fig1h"].get("figure"):
+            wandb.log({"fig1h_layer35_umap": wandb.Image(report["fig1h"]["figure"])})
+    run.finish()
 
 
 def _shard_paths(layer_dir: Path):
@@ -242,6 +269,9 @@ def main():  # noqa: D103
     if args.out_json:
         Path(args.out_json).write_text(json.dumps(report, indent=2))
         print(f"[diag] wrote {args.out_json}")
+    if args.wandb:
+        log_to_wandb(report, args)
+        print("[diag] logged to W&B")
 
 
 if __name__ == "__main__":
