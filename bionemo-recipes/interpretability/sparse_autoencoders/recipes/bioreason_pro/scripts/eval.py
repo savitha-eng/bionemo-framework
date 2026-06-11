@@ -111,6 +111,7 @@ def main():  # noqa: D103
     pmax_t = {b: torch.zeros(n_prot, H, device=dev) for b in BANDS}
     ever_fired_t = torch.zeros(H, dtype=torch.bool, device=dev)
     recon_chunks, recon_orig = [], []
+    recon_norm_chunks, recon_norm_orig = [], []
     l0_sum, l0_count = 0.0, 0
     row0 = 0
 
@@ -126,7 +127,6 @@ def main():  # noqa: D103
                 e = min(n, s + bs)
                 x = torch.from_numpy(acts[s:e]).to(dev)
                 codes = sae.encode(x)
-                recon = sae.decode(codes)
                 ever_fired_t |= (codes > args.fire_threshold).any(dim=0)
                 l0_sum += float((codes > 0).sum().item())
                 l0_count += codes.shape[0]
@@ -137,21 +137,48 @@ def main():  # noqa: D103
                         idx = pidx_c[m].unsqueeze(1).expand(-1, H)
                         pmax_t[b].scatter_reduce_(0, idx, codes[m], reduce="amax", include_self=True)
                 if sum(c.shape[0] for c in recon_chunks) < args.recon_sample:
-                    recon_chunks.append(recon.float().cpu().numpy())
+                    # Reconstruct correctly under normalize_input: the decoder operates in NORMALIZED
+                    # space; de-normalization (×std+μ per token) reinserts each token's exact mean and
+                    # magnitude FOR FREE. Report BOTH spaces:
+                    #   raw  -> inflated by that free per-token magnitude (NOT an interpretability
+                    #           number when token norms vary wildly, as they do here: p50=347, max=14k)
+                    #   norm -> HONEST feature-reconstruction quality (Anthropic-style var-explained)
+                    # Using sae.decode(codes) WITHOUT the encode `info` skips de-norm -> garbage raw R^2.
+                    if sae.normalize_input:
+                        mu = x.mean(dim=-1, keepdim=True)
+                        std = x.std(dim=-1, keepdim=True) + 1e-5
+                        xn = (x - mu) / std
+                        recon_norm = sae.decoder(codes) + sae.pre_bias
+                        recon_raw = recon_norm * std + mu
+                    else:
+                        xn = x
+                        recon_norm = sae.decoder(codes) + sae.pre_bias
+                        recon_raw = recon_norm
+                    recon_chunks.append(recon_raw.float().cpu().numpy())
                     recon_orig.append(acts[s:e])
+                    recon_norm_chunks.append(recon_norm.float().cpu().numpy())
+                    recon_norm_orig.append(xn.float().cpu().numpy())
             row0 += n
 
     # Move GPU-pooled results back to numpy for the F1/AUC/cross-modal code.
     pmax = {b: pmax_t[b].cpu().numpy() for b in BANDS}
     ever_fired = ever_fired_t.cpu().numpy()
 
-    # ---- reconstruction R^2 / normalized MSE + sparsity ----
-    X = np.concatenate(recon_orig)[: args.recon_sample]
-    R = np.concatenate(recon_chunks)[: args.recon_sample]
-    ss_res = float(((X - R) ** 2).sum())
-    ss_tot = float(((X - X.mean(axis=0)) ** 2).sum())
-    r2 = 1.0 - ss_res / (ss_tot + 1e-8)
-    nmse = ss_res / (float((X ** 2).sum()) + 1e-8)
+    # ---- reconstruction var-explained (RAW + honest NORMALIZED) + sparsity ----
+    def _var_explained(orig_list, recon_list):
+        Xa = np.concatenate(orig_list)[: args.recon_sample]
+        Ra = np.concatenate(recon_list)[: args.recon_sample]
+        res = float((np.var(Ra - Xa, axis=0)).sum())
+        tot = float((np.var(Xa, axis=0)).sum())
+        ss_res = float(((Xa - Ra) ** 2).sum())
+        return 1.0 - res / (tot + 1e-8), ss_res / (float((Xa ** 2).sum()) + 1e-8)
+
+    # RAW space: inflated by normalize_input de-norm (free per-token mean/std) when norms vary.
+    r2_raw, nmse_raw = _var_explained(recon_orig, recon_chunks)
+    # NORMALIZED space: the honest feature-reconstruction quality (the interpretability metric).
+    r2_norm, nmse_norm = _var_explained(recon_norm_orig, recon_norm_chunks)
+    r2 = r2_norm  # headline = honest normalized var-explained (NOT the inflated raw number)
+    nmse = nmse_norm
     mean_l0 = round(l0_sum / max(1, l0_count), 2)
     pct_dead = round(100.0 * float((~ever_fired).mean()), 3)
 
@@ -240,7 +267,12 @@ def main():  # noqa: D103
 
     report = {
         "sae": args.sae, "layer": args.layer, "hidden_dim": H, "n_proteins": n_prot,
-        "reconstruction": {"r2_variance_explained": round(r2, 4), "normalized_mse": round(nmse, 4)},
+        "reconstruction": {
+            "r2_variance_explained": round(r2_norm, 4),       # HEADLINE: honest normalized-space
+            "normalized_mse": round(nmse_norm, 4),
+            "r2_variance_explained_raw": round(r2_raw, 4),     # inflated by de-norm; for reference only
+            "normalized_mse_raw": round(nmse_raw, 4),
+        },
         "sparsity": {"mean_l0": round(mean_l0, 2), "top_k": int(getattr(sae, "top_k", -1))},
         "pct_dead_latents": pct_dead,
         "go_feature_f1": {
