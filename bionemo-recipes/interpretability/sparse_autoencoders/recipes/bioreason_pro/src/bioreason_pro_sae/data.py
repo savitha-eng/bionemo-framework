@@ -76,25 +76,37 @@ def _install_dataset_redirect(load_module) -> None:
     load_module._sae_redirect_installed = True
 
 
-def load_reasoning_splits(max_length_protein: int = 2000, debug: bool = False):
+def load_reasoning_splits(max_length_protein: int = 2000, debug: bool = False, include_go_pred: bool = True):
     """Return (train, val, test) HF datasets in collate-ready form (faithful SFT processing).
 
     Requires the BioReason-Pro repo importable (caller installs the unsloth stub + sys.path via
     ``model_loader`` first, or imports this only inside that context).
+
+    ``include_go_pred=False`` drops the GO-GPT predictions ("go_speculations") from the prompt — used
+    by the fusion-control experiment to test whether the text band encodes GO *beyond* the handed-in
+    predictions.
     """
     import bioreason2.dataset.cafa5.load as load_module
 
     _install_dataset_redirect(load_module)
+    kwargs = dict(SFT_DATA_KWARGS)
+    if not include_go_pred:
+        kwargs["go_gpt_predictions_column"] = None
     return load_module.load_cafa5_dataset(
         dataset=GATED_DATASET,
         max_length=max_length_protein,
         debug=debug,
-        **SFT_DATA_KWARGS,
+        **kwargs,
     )
 
 
-def make_collate_fn(tokenizer, max_length_text: int = 10000, max_length_protein: int = 2000):
-    """Build the authors' collate fn with a fresh PLProcessor (returns answers for eval)."""
+def make_collate_fn(tokenizer, max_length_text: int = 10000, max_length_protein: int = 2000,
+                    inference_mode: bool = False):
+    """Build the authors' collate fn with a fresh PLProcessor.
+
+    ``inference_mode=True`` truncates after the assistant-start marker (drops the reasoning/answer
+    tokens) — used by the fusion control so the text band has no explicit model-stated GO terms.
+    """
     from bioreason2.dataset.cafa5.collate import qwen_protein_collate_fn
     from bioreason2.models.pl.processing_pl import PLProcessor
 
@@ -105,6 +117,7 @@ def make_collate_fn(tokenizer, max_length_text: int = 10000, max_length_protein:
         max_length_text=max_length_text,
         max_length_protein=max_length_protein,
         return_answer_in_batch=True,
+        inference_mode=inference_mode,
     )
 
 

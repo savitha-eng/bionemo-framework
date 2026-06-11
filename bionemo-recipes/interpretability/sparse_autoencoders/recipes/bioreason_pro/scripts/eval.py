@@ -104,10 +104,12 @@ def main():  # noqa: D103
     protein_index, pos_type, go_ids, n_prot = load_row_meta(args.store)
     print(f"[eval] SAE hidden={H} | store {n_prot} proteins, {pos_type.shape[0]} tokens")
 
-    # Per-protein/per-band max feature activation, dead-latent firing counts, recon sample.
-    band_idx = {b: i for i, b in enumerate(BANDS)}
-    pmax = {b: np.zeros((n_prot, H), dtype=np.float32) for b in BANDS}
-    ever_fired = np.zeros(H, dtype=bool)
+    # Per-protein/per-band max feature activation (pooled on GPU via scatter_reduce(amax) — far
+    # faster than np.maximum.at), dead-latent firing counts, recon sample.
+    band_code = {b: i for i, b in enumerate(BANDS)}
+    pos_code = np.select([pos_type == b for b in BANDS], list(range(len(BANDS))), default=-1).astype(np.int64)
+    pmax_t = {b: torch.zeros(n_prot, H, device=dev) for b in BANDS}
+    ever_fired_t = torch.zeros(H, dtype=torch.bool, device=dev)
     recon_chunks, recon_orig = [], []
     l0_sum, l0_count = 0.0, 0
     row0 = 0
@@ -117,27 +119,31 @@ def main():  # noqa: D103
         for sp in _shard_paths(layer_dir):
             acts = _read_shard(sp)
             n = acts.shape[0]
-            pt = pos_type[row0:row0 + n]
-            pidx = protein_index[row0:row0 + n]
+            pidx = torch.from_numpy(protein_index[row0:row0 + n]).to(dev)
+            pcode = torch.from_numpy(pos_code[row0:row0 + n]).to(dev)
             # Encode/decode in mini-batches: a dense [n, H] code tensor is huge (n*H*4 bytes).
             for s in range(0, n, bs):
                 e = min(n, s + bs)
                 x = torch.from_numpy(acts[s:e]).to(dev)
                 codes = sae.encode(x)
                 recon = sae.decode(codes)
-                codes_np = codes.float().cpu().numpy()
-                ever_fired |= (codes_np > args.fire_threshold).any(axis=0)
-                l0_sum += float((codes_np > 0).sum())
-                l0_count += codes_np.shape[0]
-                pt_c, pidx_c = pt[s:e], pidx[s:e]
+                ever_fired_t |= (codes > args.fire_threshold).any(dim=0)
+                l0_sum += float((codes > 0).sum().item())
+                l0_count += codes.shape[0]
+                pcode_c, pidx_c = pcode[s:e], pidx[s:e]
                 for b in BANDS:
-                    m = pt_c == b
+                    m = pcode_c == band_code[b]
                     if m.any():
-                        np.maximum.at(pmax[b], pidx_c[m], codes_np[m])
+                        idx = pidx_c[m].unsqueeze(1).expand(-1, H)
+                        pmax_t[b].scatter_reduce_(0, idx, codes[m], reduce="amax", include_self=True)
                 if sum(c.shape[0] for c in recon_chunks) < args.recon_sample:
                     recon_chunks.append(recon.float().cpu().numpy())
                     recon_orig.append(acts[s:e])
             row0 += n
+
+    # Move GPU-pooled results back to numpy for the F1/AUC/cross-modal code.
+    pmax = {b: pmax_t[b].cpu().numpy() for b in BANDS}
+    ever_fired = ever_fired_t.cpu().numpy()
 
     # ---- reconstruction R^2 / normalized MSE + sparsity ----
     X = np.concatenate(recon_orig)[: args.recon_sample]

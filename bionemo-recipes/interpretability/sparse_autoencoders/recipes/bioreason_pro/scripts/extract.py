@@ -77,6 +77,10 @@ def parse_args():  # noqa: D103
     p.add_argument("--device", default="cuda")
     p.add_argument("--verify-hidden-states", action="store_true",
                    help="On the first batch, confirm hook output == output_hidden_states[L+1]")
+    p.add_argument("--no-go-pred", action="store_true",
+                   help="Fusion control: drop GO-GPT predictions (go_speculations) from the prompt")
+    p.add_argument("--inference-mode", action="store_true",
+                   help="Fusion control: truncate after assistant-start (no reasoning/answer tokens)")
     p.add_argument("--report-json", default=None, help="Write the tokens/disk report to this JSON path")
     return p.parse_args()
 
@@ -188,16 +192,19 @@ def main():  # noqa: D103
 
     # --- Data ---
     print(f"[data] loading reasoning splits (split={args.split})")
-    train_ds, val_ds, test_ds = brp_data.load_reasoning_splits(max_length_protein=args.max_length_protein)
+    train_ds, val_ds, test_ds = brp_data.load_reasoning_splits(
+        max_length_protein=args.max_length_protein, include_go_pred=not args.no_go_pred)
     ds = {"train": train_ds, "validation": val_ds, "test": test_ds}[args.split]
     if args.shuffle:
         ds = ds.shuffle(seed=args.seed)
     n = min(args.num_proteins, len(ds))
     ds = ds.select(range(n))
-    print(f"[data] using {n} proteins from '{args.split}' (full split has {len(train_ds)} train rows)")
+    print(f"[data] using {n} proteins from '{args.split}' (full split has {len(train_ds)} train rows) "
+          f"| go_pred={'OFF' if args.no_go_pred else 'on'} inference_mode={args.inference_mode}")
 
     collate_fn = brp_data.make_collate_fn(
-        model.text_tokenizer, max_length_text=args.max_length_text, max_length_protein=args.max_length_protein
+        model.text_tokenizer, max_length_text=args.max_length_text, max_length_protein=args.max_length_protein,
+        inference_mode=args.inference_mode
     )
     loader = DataLoader(ds, batch_size=args.batch_size, shuffle=False, collate_fn=collate_fn)
 
