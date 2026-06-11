@@ -299,8 +299,16 @@ def main():  # noqa: D103
     freqv = fire_total_np / max(1, N)
     n_prot_active = (pmax_np > 0).sum(0)
     feat_ids = np.arange(H)
+    # Display label/description (dashboard contract): GO concept if labeled, else composition class.
+    descr = np.array([
+        (f"{go_label[f]} (AUC {go_auc[f]:.2f})" if go_label[f] != "none" else band_class[f])
+        for f in range(H)], dtype=object)
+    label = np.array([f"F{i}: {descr[i]}" for i in range(H)], dtype=object)
     meta = {
         "feature_id": feat_ids,
+        "label": label.astype(str),
+        "description": descr.astype(str),
+        "activation_freq": freqv,                 # dashboard contract name
         "activation_frequency": freqv,
         "log_frequency": np.log10(freqv + 1e-9),
         "mean_activation": np.nan_to_num(act_mean_np),
@@ -317,11 +325,12 @@ def main():  # noqa: D103
     live = freqv > 0
     pq.write_table(pa.table({k: v[live] if hasattr(v, "__len__") else v for k, v in meta.items()}),
                    str(out / "feature_metadata.parquet"))
-    atlas = dict(meta); atlas["umap_x"] = umap_x; atlas["umap_y"] = umap_y
+    atlas = dict(meta); atlas["x"] = umap_x; atlas["y"] = umap_y       # atlas uses x/y (decoder UMAP)
     pq.write_table(pa.table({k: v[live] for k, v in atlas.items()}), str(out / "features_atlas.parquet"))
 
     # ---- feature_examples (band-tagged; text decoding added by interp_text_contexts.py later) ----
-    ex_feat, ex_pid, ex_band, ex_act, ex_rank, ex_tidx = [], [], [], [], [], []
+    ex = {k: [] for k in ("feature_id", "protein_id", "band", "activation_value", "example_rank",
+                           "token_index", "residue_idx", "window_start", "sequence_window", "highlight_values")}
     topi_ex_np = topi_ex.cpu().numpy(); topv_ex_np = topv_ex.cpu().numpy()
     for f in active_feats:
         rank = 0
@@ -329,13 +338,16 @@ def main():  # noqa: D103
             r = topi_ex_np[f, j]
             if r < 0 or topv_ex_np[f, j] <= 0:
                 continue
-            ex_feat.append(int(f)); ex_pid.append(tok_pid[r]); ex_band.append(pos_type[r])
-            ex_act.append(float(topv_ex_np[f, j])); ex_rank.append(rank); ex_tidx.append(int(tok_tidx[r]))
+            band = str(pos_type[r]); act = float(topv_ex_np[f, j]); ti = int(tok_tidx[r])
+            ex["feature_id"].append(int(f)); ex["protein_id"].append(tok_pid[r]); ex["band"].append(band)
+            ex["activation_value"].append(act); ex["example_rank"].append(rank)
+            ex["token_index"].append(ti); ex["residue_idx"].append(0); ex["window_start"].append(ti)
+            # Placeholder window; interp_text_contexts.py (Env A) overwrites text-band rows with the
+            # decoded reasoning window. Keeps the card renderable in the meantime.
+            ex["sequence_window"].append(f"[{band}] {tok_pid[r]} @tok{ti}")
+            ex["highlight_values"].append([act])
             rank += 1
-    pq.write_table(pa.table({
-        "feature_id": ex_feat, "protein_id": ex_pid, "band": ex_band,
-        "activation_value": ex_act, "example_rank": ex_rank, "token_index": ex_tidx,
-    }), str(out / "feature_examples.parquet"))
+    pq.write_table(pa.table(ex), str(out / "feature_examples.parquet"))
 
     # ---- summary ----
     print(f"[dash] wrote {live.sum()} live features to {out}")
