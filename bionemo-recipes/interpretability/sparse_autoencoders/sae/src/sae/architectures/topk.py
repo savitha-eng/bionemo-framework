@@ -83,6 +83,7 @@ class TopKSAE(SparseAutoencoder):
         dead_tokens_threshold: int = 10_000_000,
         aggregate_loss: bool = False,
         dead_count_global: bool = False,
+        normalize_loss: bool = False,
         init_encoder_from_decoder: bool = True,
         init_pre_bias: bool = True,
         decoder_impl: str = "dense",
@@ -99,6 +100,10 @@ class TopKSAE(SparseAutoencoder):
         self.top_k = top_k
         self.init_pre_bias = init_pre_bias
         self.normalize_input = normalize_input
+        # When True (and normalize_input), the FVU loss is computed in NORMALIZED space so every
+        # token contributes equally regardless of magnitude (training then matches the honest
+        # normalized variance_explained metric). Default False preserves the legacy raw-space loss.
+        self.normalize_loss = normalize_loss
         self.auxk = auxk
         self.auxk_coef = auxk_coef
         self.dead_tokens_threshold = dead_tokens_threshold
@@ -144,6 +149,7 @@ class TopKSAE(SparseAutoencoder):
             "dead_tokens_threshold": self.dead_tokens_threshold,
             "aggregate_loss": self.aggregate_loss,
             "dead_count_global": self.dead_count_global,
+            "normalize_loss": self.normalize_loss,
         }
 
     def _init_encoder_from_decoder(self) -> None:
@@ -177,6 +183,18 @@ class TopKSAE(SparseAutoencoder):
     def _denormalize(self, x: torch.Tensor, info: Dict[str, torch.Tensor]) -> torch.Tensor:
         """Restore original scale using stored statistics."""
         return x * info["std"] + info["mu"]
+
+    def _loss_targets(self, x, recon, info):
+        """Return (target, recon) for the FVU loss, in normalized space iff normalize_loss is set.
+
+        With normalize_loss + normalize_input, both are standardized by each token's mean/std so the
+        per-token magnitude is divided out and every token contributes equally to the loss (and the
+        x_var centering by pre_bias is then dimensionally consistent, since pre_bias lives in
+        normalized space). Otherwise returns the raw tensors (legacy behavior, unchanged).
+        """
+        if self.normalize_loss and self.normalize_input and info:
+            return (x - info["mu"]) / info["std"], (recon - info["mu"]) / info["std"]
+        return x, recon
 
     def _variance_explained_normalized(self, x, recon, info, fallback):
         """Variance-explained in NORMALIZED space (the honest interpretability metric).
@@ -495,13 +513,17 @@ class TopKSAE(SparseAutoencoder):
         # legacy per-token ratio mean_t(mse_t / x_var_t), which over-weights low-variance tokens
         # and down-weights rare high-variance ones, starving the latents specialized on them.
         # aggregate_loss=True uses a single batch-level mse.mean() / var.mean() ratio instead.
+        # normalize_loss=True computes the FVU in NORMALIZED space (recon_norm vs x_norm) so every
+        # token is weighted equally regardless of raw magnitude -- the objective then matches the
+        # honest normalized variance_explained metric (otherwise high-norm tokens dominate the grad).
+        x_l, recon_l = self._loss_targets(x, recon, norm_info)
         if not self.aggregate_loss:
-            mse = (recon - x).pow(2).mean(dim=-1)
-            x_var = (x - self.pre_bias).pow(2).mean(dim=-1)
+            mse = (recon_l - x_l).pow(2).mean(dim=-1)
+            x_var = (x_l - self.pre_bias).pow(2).mean(dim=-1)
             recon_loss = (mse / (x_var + 1e-8)).mean()
         else:
-            mse = (recon - x).pow(2).mean()
-            x_var = (x - self.pre_bias).pow(2).mean()
+            mse = (recon_l - x_l).pow(2).mean()
+            x_var = (x_l - self.pre_bias).pow(2).mean()
             recon_loss = mse / (x_var + 1e-8)
 
         # Sparsity metric (for logging)
@@ -556,8 +578,10 @@ class TopKSAE(SparseAutoencoder):
         self._update_dead_latent_stats_from_indices(top_k_indices, x.shape[0])
 
         # Primary reconstruction loss (FVU), centered by pre_bias -- matches dense loss().
-        mse = (recon - x).pow(2).mean(dim=-1)
-        x_var = (x - self.pre_bias).pow(2).mean(dim=-1)
+        # normalize_loss -> compute in normalized space (equal per-token weight); see _loss_targets.
+        x_l, recon_l = self._loss_targets(x, recon, info)
+        mse = (recon_l - x_l).pow(2).mean(dim=-1)
+        x_var = (x_l - self.pre_bias).pow(2).mean(dim=-1)
         recon_loss = (mse / (x_var + 1e-8)).mean()
 
         # For TopK, L0 == count of nonzero top-k values.

@@ -70,6 +70,9 @@ def parse_args():  # noqa: D103
                            help="Batch-level FVU + AuxK loss instead of the per-token ratio (topk only).")
     sae_group.add_argument("--dead-count-global", action=argparse.BooleanOptionalAction, default=False,
                            help="Count dead-latent inactivity in total tokens (x world_size) under DDP (topk only).")
+    sae_group.add_argument("--normalize-loss", action=argparse.BooleanOptionalAction, default=False,
+                           help="Compute the FVU loss in normalized space (equal per-token weight, "
+                                "matches the honest var_explained metric; needs --normalize-input).")
 
     train_group = p.add_argument_group("Training")
     train_group.add_argument("--lr", type=float, default=3e-4)
@@ -125,6 +128,7 @@ def build_sae(args, input_dim: int) -> torch.nn.Module:  # noqa: D103
             dead_tokens_threshold=args.dead_tokens_threshold,
             aggregate_loss=args.aggregate_loss,
             dead_count_global=args.dead_count_global,
+            normalize_loss=args.normalize_loss,
         )
     elif args.model_type == "relu":
         return ReLUSAE(input_dim=input_dim, hidden_dim=hidden_dim, l1_coeff=args.l1_coeff)
