@@ -264,6 +264,9 @@ class PerfLogger:
         if "train/variance_explained" in metrics:
             parts.append(f"var_exp: {metrics['train/variance_explained']:.4f}")
 
+        if "train/variance_explained_normalized" in metrics:
+            parts.append(f"var_exp_norm: {metrics['train/variance_explained_normalized']:.4f}")
+
         if "train/mse" in metrics:
             parts.append(f"mse: {metrics['train/mse']:.6f}")
 

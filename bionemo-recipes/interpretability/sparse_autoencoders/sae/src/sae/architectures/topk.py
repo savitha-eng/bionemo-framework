@@ -178,6 +178,22 @@ class TopKSAE(SparseAutoencoder):
         """Restore original scale using stored statistics."""
         return x * info["std"] + info["mu"]
 
+    def _variance_explained_normalized(self, x, recon, info, fallback):
+        """Variance-explained in NORMALIZED space (the honest interpretability metric).
+
+        When ``normalize_input`` is on, the standard raw-space ``variance_explained`` is inflated:
+        de-normalization reinserts each token's per-token mean/std for free, which dominates the
+        variance when token norms vary a lot (as in multimodal residual streams). This computes
+        variance-explained on the standardized tokens instead, reflecting how much of the SAE's
+        actual (normalized) target it reconstructs. Falls back to the raw value when normalize_input
+        is off (the two coincide).
+        """
+        if not (self.normalize_input and info):
+            return fallback
+        xn = (x - info["mu"]) / info["std"]
+        rn = (recon - info["mu"]) / info["std"]
+        return 1.0 - (torch.var(rn - xn, dim=0).sum() / (torch.var(xn, dim=0).sum() + 1e-8))
+
     def encode_pre_act(self, x: torch.Tensor) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         """Compute pre-activation latent values (before ReLU and top-k).
 
@@ -497,6 +513,7 @@ class TopKSAE(SparseAutoencoder):
             total_var = torch.var(x, dim=0).sum()
             residual_var = torch.var(recon - x, dim=0).sum()
             var_explained = 1.0 - (residual_var / (total_var + 1e-8))
+            var_explained_norm = self._variance_explained_normalized(x, recon, norm_info, var_explained)
 
         result = {
             "total": recon_loss,
@@ -504,6 +521,7 @@ class TopKSAE(SparseAutoencoder):
             "sparsity": l0,
             "mse": raw_mse,
             "variance_explained": var_explained,
+            "variance_explained_normalized": var_explained_norm,
         }
 
         # Log dead latent percentage (always, for comparison across runs)
@@ -550,6 +568,7 @@ class TopKSAE(SparseAutoencoder):
             total_var = torch.var(x, dim=0).sum()
             residual_var = torch.var(recon - x, dim=0).sum()
             var_explained = 1.0 - (residual_var / (total_var + 1e-8))
+            var_explained_norm = self._variance_explained_normalized(x, recon, info, var_explained)
 
         result = {
             "total": recon_loss,
@@ -557,6 +576,7 @@ class TopKSAE(SparseAutoencoder):
             "sparsity": l0,
             "mse": raw_mse,
             "variance_explained": var_explained,
+            "variance_explained_normalized": var_explained_norm,
         }
         dead_pct = (self.stats_last_nonzero > self.dead_tokens_threshold).float().mean() * 100
         result["dead_pct"] = dead_pct

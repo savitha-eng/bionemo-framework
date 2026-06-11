@@ -55,6 +55,12 @@ Measuring var-explained in both spaces on the same SAE:
 `eval.py`: it called `encode()` then `decode()` *without* the normalization `info`, skipping
 de-normalization → a garbage R² of −0.11. Fixed.)
 
+**Training-time logging fixed too.** The W&B curves previously showed only the inflated raw
+`variance_explained` (~0.97). We added `variance_explained_normalized` to the SAE loss (`topk.py`, both
+dense + Triton paths) so training now logs **both** — confirmed on run `sae-l32-exp8-honest-varexp`:
+`train/variance_explained = 0.976` (raw) vs `train/variance_explained_normalized = 0.760` (honest,
+matching the eval). All recipes get this metric automatically.
+
 ### Hypothesis B — sink tokens (your suggestion)
 Sink tokens are a small fraction of positions with huge magnitude on a few "wired" outlier channels —
 architectural (optimizer-induced), input-independent, and known to dominate SAE loss if not removed.
@@ -185,11 +191,66 @@ from `go-basic.obo`). Feature → concept direction; complements eval.py's conce
 not just faithful — its sparse features correspond to human-readable biology. This is the validation we
 wanted *before* committing to the full extraction.
 
-*Caveats:* this is the model-free, **biology** view (protein-level GO). It does not yet show the
-*linguistic* trigger of text-band features (would need decoding the reasoning-text windows — a possible
-Part B). And it's on the 300-protein subset; the full run will sharpen rare-concept features.
+### 5b. Text-context view — the linguistic trigger (Part B)
 
-## 6. What's next (your call)
+The biology view labels features by *which proteins* they fire on. We also decoded the actual
+reasoning-**text** windows around each feature's top-activating tokens (`scripts/interp_text_contexts.py`,
+reproducing each protein's token sequence and matching by `protein_id`). The features are cleanly
+**monosemantic** — each fires on the exact token of its concept (⟦⟧ = the firing token):
+
+| feature | biology label (GO-AUC) | top-activating text contexts | concept |
+|---|---|---|---|
+| 12409 | positive regulation (0.98) | "…⟦positive⟧ regulation of ruffle assembly…", "…⟦positive⟧ regulation of cyclin-dependent kinase…", "…⟦positive⟧ regulation of cell growth…" | the concept **positive regulation** across many distinct GO terms |
+| 2048 | catalytic activity (0.93) | "…transferase activity…", "…hydrolase activity…", "…lyase activity…", "…nucleotidyltransferase activity…" | **enzyme catalytic activity** |
+| 16902 | nucleic acid binding (0.91) | "…⟦nucleic⟧ acid binding…" (×5, near RNA/DNA binding) | **nucleic-acid binding** |
+| 1275 | cytosol (0.96) | "…GO:0005829 ⟦cytosol⟧…" (×5) | **cytosol** localization |
+| 13476 | protein complex (0.94) | "…SPOTS ⟦complex⟧…", "…holoenzyme ⟦complex⟧…", "…SCF ubiquitin ligase ⟦complex⟧…" | **protein complex** |
+
+The two views **agree**: feature 12409 scores GO-AUC 0.98 for "positive regulation of biological
+process" *and* fires on the literal word "positive" in that phrase across many different child terms —
+it has abstracted the concept, not memorized one term. *(Honest note: these text features partly detect
+the GO-term phrasing present in the reasoning prompt — a read-back component, consistent with the fusion
+control in `LAYER_ANALYSIS`. The SAE-V protein↔text fusion below shows some of this concept is also
+grounded in the protein embedding, not pure text read-back.)*
+
+*Caveats:* on the 300-protein subset; the full run will sharpen rare-concept features.
+
+## 6. Multimodal feature fusion (SAE-V)
+
+BioReason-Pro is multimodal (protein embeddings + GO memory + reasoning text in one stream), so a key
+question is whether the SAE finds **features shared across modalities** — the same concept represented
+in both the protein embedding and the text. We applied **SAE-V** (arXiv:2502.17514, Eq. 7): for each
+feature, take its top-K activating tokens *within each band* and measure the mean rank-paired cosine
+(`omega`) of their residual vectors across band pairs. omega → 1 = a fused, modality-agnostic feature.
+*(Script: `scripts/crossmodal.py`.)*
+
+**The baseline is essential.** The residual stream has shared directions (DC component, the sink
+channels from §1) that inflate cosine between *any* two tokens, so raw omega is meaningless alone. We
+compare against the mean cosine of **random cross-band token pairs**:
+
+| band pair | omega (features) | random baseline | **lift over baseline** | reading |
+|---|---|---|---|---|
+| **protein ↔ text** | 0.50 | **−0.08** | **+0.59** | **strong, genuine fusion** |
+| go ↔ text | 0.48 | 0.15 | **+0.33** | moderate fusion |
+| protein ↔ go | 0.55 | 0.52 | +0.02 | *not* special — shared injected-embedding structure |
+
+**Reading (the baseline flips the naive interpretation):**
+- **protein↔text is the most fused** (+0.59) even though its raw omega looked weakest. Random
+  protein/text token pairs are near-orthogonal (−0.08), but feature-selected pairs sit at 0.50 — the SAE
+  finds features where **the protein embedding and the reasoning text point the same direction**. These
+  are genuine multimodal concepts (the model's shared "protein function" representation), consistent with
+  §`LAYER_ANALYSIS` (function decodes from both the protein embedding ~0.73 and the text ~0.83).
+- **go↔text** is moderately fused (+0.33).
+- **protein↔go** looked most aligned (0.55) but is the *least* fused (+0.02): both are high-norm injected
+  embeddings with high background cosine; the features add almost nothing beyond that.
+- **Partial, not perfect:** no feature exceeds omega 0.7 absolute, so fusion is real but incomplete —
+  the shared cross-modal direction coexists with modality-specific structure.
+
+Only 128 / 200 features fire strongly in the protein / go bands (vs 11,044 in text), echoing the
+low-rank injected bands — so the SAE's multimodal features are relatively few, but the protein↔text ones
+are clearly real.
+
+## 7. What's next (your call)
 1. **Finalize + push to GitHub** for review (currently blocked on git credentials).
 2. **Full-scale run on Lepton** — the gate is GREEN; awaiting your one-line OK.
 3. **Autointerp labeling** of the top features (what concepts they encode).

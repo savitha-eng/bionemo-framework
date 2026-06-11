@@ -149,6 +149,23 @@ def main():  # noqa: D103
             out[int(k)] = float(cos.mean().item())
         return out
 
+    # BASELINE: mean cosine of RANDOM cross-band token pairs. The residual stream has shared
+    # directions (DC component, outlier channels) that inflate cosine between ANY two tokens, so
+    # omega is only meaningful relative to this. A feature is genuinely fused only if its omega
+    # exceeds the random cross-band baseline.
+    band_tok = {b: np.where(pos_code == band_of[b])[0] for b in BANDS}
+    rng = np.random.default_rng(0)
+
+    def baseline_cos(ba, bb, n=20000):
+        a = band_tok[ba]
+        b = band_tok[bb]
+        if a.size == 0 or b.size == 0:
+            return None
+        ia = torch.from_numpy(rng.choice(a, n)).to(dev)
+        ib = torch.from_numpy(rng.choice(b, n)).to(dev)
+        cos = (Znorm[ia] * Znorm[ib]).sum(dim=1)
+        return float(cos.mean().item()), float(cos.std().item())
+
     report = {"sae": args.sae, "layer": args.layer, "K": K, "delta": args.delta,
               "n_tokens": int(N), "sae_hidden": H,
               "n_features_firing_per_band": n_active, "pairs": {}}
@@ -162,16 +179,24 @@ def main():  # noqa: D103
         w = omega(both, ba, bb)
         vals = np.array(list(w.values()))
         top_feats = sorted(w.items(), key=lambda kv: kv[1], reverse=True)[: args.top_features_report]
+        base = baseline_cos(ba, bb)
+        base_mean = base[0] if base else None
+        # delta over baseline = how much MORE aligned feature-selected pairs are than random pairs
+        n_above_base = int((vals > base_mean).sum()) if base_mean is not None else None
         report["pairs"][pair] = {
             "n_multimodal_features": int(both.size),
             "omega_mean": round(float(vals.mean()), 4),
             "omega_median": round(float(np.median(vals)), 4),
             "omega_max": round(float(vals.max()), 4),
+            "baseline_random_pair_cos": round(base_mean, 4) if base_mean is not None else None,
+            "omega_minus_baseline": round(float(vals.mean()) - base_mean, 4) if base_mean is not None else None,
+            "n_features_above_baseline": n_above_base,
             **{f"n_omega_gt_{t}": int((vals > t).sum()) for t in args.omega_thresholds},
             "top_features": [{"feature": f, "omega": round(o, 4)} for f, o in top_feats],
         }
+        bstr = f"baseline={base_mean:.3f} delta={vals.mean()-base_mean:+.3f}" if base_mean is not None else ""
         print(f"[crossmodal] {pair}: {both.size} multimodal feats | omega mean={vals.mean():.3f} "
-              f"median={np.median(vals):.3f} max={vals.max():.3f} | "
+              f"median={np.median(vals):.3f} max={vals.max():.3f} | {bstr} | "
               + " ".join(f">{t}:{int((vals>t).sum())}" for t in args.omega_thresholds))
 
     if args.out_json:
