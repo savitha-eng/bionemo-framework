@@ -62,6 +62,14 @@ SLIDES = [
         "explained" for free, and the raw loss is dominated by it. <b>Normalized</b> (what the SAE models):
         magnitude removed, PC1 ~27–30%, &gt;300 PCs for 90% → the real target is high-dimensional.</p>"""),
 
+    ("""<h2>Where the magnitude comes from — the BioReason-Pro code</h2>""",
+     f"""<div class="fig">{img('fig_modality_norms.png')}</div>
+        <p><b>Text</b> tokens use the pretrained Qwen <b>embedding table</b> (norm ≈ 1). <b>Protein/GO</b>
+        tokens are spliced in via trained <code>Linear→GELU→Linear</code> projections
+        (<code>protein_llm.py</code>) with <b>no output normalization</b> → unconstrained magnitude
+        (protein ≈ <b>1,356×</b> text at input). RMSNorm fixes it per-block for the model, but the
+        <b>raw residual stream keeps the gap</b> (~9× at L32) — what dominates raw-space SAE loss/metrics.</p>"""),
+
     ("""<h2>Ruled out — it was <i>not</i> sink tokens</h2>""",
      f"""<div class="fig">{img('fig_sinks.png')}</div>
         <p>The obvious culprit — a few architectural "sink" tokens — was tested and <b>cleared</b>:
