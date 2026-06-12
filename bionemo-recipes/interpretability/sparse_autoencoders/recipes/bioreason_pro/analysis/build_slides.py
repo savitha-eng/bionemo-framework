@@ -96,7 +96,7 @@ SLIDES = [
      f"""<div class="fig">{img('fig_layer_reversal.png')}</div>
         <p>L28's "collapse" (54.9% dead) was a <b>raw-loss artifact</b> — under <code>normalize_loss</code>
         it drops to <b>5.1%</b>. All layers healthy ⇒ choice is <b>use-case-driven</b>:
-        <b>steering → L28</b> (earliest, most faithful); <b>multimodal fusion → L32</b> (95 vs 57 cross-modal feats; interpretability tied).</p>"""),
+        <b>steering → L28</b> (earliest, most faithful); <b>L28 is the pick</b> (interpretability tied with L32; the apparent L32 cross-modal edge was a prompt artifact — see deck 2).</p>"""),
 
     ("""<h2>Takeaways</h2>""",
      """<ol>

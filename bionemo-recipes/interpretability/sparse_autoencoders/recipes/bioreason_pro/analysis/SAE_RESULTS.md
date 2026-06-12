@@ -32,8 +32,12 @@ the gate before any full-scale run.
   **0.76 → 0.81**, loss-recovered **0.94 → 0.98**.
 - **With the right loss, the layer choice flips:** L28's apparent "collapse" (54.9% dead) was a raw-loss
   artifact — under `normalize_loss` it drops to **5.1% dead** and L28 *beats* L32 on reconstruction/
-  fidelity/biology. **Steering → L28** (earliest, most faithful); **multimodal-fusion studies → L32**
-  (interpretability is tied, but L32 has ~65% more protein↔text cross-modal features: 95 vs 57).
+  fidelity/biology. **L28 is the pick** (earliest → best for steering, most faithful; interpretability
+  tied with L32).
+- **Caveat (§6): the SAE-V "protein↔text fusion" claim is retracted** — inspecting the features showed the
+  cross-modal cosine was driven by the fixed system-prompt prefix; on real reasoning text the lift
+  collapses (+0.58 → +0.10). Feature-level multimodal fusion is **not** established here. (The separate
+  *probing* result — function decodes from text better than from the protein embedding — still holds.)
 - *(Original raw-loss winner, now superseded: L32 8× top_k 128, honest var-exp 0.76 / 12.8% dead /
   GO-AUC 0.83 / loss-recovered 0.94 — a genuine feature model; §1c has the updated numbers.)*
 
@@ -135,29 +139,27 @@ The earlier "L28 collapses, use L32" (§4) was an **artifact of the raw-space lo
 L28's dead rate went **54.9% → 5.1%**. Var-exp & fidelity rise toward *earlier* layers (lower rank =
 easier to reconstruct); effective rank rises toward *deeper* layers (richer dictionary). So the layer
 choice is now **use-case-driven, not "L28 is broken":**
-- **Steering → L28** — earliest (most network downstream for an intervention to propagate), highest
-  var-exp, best GO-AUC, most faithful (0.988).
-- **Multimodal-fusion studies → L32** — see below; not "richer" in general, but it has **more
-  cross-modal features**.
-- L30 is a fine middle (lowest dead) but doesn't dominate either.
+- **L28 is the all-around pick** — earliest (most network downstream for an intervention to propagate),
+  highest var-exp, best GO-AUC, most faithful (0.988), feature interpretability tied with L32.
+- L30 is a fine middle (lowest dead) but doesn't dominate.
 
-**Don't confuse var-exp with richness, and don't overclaim "L32 is richer":** higher var-explained means
-*easier to reconstruct* (lower-rank), **not** richer — so L28's higher var-exp (0.863 vs 0.811) is if
-anything a sign it's *lower*-rank/easier, not more structured. PCA confirms the residual stream is
-magnitude-dominated (PC1 ≈ 80% raw variance at every layer); in normalized space the **all-token**
-effective rank is *similar* across layers. So there is **no clean "L28 var-exp vs L32 rank" tradeoff**.
+**Don't confuse var-exp with richness:** higher var-explained means *easier to reconstruct* (lower-rank),
+**not** richer — so L28's higher var-exp (0.863 vs 0.811) is if anything a sign it's *lower*-rank/easier.
+PCA confirms the residual stream is magnitude-dominated (PC1 ≈ 80% raw variance); in normalized space the
+all-token effective rank is *similar* across layers. So there is **no clean "L28 vs L32" tradeoff**.
 
-**The one concrete, measured L28↔L32 difference is cross-modal fusion** (same feature pipeline, held-out):
+**L28↔L32 feature comparison** (same pipeline, held-out):
 
-| layer | live feats | GO-labeled (AUC>0.65) | **truly cross-modal (protein↔text)** | top concepts |
+| layer | live feats | GO-labeled (AUC>0.65) | cross-modal flag | top concepts |
 |---|---|---|---|---|
-| L28 | 19,441 | 4,635 | **57** | cytosol, positive regulation, nucleic-acid binding, complex, … |
-| L32 | 19,389 | 4,703 | **95** | (same set) |
+| L28 | 19,441 | 4,635 | 57 | cytosol, positive regulation, nucleic-acid binding, complex, … |
+| L32 | 19,389 | 4,703 | 95 | (same set) |
 
-Interpretability is **essentially tied** (≈4,600–4,700 GO-labeled, identical concept set, same band
-composition). The deeper layer (**L32**) just fuses protein↔text in **~65% more features** (95 vs 57).
-So: **steering → L28** (earliest, most faithful at 0.988, feature quality tied); **multimodal-fusion
-analysis → L32** (more protein↔text features). Both have full feature tables in `analysis/feature_tables/`.
+Interpretability is **essentially tied** (≈4,600–4,700 GO-labeled, identical concepts/composition). I
+earlier called the cross-modal count (95 vs 57) a reason to prefer L32 — **that's now retracted**: §6
+shows those cross-modal flags are driven by **prompt boilerplate**, not genuine fusion, so the count
+isn't meaningful. **Net: L28 and L32 are interpretation-equivalent; pick L28** (earliest + most faithful).
+Both layers' full feature tables are in `analysis/feature_tables/`.
 
 **Updated winner:** **`normalize_loss` is the default for this recipe**; layer by use case (L28 for
 steering, L32 for the broadest dictionary). The §2–§5 numbers below predate this and use the raw-space
@@ -290,8 +292,8 @@ The two views **agree**: feature 12409 scores GO-AUC 0.98 for "positive regulati
 process" *and* fires on the literal word "positive" in that phrase across many different child terms —
 it has abstracted the concept, not memorized one term. *(Honest note: these text features partly detect
 the GO-term phrasing present in the reasoning prompt — a read-back component, consistent with the fusion
-control in `LAYER_ANALYSIS`. The SAE-V protein↔text fusion below shows some of this concept is also
-grounded in the protein embedding, not pure text read-back.)*
+control in `LAYER_ANALYSIS`. Whether the concept is also grounded in the protein embedding is **not**
+established by SAE-V here — see the §6 correction.)*
 
 *Caveats:* on the 300-protein subset; the full run will sharpen rare-concept features.
 
@@ -314,21 +316,30 @@ compare against the mean cosine of **random cross-band token pairs**:
 | go ↔ text | 0.48 | 0.15 | **+0.33** | moderate fusion |
 | protein ↔ go | 0.55 | 0.52 | +0.02 | *not* special — shared injected-embedding structure |
 
-**Reading (the baseline flips the naive interpretation):**
-- **protein↔text is the most fused** (+0.59) even though its raw omega looked weakest. Random
-  protein/text token pairs are near-orthogonal (−0.08), but feature-selected pairs sit at 0.50 — the SAE
-  finds features where **the protein embedding and the reasoning text point the same direction**. These
-  are genuine multimodal concepts (the model's shared "protein function" representation), consistent with
-  §`LAYER_ANALYSIS` (function decodes from both the protein embedding ~0.73 and the text ~0.83).
-- **go↔text** is moderately fused (+0.33).
-- **protein↔go** looked most aligned (0.55) but is the *least* fused (+0.02): both are high-norm injected
-  embeddings with high background cosine; the features add almost nothing beyond that.
-- **Partial, not perfect:** no feature exceeds omega 0.7 absolute, so fusion is real but incomplete —
-  the shared cross-modal direction coexists with modality-specific structure.
+> ⚠️ **CORRECTION (this claim does NOT hold — the "+0.59 fusion" is a prompt-template artifact).**
+> Inspecting the actual cross-modal features (`crossmodal_example.py`) shows their top **text** tokens are
+> all the **fixed system prompt** ("You are a scientific assistant…"), which sits adjacent to the
+> protein/GO blocks — *not* reasoning content. Restricting the text band to the model's **reasoning/
+> response** tokens (`crossmodal_response_check.py`) collapses the protein↔text lift from **+0.58 → +0.10**
+> (omega 0.50 → 0.01). So the cross-modal cosine was driven by the boilerplate prefix, and there is
+> **no demonstrated genuine *semantic* protein↔text fusion at the SAE-feature level.** Likely causes:
+> (a) positional — prompt tokens next to the modality blocks share residual structure; (b) tautological —
+> a feature's top protein and top text tokens are both selected to maximize the *same* feature, so they
+> align by construction.
+>
+> **What still holds (separate analysis):** the *probing* result in `LAYER_ANALYSIS` — biological function
+> decodes from the **text band (AUC 0.83) better than from the raw protein embedding (0.73)**, with a
+> fusion control showing it's mostly genuine integration — is a different measurement (linear decodability
+> of the text representation, not feature-level cosine) and is **not** affected by this artifact. So "the
+> model folds protein-derived function into its text representation" is supported by probing; "individual
+> SAE features fuse protein+text directions" is **not** supported once boilerplate is removed.
 
-Only 128 / 200 features fire strongly in the protein / go bands (vs 11,044 in text), echoing the
-low-rank injected bands — so the SAE's multimodal features are relatively few, but the protein↔text ones
-are clearly real.
+*(Original, now-retracted reading: protein↔text +0.59 "strong genuine fusion", go↔text +0.33, protein↔go
++0.02. The protein↔go +0.02 conclusion — that it's just shared injected structure — still stands.)*
+
+**Takeaway:** SAE-V at the feature level did **not** establish multimodal fusion here; the apparent signal
+was prompt boilerplate. To test fusion properly one must (1) exclude prompt tokens, (2) control for the
+top-token selection effect, and ideally (3) test causally (ablate the protein/GO input — see §7).
 
 ## 7. What's next (your call)
 1. **Finalize + push to GitHub** for review (currently blocked on git credentials).

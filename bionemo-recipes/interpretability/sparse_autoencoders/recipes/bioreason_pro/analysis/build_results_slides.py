@@ -57,7 +57,7 @@ SLIDES = [
      f"""<div class="fig">{img('fig_layer_reversal.png')}</div>
         <p>Honest var-explained 0.81–0.86 · dead latents 4–5% · loss-recovered 0.98 (model keeps 98% of
         its fidelity when the SAE recon is substituted in) · GO-AUC ~0.84.
-        <b>Steering → L28</b> (earliest, most faithful) · <b>multimodal fusion → L32</b> (95 vs 57 cross-modal feats; interpretability tied).</p>"""),
+        <b>Steering → L28</b> (earliest, most faithful) · <b>interpretability tied with L32</b>, so <b>L28 is the pick</b>.</p>"""),
 
     ("""<h2>How the interpretation works</h2>""",
      """<p>The SAE gives each token a <b>sparse code</b> (128 of 20,480 features active). To interpret a
@@ -76,7 +76,7 @@ SLIDES = [
 
     ("""<h2>What the dictionary contains</h2>""",
      f"""<div class="fig">{img('fig_feature_analysis.png')}</div>
-        <p>Of 19,389 live features: <b>4,703 carry a confident GO concept</b>, <b>95 are truly cross-modal</b>.
+        <p>Of 19,389 live features: <b>4,703 carry a confident GO concept</b>. (95 were flagged cross-modal, but §SAE-V shows that signal is a prompt-template artifact — retracted.)
         Most features are about the reasoning <b>text</b> (the model integrates biology into its reasoning);
         a smaller set are protein/GO-specific.</p>"""),
 
@@ -94,17 +94,21 @@ SLIDES = [
         (e.g. ~8 distinct "cytosol" features) — healthy-SAE signatures. Full list:
         <code>analysis/feature_tables/features_L32_normloss.csv</code> (all 19,389).</p>"""),
 
-    ("""<h2>Genuine multimodal fusion (SAE-V)</h2>""",
-     """<p>Cross-modal cosine (omega), <b>relative to a random cross-band baseline</b>:</p>
+    ("""<h2>Multimodal fusion (SAE-V) — tested and <span style="color:#EF2020">retracted</span></h2>""",
+     """<p>SAE-V cross-modal cosine first looked like strong protein↔text fusion (+0.59 over a random
+        baseline). <b>But inspecting the features showed their top "text" tokens are the fixed system
+        prompt</b> ("You are a scientific assistant…"), adjacent to the protein/GO blocks — not reasoning.</p>
         <table>
-        <tr><th>band pair</th><th>lift over baseline</th><th>reading</th></tr>
-        <tr><td><b>protein ↔ text</b></td><td><b>+0.59</b></td><td><b>strong, genuine fusion</b></td></tr>
-        <tr><td>go ↔ text</td><td>+0.33</td><td>moderate fusion</td></tr>
-        <tr><td>protein ↔ go</td><td>+0.02</td><td>not special (shared injected structure)</td></tr>
+        <tr><th>text band used</th><th>protein↔text lift over baseline</th></tr>
+        <tr><td>all text (incl. prompt)</td><td>+0.58</td></tr>
+        <tr><td><b>reasoning/response text only</b></td><td><b>+0.10</b> (collapses)</td></tr>
         </table>
-        <p>So features like "catalytic activity" represent the concept in <b>both</b> the ESM3 protein
-        embedding <b>and</b> the reasoning text, pointing the same direction — the model's shared
-        cross-modal representation. (The baseline is essential — it flips which pair looks fused.)</p>"""),
+        <p>So the "fusion" was a <b>prompt-template artifact</b> (plus a top-token selection effect). We do
+        <b>not</b> claim genuine feature-level protein↔text fusion. <i>Separately</i>, probing still shows
+        function decodes from the text band (0.83) better than the raw protein embedding (0.73) — the model
+        does fold biology into text — but that's decodability, not feature-level cosine fusion.</p>
+        <p class="dim">Lesson: a summary stat (+0.59) didn't survive looking at the actual features.
+        Causal test (ablate protein/GO input) is the proper next step.</p>"""),
 
     ("""<h2>What triggers a feature — real reasoning-text snippets</h2>""",
      f"""{context_rows()}
@@ -125,7 +129,7 @@ SLIDES = [
         <li>The SAE is <b>faithful</b> (loss-recovered 0.98) and its sparse features are
             <b>human-readable biology</b> — ~4,700 GO-labeled, AUC up to 0.98 on held-out proteins.</li>
         <li>It captures <b>localization, molecular function, and process</b> concepts; mostly via the
-            <b>text/reasoning</b> band, with a real <b>protein↔text fusion</b> subset.</li>
+            <b>text/reasoning</b> band. (An apparent protein↔text fusion signal turned out to be a prompt-template artifact — see SAE-V slide.)</li>
         <li>Validated on a subset — ready to scale, with the full feature table + dashboard for inspection.</li>
         </ol>"""),
 ]
