@@ -136,8 +136,16 @@ easier to reconstruct); effective rank rises toward *deeper* layers (richer dict
 choice is now **use-case-driven, not "L28 is broken":**
 - **Steering → L28** — earliest (most network downstream for an intervention to propagate), highest
   var-exp, best GO-AUC, most faithful (0.988).
-- **Richest feature atlas → L32** — highest effective rank ⇒ most distinct concepts.
+- **Richest feature atlas → L32** — highest *text-band* effective rank ⇒ most distinct concepts.
 - L30 is a fine middle (lowest dead) but doesn't dominate either.
+
+**PCA caveat on "richness" (`fig_pca_layers.png`):** PCA of the residual stream shows a single PC
+explains **~80% of raw variance at every layer** — that PC is the **magnitude direction** (the root
+cause of both the inflated metric and the raw-space loss; protein median norm 2,339 vs text 321). In
+the **normalized** space the SAE actually models, the spectrum is high-dimensional (>300 PCs for 90%)
+and the **all-token** effective rank is *similar* across layers (slightly higher at L28). So the
+"L32 = richer" claim is specifically about **text-band** rank; in the all-token view L28 gives up little
+or no richness — which **strengthens L28 as the all-around pick**, not only for steering.
 
 **Updated winner:** **`normalize_loss` is the default for this recipe**; layer by use case (L28 for
 steering, L32 for the broadest dictionary). The §2–§5 numbers below predate this and use the raw-space

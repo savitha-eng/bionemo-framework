@@ -11,6 +11,30 @@ live in `model_loader.py`/`data.py` (a `sys.modules` `unsloth` stub so the `use_
 path imports, and a `load_dataset` redirect from the gated `wanglab/cafa5` to the cached standalone
 reasoning repo).
 
+## Key result — the variance-explained fix (`normalize_loss`)
+
+Initial runs reported **var-explained ≈ 0.97**, which is a red flag (near-identity "copy machine,"
+not an interpretable model). It turned out to be **two raw-space bugs**, both rooted in the same fact:
+with `normalize_input`, the residual stream is dominated by a single **magnitude** direction (PCA: PC1
+≈ 80% of raw variance; per-band median norm protein **2,339** vs text **321**).
+
+1. **Metric** was computed in raw space — inflated because de-normalization reinserts each token's
+   magnitude for free. Honest (normalized-space) var-explained is **0.76, not 0.97**. We now log
+   `variance_explained_normalized` alongside the raw one (`topk.py`).
+2. **Loss** was raw-space too — so the SAE was *trained* to over-weight high-magnitude tokens
+   (~50× the gradient of a text token). **`normalize_loss`** (opt-in, `topk.py` + `--normalize-loss`)
+   computes the FVU in normalized space so every token is weighted equally. It is **strictly better**:
+   at L32, dead latents **12.8% → 5.3%**, var-exp **0.76 → 0.81**, loss-recovered **0.94 → 0.98** — and
+   it **rescued L28** (54.9% → 5.1% dead), making the layer choice use-case-driven (steering → L28,
+   richest atlas → L32). Sink tokens were tested and **ruled out** (removing them moves var-exp ~0.0001).
+
+`normalize_loss` is **on by default for this recipe**; it stays opt-in (default off) in the shared
+`sae` package since unimodal models (Evo2/ESM2) have ~uniform token norms where raw ≈ normalized.
+
+📊 Full writeup: [`analysis/SAE_RESULTS.md`](analysis/SAE_RESULTS.md) ·
+slide deck: [`analysis/slides_variance_explained_fix.html`](analysis/slides_variance_explained_fix.html)
+(build via `python analysis/build_slides.py`).
+
 ## Environments
 
 Extraction needs **both** the BioReason-Pro model env *and* the `sae` package; train/eval are
