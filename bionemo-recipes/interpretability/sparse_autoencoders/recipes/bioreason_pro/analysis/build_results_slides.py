@@ -57,7 +57,7 @@ SLIDES = [
      f"""<div class="fig">{img('fig_layer_reversal.png')}</div>
         <p>Honest var-explained 0.81–0.86 · dead latents 4–5% · loss-recovered 0.98 (model keeps 98% of
         its fidelity when the SAE recon is substituted in) · GO-AUC ~0.84.
-        <b>Steering → L28</b> (earliest, most faithful) · <b>richest atlas → L32</b>.</p>"""),
+        <b>Steering → L28</b> (earliest, most faithful) · <b>multimodal fusion → L32</b> (95 vs 57 cross-modal feats; interpretability tied).</p>"""),
 
     ("""<h2>How the interpretation works</h2>""",
      """<p>The SAE gives each token a <b>sparse code</b> (128 of 20,480 features active). To interpret a

@@ -32,7 +32,8 @@ the gate before any full-scale run.
   **0.76 → 0.81**, loss-recovered **0.94 → 0.98**.
 - **With the right loss, the layer choice flips:** L28's apparent "collapse" (54.9% dead) was a raw-loss
   artifact — under `normalize_loss` it drops to **5.1% dead** and L28 *beats* L32 on reconstruction/
-  fidelity/biology. **Steering → L28** (earliest, most faithful); **richest atlas → L32** (highest rank).
+  fidelity/biology. **Steering → L28** (earliest, most faithful); **multimodal-fusion studies → L32**
+  (interpretability is tied, but L32 has ~65% more protein↔text cross-modal features: 95 vs 57).
 - *(Original raw-loss winner, now superseded: L32 8× top_k 128, honest var-exp 0.76 / 12.8% dead /
   GO-AUC 0.83 / loss-recovered 0.94 — a genuine feature model; §1c has the updated numbers.)*
 
@@ -136,16 +137,27 @@ easier to reconstruct); effective rank rises toward *deeper* layers (richer dict
 choice is now **use-case-driven, not "L28 is broken":**
 - **Steering → L28** — earliest (most network downstream for an intervention to propagate), highest
   var-exp, best GO-AUC, most faithful (0.988).
-- **Richest feature atlas → L32** — highest *text-band* effective rank ⇒ most distinct concepts.
+- **Multimodal-fusion studies → L32** — see below; not "richer" in general, but it has **more
+  cross-modal features**.
 - L30 is a fine middle (lowest dead) but doesn't dominate either.
 
-**PCA caveat on "richness" (`fig_pca_layers.png`):** PCA of the residual stream shows a single PC
-explains **~80% of raw variance at every layer** — that PC is the **magnitude direction** (the root
-cause of both the inflated metric and the raw-space loss; protein median norm 2,339 vs text 321). In
-the **normalized** space the SAE actually models, the spectrum is high-dimensional (>300 PCs for 90%)
-and the **all-token** effective rank is *similar* across layers (slightly higher at L28). So the
-"L32 = richer" claim is specifically about **text-band** rank; in the all-token view L28 gives up little
-or no richness — which **strengthens L28 as the all-around pick**, not only for steering.
+**Don't confuse var-exp with richness, and don't overclaim "L32 is richer":** higher var-explained means
+*easier to reconstruct* (lower-rank), **not** richer — so L28's higher var-exp (0.863 vs 0.811) is if
+anything a sign it's *lower*-rank/easier, not more structured. PCA confirms the residual stream is
+magnitude-dominated (PC1 ≈ 80% raw variance at every layer); in normalized space the **all-token**
+effective rank is *similar* across layers. So there is **no clean "L28 var-exp vs L32 rank" tradeoff**.
+
+**The one concrete, measured L28↔L32 difference is cross-modal fusion** (same feature pipeline, held-out):
+
+| layer | live feats | GO-labeled (AUC>0.65) | **truly cross-modal (protein↔text)** | top concepts |
+|---|---|---|---|---|
+| L28 | 19,441 | 4,635 | **57** | cytosol, positive regulation, nucleic-acid binding, complex, … |
+| L32 | 19,389 | 4,703 | **95** | (same set) |
+
+Interpretability is **essentially tied** (≈4,600–4,700 GO-labeled, identical concept set, same band
+composition). The deeper layer (**L32**) just fuses protein↔text in **~65% more features** (95 vs 57).
+So: **steering → L28** (earliest, most faithful at 0.988, feature quality tied); **multimodal-fusion
+analysis → L32** (more protein↔text features). Both have full feature tables in `analysis/feature_tables/`.
 
 **Updated winner:** **`normalize_loss` is the default for this recipe**; layer by use case (L28 for
 steering, L32 for the broadest dictionary). The §2–§5 numbers below predate this and use the raw-space
