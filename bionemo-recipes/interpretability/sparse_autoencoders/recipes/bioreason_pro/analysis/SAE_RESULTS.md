@@ -26,8 +26,15 @@ the gate before any full-scale run.
 - **The "sink token" hypothesis was tested and ruled out as the *cause*.** Sinks *do* exist (4 stable
   outlier channels, ~0.1% of tokens at 7× norm) — but removing them changes var-explained by **0.0001**,
   because `normalize-input` already neutralizes them. Real, but not why the number was high.
-- **Winner: layer 32, 8× dictionary, top_k 128, `normalize-input` + AuxK.** Honest var-explained 0.76,
-  **12.8% dead latents**, **GO-AUC 0.83**, and **loss-recovered 0.94** — a genuine, faithful feature model.
+- **The fix is two-part (see §1c):** the raw-space metric was inflated *and* the raw-space **loss** was
+  too — it over-weights high-magnitude tokens. `normalize_loss` (compute FVU in normalized space) fixes
+  the objective and is **strictly better**: at L32 it takes dead latents **12.8% → 5.3%**, var-explained
+  **0.76 → 0.81**, loss-recovered **0.94 → 0.98**.
+- **With the right loss, the layer choice flips:** L28's apparent "collapse" (54.9% dead) was a raw-loss
+  artifact — under `normalize_loss` it drops to **5.1% dead** and L28 *beats* L32 on reconstruction/
+  fidelity/biology. **Steering → L28** (earliest, most faithful); **richest atlas → L32** (highest rank).
+- *(Original raw-loss winner, now superseded: L32 8× top_k 128, honest var-exp 0.76 / 12.8% dead /
+  GO-AUC 0.83 / loss-recovered 0.94 — a genuine feature model; §1c has the updated numbers.)*
 
 ---
 
@@ -86,7 +93,60 @@ in the shared `sae` package; PR #1619 is the dead-latent/FVU **training-flags** 
 
 ---
 
-## 2. Config comparison (layer 32)
+## 1c. The *loss* was raw-space too — `normalize_loss` (Polina/Jared review)
+
+Fixing the metric (above) made the *reported* number honest but **left the training objective wrong**.
+The optimized FVU — `mse/x_var` — is computed on the **de-normalized (raw)** recon, so even with
+`aggregate_loss` (#1619, which fixed the *per-token-ratio* starvation) a protein token (norm ~2,400)
+contributes ~400× more to the gradient than a text token (~120). So the SAE was *trained* to favor
+high-magnitude tokens while we *measured* normalized var-explained — a mismatch. (Confirmed: with the
+normalized metric, raw `variance_explained` climbs right back to 0.976 regardless of the loss, because
+de-normalization reinserts magnitude for free — so the normalized metric stays necessary.)
+
+**Fix — `normalize_loss` (opt-in):** compute the FVU in **normalized space** (`_loss_targets()` in
+`topk.py`, dense + Triton) so every token is weighted equally and the objective matches the metric.
+Under it, per-token ≈ aggregate (all tokens have unit variance), so it *subsumes* `aggregate_loss`.
+Default off → unimodal recipes (Evo2/ESM2, where raw≈normalized) are unaffected; **on for this recipe.**
+
+**It is strictly better — L32, raw-loss vs `normalize_loss` (held-out):**
+
+| L32, 8×, top_k 128 | norm var-exp | dead % | GO-AUC | loss-recovered | active |
+|---|---|---|---|---|---|
+| raw-space loss | 0.762 | 12.8 | 0.831 | 0.939 | 17,865 |
+| **`normalize_loss`** | **0.811** | **5.3** | **0.844** | **0.977** | **19,389** |
+
+Dead latents more than halved, normalized reconstruction up, *and* more faithful — because the
+raw-space loss was spending capacity reconstructing high-magnitude tokens whose magnitude
+de-normalization already supplies for free. Protein-band AUC was unchanged (0.598→0.585), so equalizing
+weight did **not** starve the protein signal (which is intrinsically weak — the band is low-rank).
+
+### The layer story changes: with the right loss, L28 is rescued
+
+The earlier "L28 collapses, use L32" (§4) was an **artifact of the raw-space loss**, not the layer. With
+`normalize_loss`, all three candidate layers are healthy (held-out, 8× / top_k 128 / normalize_loss):
+
+| layer | norm var-exp | dead % | GO-AUC | loss-recovered | effective rank (PR) |
+|---|---|---|---|---|---|
+| **L28** | **0.863** | 5.1 | **0.846** | **0.988** | 253 |
+| L30 | 0.841 | **3.8** | 0.834 | 0.983 | (mid) |
+| L32 | 0.811 | 5.3 | 0.844 | 0.977 | **670** |
+
+L28's dead rate went **54.9% → 5.1%**. Var-exp & fidelity rise toward *earlier* layers (lower rank =
+easier to reconstruct); effective rank rises toward *deeper* layers (richer dictionary). So the layer
+choice is now **use-case-driven, not "L28 is broken":**
+- **Steering → L28** — earliest (most network downstream for an intervention to propagate), highest
+  var-exp, best GO-AUC, most faithful (0.988).
+- **Richest feature atlas → L32** — highest effective rank ⇒ most distinct concepts.
+- L30 is a fine middle (lowest dead) but doesn't dominate either.
+
+**Updated winner:** **`normalize_loss` is the default for this recipe**; layer by use case (L28 for
+steering, L32 for the broadest dictionary). The §2–§5 numbers below predate this and use the raw-space
+loss at L32 — they remain valid as the *investigation trail*, but the headline metrics are superseded by
+this table.
+
+---
+
+## 2. Config comparison (layer 32) — *(raw-space loss; superseded by §1c)*
 
 All trained on the same 28.8M-token store, evaluated on the same 300 held-out proteins with the fixed
 eval. **Honest var-exp** = normalized space; **raw** shown for reference.
