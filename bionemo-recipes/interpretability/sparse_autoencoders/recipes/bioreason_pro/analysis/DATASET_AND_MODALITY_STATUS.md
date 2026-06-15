@@ -93,6 +93,33 @@ few distinct concepts an SAE can learn. **Participation ratio** `PR = (Σλ)²/�
 distinct protein concepts → few + weak protein features. Three independent measurements agree (coverage
 ~1.5%, AUC ~0.59, rank ~3–10).
 
+### Rank by layer (per-token normalized PR / k90)
+
+| layer | protein | go | text |
+|---|---|---|---|
+| L28 | 2.9 / 9 | 4.5 / 19 | 127 / 1186 |
+| L30 | 2.9 / 9 | 4.4 / 14 | 113 / 1357 |
+| L32 | 3.0 / 10 | 4.2 / 12 | 103 / 1508 |
+
+- **Protein rank is flat (~3) across all three layers** — protein is intrinsically low-rank at every
+  depth in this range, *not* a layer artifact. (So going earlier, L24/L26, is **unlikely** to add protein
+  structure — worth testing, but the L28→L32 trend says don't expect much.)
+- text/go vary only mildly with depth; text is high-rank everywhere.
+- **Key reconciliation:** L28 fits 4× more protein *features* (1,222 vs L32's 309) over the **same ~3–10
+  protein dimensions** → that's **more redundancy (feature-splitting), not more distinct concepts.** So
+  "L28 is the better *bio* layer" should be softened: it gives protein tokens more (redundant) coverage,
+  but the underlying protein *structure* is the same low rank at L28 and L32. L28's real edge is fidelity
+  + being earlier (steering), not richer biology.
+
+### What do the dead latents look like? (L32, the 1,091 dead-everywhere = 5.3%)
+- **Not redundant duplicates:** median decoder-cosine to the nearest *live* feature is **0.094** (near-
+  orthogonal); 0/1,091 exceed 0.9. They're genuinely distinct directions, not copies.
+- **Not inert/random:** their median max *pre-activation* (before top-k selection) is **4.4** (vs live
+  features' median activation ~13); only 1/1,091 is truly ~0. **99% "almost fire."**
+- So dead latents are **distinct directions that consistently lose the top-128 competition** — top_k is
+  the binding constraint, and AuxK keeps them almost-alive. (Implication: a larger `top_k` or more
+  capacity would revive many; they're not wasted random directions.)
+
 **Caveats:**
 - The number is **method-sensitive** (`LAYER_ANALYSIS.md` reported protein PR ~85 on a 1,500-protein
   sample with a different normalization). The *ordering* (protein ≪ text) is robust; the absolute value
@@ -111,9 +138,12 @@ distinct protein concepts → few + weak protein features. Three independent mea
 - Should we re-extract with `--shuffle` for rigor (low risk given the data is pre-shuffled, but clean)?
 
 **Layer**
-- **L28 fits ~4× more bio features than L32** and is more faithful — is it simply the better bio/steering
-  layer? *Proposed:* test even earlier layers (**L24/L26**) with the fixed loss — does bio coverage keep
-  rising earlier, or do those layers rank-collapse (L24 did in the raw-loss era)?
+- **L28 fits ~4× more bio features than L32** and is more faithful — but per §4 the protein *rank* is the
+  same (~3) at all three layers, so L28's extra protein features are likely **redundant, not new
+  concepts**. So L28's edge is fidelity + earliness (steering), not richer biology. *Proposed:* still
+  worth testing L24/L26 with the fixed loss, but the flat protein-rank trend says **don't expect earlier
+  layers to add protein structure** — the bottleneck looks like the protein representation itself, not
+  the layer. (Caveat: rank is sample-limited; scale could change this.)
 
 **Modality balancing** (full plan in `MODALITY_BALANCING.md`)
 - **Inverse-frequency loss reweighting** to pull capacity toward protein/GO — does protein-band AUC beat
