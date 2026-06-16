@@ -9,10 +9,11 @@ Companions: `SAE_RESULTS.md` (full results), `MODALITY_BALANCING.md` (experiment
 ## 1. Dataset — what we're actually using
 
 The model is BioReason-Pro (Qwen3-4B + ESM3 protein embeddings + GO graph memory). Each example is one
-protein's reasoning prompt; tokens are tagged **protein** (ESM3 slots) / **go** (graph memory) / **text**
-(prompt + reasoning). ~**3,600 tokens/protein** (≈ 287 protein + 200 go + ~3,100 text).
+**protein** (a reasoning prompt); tokens within an example are tagged **protein** (ESM3 slots) / **go**
+(graph memory) / **text** (prompt + reasoning). A subset of "**8,000**" means **8,000 proteins/examples**
+(not 8k tokens) — at ~**3,601 tokens/example** that's **28.8M tokens**.
 
-| split / subset | proteins | tokens | used for |
+| split / subset | **proteins (examples)** | tokens | used for |
 |---|---|---|---|
 | **current subset (L28/30/32 + all recent analysis)** | **8,000** | **28.8M** | SAE training |
 | earlier subset (layer 24, abandoned) | 20,000 | ~72M | original Step-C (the "~70M" figure) |
@@ -20,13 +21,24 @@ protein's reasoning prompt; tokens are tagged **protein** (ESM3 slots) / **go** 
 | **full train split** | **117,002** | **~420M** (projected) | the full run (gated) |
 | full validation split | 7,365 | ~27M | — |
 
-**So everything recent runs on ~28.8M tokens / 8k proteins (~6.8% of train).** We *downsized* from the
-20k/72M layer-24 extraction when we switched to the probe-selected layers, for fast train/eval cycles.
+**So everything recent runs on 8k proteins → ~28.8M tokens (~6.8% of train proteins).** We *downsized*
+from the 20k/72M layer-24 extraction when we switched to the probe-selected layers, for fast cycles.
+
+**Token distribution within the 8k train subset** (`scripts/token_distribution.py`):
+
+| band | corpus share | per-protein: mean / median / range |
+|---|---|---|
+| **protein** | **15.0%** | 541 / 425 / **16–2,002** (varies by protein length, capped at `max_length_protein`) |
+| **go** | **5.6%** | **200 / 200 / fixed** — always exactly 200 GO-memory slots |
+| **text** | **79.4%** | 2,860 / 2,654 / 1,163–11,218 |
+
+(val300 is nearly identical: protein 15.4% / go 5.6% / text 79.0%.) Note the **protein-token count
+varies hugely** (16→2,002, std 415) — driven by protein length — so the 15% corpus share is dominated by
+*long* proteins; the median example is only ~425 protein tokens (~13%). **GO is fixed at exactly 200.**
 
 **Sampling:** `extract.py` takes the **first N** proteins (`select(range(n))`, no `--shuffle`). But the
 dataset's native order is **already mixed** (IDs span organisms/prefixes, not sorted) and the subset is
-diverse (**15,344 distinct GO terms, 39 GO/protein**), so it's **effectively representative**. Token
-mix of the corpus: **protein 15.4% · go 5.6% · text 79.0%**.
+diverse (**15,344 distinct GO terms, 39 GO/protein**), so it's **effectively representative**.
 
 ---
 
