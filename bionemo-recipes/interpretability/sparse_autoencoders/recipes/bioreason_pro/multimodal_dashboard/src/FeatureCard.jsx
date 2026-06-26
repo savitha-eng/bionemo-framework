@@ -369,40 +369,79 @@ const FeatureCard = forwardRef(function FeatureCard({ feature, isHighlighted, fo
           ) : examples.length > 0 ? (
             <>
               {(() => {
-                const visibleExamples = examples.slice(0, 6)
-                const { anchor: alignAnchor, totalLength } = computeAlignInfo(visibleExamples, alignMode)
-                return visibleExamples.map((ex, i) => (
-                  <div key={i} style={styles.example}>
-                    <div style={styles.exampleMeta}>
-                      <span>
-                        <span style={styles.proteinId}>{ex.protein_id}</span>
-                        <a
-                          href={uniprotUrl(getAccession(ex.protein_id, ex.alphafold_id))}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={styles.uniprotLink}
-                          onClick={e => e.stopPropagation()}
-                          title="View on UniProt"
-                        >
-                          ↗
-                        </a>
-                        {ex.best_annotation && (
-                          <span style={styles.annotation}>{ex.best_annotation}</span>
-                        )}
-                      </span>
-                      <span>max: {ex.max_activation?.toFixed(3) || 'N/A'}</span>
+                // Group examples BY BAND so cross-modal features show BOTH their protein and text parts.
+                const BAND_META = {
+                  protein:   { label: 'PROTEIN',   color: '#2563eb' },
+                  go:        { label: 'GO',        color: '#16a34a' },
+                  prompt:    { label: 'PROMPT',    color: '#64748b' },
+                  reasoning: { label: 'REASONING', color: '#9333ea' },
+                  answer:    { label: 'ANSWER',    color: '#ea580c' },
+                  text:      { label: 'TEXT',      color: '#9333ea' },
+                }
+                const byBand = {}
+                for (const ex of examples) {
+                  const b = ex.band || 'text'
+                  ;(byBand[b] = byBand[b] || []).push(ex)
+                }
+                const bandsPresent = ['protein', 'go', 'prompt', 'reasoning', 'answer', 'text'].filter(b => byBand[b]?.length)
+                const perBand = bandsPresent.length > 1 ? 3 : 6  // show fewer per band when fusing
+                // peak activation per band + the overall top, so WEAK (spurious) bands can be flagged
+                const bandPeak = b => Math.max(...byBand[b].map(e => e.max_activation || 0))
+                const topPeak = Math.max(...bandsPresent.map(bandPeak), 1e-9)
+                return bandsPresent.map(b => {
+                  const meta = BAND_META[b] || { label: b.toUpperCase(), color: '#666' }
+                  const bandExamples = byBand[b].slice(0, perBand)
+                  const peak = bandPeak(b)
+                  const weak = peak < 0.3 * topPeak  // fires <30% as strongly as the feature's dominant band
+                  const { anchor: alignAnchor, totalLength } = computeAlignInfo(bandExamples, alignMode)
+                  return (
+                    <div key={b} style={weak ? { opacity: 0.5 } : undefined}>
+                      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.5, color: meta.color,
+                                    borderLeft: `3px solid ${meta.color}`, paddingLeft: 6, margin: '8px 0 4px' }}>
+                        {meta.label} examples ({byBand[b].length}) · peak {peak.toFixed(1)}
+                        {weak && <span style={{ fontWeight: 400, fontStyle: 'italic', color: '#999' }}> — weak / likely spurious</span>}
+                      </div>
+                      {bandExamples.map((ex, i) => (
+                        <div key={`${b}-${i}`} style={styles.example}>
+                          <div style={styles.exampleMeta}>
+                            <span>
+                              <span style={styles.proteinId}>{ex.protein_id}</span>
+                              <a
+                                href={uniprotUrl(getAccession(ex.protein_id, ex.alphafold_id))}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={styles.uniprotLink}
+                                onClick={e => e.stopPropagation()}
+                                title="View on UniProt"
+                              >
+                                ↗
+                              </a>
+                              {ex.best_annotation && (
+                                <span style={styles.annotation}>{ex.best_annotation}</span>
+                              )}
+                            </span>
+                            <span>max: {ex.max_activation?.toFixed(3) || 'N/A'}</span>
+                          </div>
+                          {ex.go_terms && (
+                            <div style={{ fontSize: 10, color: '#16a34a', margin: '2px 0 3px', lineHeight: 1.3 }}
+                                 title="GO terms found in this window (resolved from go-basic.obo)">
+                              🟢 {ex.go_terms}
+                            </div>
+                          )}
+                          <ProteinSequence
+                            sequence={ex.sequence}
+                            activations={ex.activations}
+                            maxActivation={ex.max_activation}
+                            alignMode={alignMode}
+                            alignAnchor={alignAnchor}
+                            totalLength={totalLength}
+                            scrollGroupRef={scrollGroupRef}
+                          />
+                        </div>
+                      ))}
                     </div>
-                    <ProteinSequence
-                      sequence={ex.sequence}
-                      activations={ex.activations}
-                      maxActivation={ex.max_activation}
-                      alignMode={alignMode}
-                      alignAnchor={alignAnchor}
-                      totalLength={totalLength}
-                      scrollGroupRef={scrollGroupRef}
-                    />
-                  </div>
-                ))
+                  )
+                })
               })()}
 
               {/* 2x3 Mol* structure grid */}

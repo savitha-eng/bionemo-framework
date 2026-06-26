@@ -245,12 +245,13 @@ const styles = {
   },
 }
 
-export default function App({ title = "ESM2 Sparse Autoencoder Feature Explorer", subtitle = "Explore sparse autoencoder features with UMAP embedding and crossfiltering" }) {
+export default function App({ title = "BioReason-Pro L28 SAE — Feature Explorer", subtitle = "Multimodal (ESM3 protein + GO graph + Qwen3) SAE features — UMAP + crossfiltering" }) {
   const [features, setFeatures] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadingProgress, setLoadingProgress] = useState({ step: 0, total: 4, message: 'Starting up...' })
   const [error, setError] = useState(null)
   const [sortBy, setSortBy] = useState('frequency')
+  const [modalityFilter, setModalityFilter] = useState('all')  // all | protein | go | text | cross-modal
   const [selectedFeatureIds, setSelectedFeatureIds] = useState(null) // null = all selected
   const [mosaicReady, setMosaicReady] = useState(false)
   const [categoryColumns, setCategoryColumns] = useState([])
@@ -272,6 +273,7 @@ export default function App({ title = "ESM2 Sparse Autoencoder Feature Explorer"
   const featureRefs = useRef({})
   const featureListRef = useRef(null)
   const searchSource = useRef({ source: 'search' })
+  const modalitySource = useRef({ source: 'modality' })
 
   // Dark mode toggle
   useEffect(() => {
@@ -293,10 +295,12 @@ export default function App({ title = "ESM2 Sparse Autoencoder Feature Explorer"
     return result.toArray().map(row => ({
       protein_id: row.protein_id,
       alphafold_id: row.alphafold_id,
+      band: row.band,
       sequence: row.sequence,
       activations: Array.from(row.activations),
       max_activation: row.max_activation,
       best_annotation: row.best_annotation,
+      go_terms: row.go_terms,
     }))
   }, [])
 
@@ -344,7 +348,9 @@ export default function App({ title = "ESM2 Sparse Autoencoder Feature Explorer"
         // Step 2: Load parquet data
         setLoadingProgress({ step: 2, total: 4, message: 'Loading embedding data...' })
         const urlParams = new URLSearchParams(window.location.search)
-        const dataPath = urlParams.get('data') || '/features_atlas.parquet'
+        // ?model=<name> loads all 3 files from /<name>/ (per-model subdir); no model => root (current view).
+        const modelBase = urlParams.get('model') ? `/${urlParams.get('model')}` : ''
+        const dataPath = urlParams.get('data') || `${modelBase}/features_atlas.parquet`
         const parquetUrl = dataPath.startsWith('http')
           ? dataPath
           : new URL(dataPath, window.location.origin).href
@@ -449,8 +455,8 @@ export default function App({ title = "ESM2 Sparse Autoencoder Feature Explorer"
 
         // Step 4: Load feature metadata from parquet via DuckDB
         setLoadingProgress({ step: 4, total: 4, message: 'Loading feature metadata...' })
-        const metaUrl = new URL('/feature_metadata.parquet', window.location.origin).href
-        const examplesUrl = new URL('/feature_examples.parquet', window.location.origin).href
+        const metaUrl = new URL(`${modelBase}/feature_metadata.parquet`, window.location.origin).href
+        const examplesUrl = new URL(`${modelBase}/feature_examples.parquet`, window.location.origin).href
 
         await vg.coordinator().exec(`
           CREATE TABLE IF NOT EXISTS feature_metadata AS
@@ -469,6 +475,20 @@ export default function App({ title = "ESM2 Sparse Autoencoder Feature Explorer"
           max_activation: row.max_activation,
           best_f1: row.best_f1,
           best_annotation: row.best_annotation,
+          band_class: row.band_class,
+          fusion_class: row.fusion_class,
+          protein_frac: row.protein_frac,
+          go_frac: row.go_frac,
+          text_frac: row.text_frac,
+          text_span: row.text_span,
+          protein_span: row.protein_span,
+          go_span: row.go_span,
+          go_text_frac: row.go_text_frac,
+          ipr_text_frac: row.ipr_text_frac,
+          crossmodal_omega: row.crossmodal_omega,
+          reasoning_frac: row.reasoning_frac,
+          answer_frac: row.answer_frac,
+          prompt_frac: row.prompt_frac,
         }))
         setFeatures(loadedFeatures)
 
@@ -477,6 +497,7 @@ export default function App({ title = "ESM2 Sparse Autoencoder Feature Explorer"
           await vg.coordinator().exec(`
             CREATE OR REPLACE TABLE features AS
             SELECT f.*,
+                   m.reasoning_frac, m.answer_frac,
                    CASE
                      WHEN m.best_annotation IS NULL OR m.best_annotation = '' OR m.best_annotation = 'None' THEN 'unlabeled'
                      WHEN CONTAINS(m.best_annotation, ':') THEN SPLIT_PART(m.best_annotation, ':', 1)
@@ -663,6 +684,23 @@ export default function App({ title = "ESM2 Sparse Autoencoder Feature Explorer"
     setPlotResetKey(k => k + 1)
   }, [])
 
+  // Push the modality filter into the Mosaic crossfilter so the UMAP + histograms show ONLY that
+  // modality's features (e.g. just reasoning features, or just answer features). Mirrors the search path.
+  useEffect(() => {
+    if (!mosaicReady || !brushRef.current) return
+    const selection = brushRef.current
+    let predicate = null
+    if (modalityFilter === 'reasoning') predicate = sql`reasoning_frac >= 0.5`
+    else if (modalityFilter === 'answer') predicate = sql`answer_frac >= 0.5`
+    else if (modalityFilter === 'cross-modal') predicate = sql`fusion_class LIKE 'cross-modal%'`
+    else if (modalityFilter === 'protein') predicate = sql`(band_class LIKE '%protein%' OR band_class = 'mixed')`
+    else if (modalityFilter === 'go') predicate = sql`band_class LIKE '%go%'`
+    else if (modalityFilter === 'text') predicate = sql`band_class = 'text-heavy'`
+    try {
+      selection.update({ source: modalitySource.current, predicate, value: modalityFilter === 'all' ? null : modalityFilter })
+    } catch (err) { console.warn('Modality filter update error:', err) }
+  }, [modalityFilter, mosaicReady])
+
   // Handle search - updates both Mosaic crossfilter (for UMAP/histograms) and local state (for cards)
   const handleSearchChange = useCallback((e) => {
     const term = e.target.value
@@ -706,6 +744,23 @@ export default function App({ title = "ESM2 Sparse Autoencoder Feature Explorer"
       result = result.filter(f => selectedFeatureIds.has(f.feature_id))
     }
 
+    // Filter by MODALITY (band_class composition). 'cross-modal' uses fusion_class.
+    if (modalityFilter !== 'all') {
+      if (modalityFilter === 'cross-modal') {
+        result = result.filter(f => String(f.fusion_class || '').startsWith('cross-modal'))
+      } else if (modalityFilter === 'reasoning') {
+        result = result.filter(f => (f.reasoning_frac || 0) >= 0.5)
+      } else if (modalityFilter === 'answer') {
+        result = result.filter(f => (f.answer_frac || 0) >= 0.5)
+      } else {
+        // protein -> protein-heavy/protein-go-shared/mixed ; go -> go-heavy/protein-go-shared ; text -> text-heavy
+        const bc = f => String(f.band_class || '')
+        if (modalityFilter === 'protein') result = result.filter(f => bc(f).includes('protein') || bc(f) === 'mixed')
+        else if (modalityFilter === 'go') result = result.filter(f => bc(f).includes('go'))
+        else if (modalityFilter === 'text') result = result.filter(f => bc(f) === 'text-heavy')
+      }
+    }
+
     // Also filter by search term client-side (searches metadata fields)
     if (searchTerm.trim()) {
       const q = searchTerm.toLowerCase()
@@ -725,10 +780,13 @@ export default function App({ title = "ESM2 Sparse Autoencoder Feature Explorer"
       result = [...result].sort((a, b) => (b.best_f1 || 0) - (a.best_f1 || 0))
     } else if (sortBy === 'feature_id') {
       result = [...result].sort((a, b) => a.feature_id - b.feature_id)
+    } else if (['reasoning_frac', 'answer_frac', 'prompt_frac', 'protein_frac', 'go_text_frac',
+                'text_span', 'protein_span', 'crossmodal_omega'].includes(sortBy)) {
+      result = [...result].sort((a, b) => (b[sortBy] || 0) - (a[sortBy] || 0))  // highest-first
     }
 
     return result
-  }, [features, sortBy, selectedFeatureIds, searchTerm])
+  }, [features, sortBy, selectedFeatureIds, searchTerm, modalityFilter])
 
   if (loading) {
     const pct = Math.round(((loadingProgress.step - 1) / loadingProgress.total) * 100)
@@ -999,12 +1057,34 @@ export default function App({ title = "ESM2 Sparse Autoencoder Feature Explorer"
               style={styles.searchInput}
             />
             <select
+              value={modalityFilter}
+              onChange={e => setModalityFilter(e.target.value)}
+              style={styles.sortSelect}
+              title="Filter the feature list by modality (band composition)"
+            >
+              <option value="all">All modalities</option>
+              <option value="protein">🔵 Protein features</option>
+              <option value="go">🟢 GO features</option>
+              <option value="text">🟣 Text (all)</option>
+              <option value="reasoning">🟣 Text · reasoning</option>
+              <option value="answer">🟠 Text · answer</option>
+              <option value="cross-modal">🔗 Cross-modal</option>
+            </select>
+            <select
               value={sortBy}
               onChange={e => setSortBy(e.target.value)}
               style={styles.sortSelect}
             >
               <option value="frequency">By Frequency</option>
               <option value="max_activation">By Max Activation</option>
+              <option value="reasoning_frac">By Reasoning %</option>
+              <option value="answer_frac">By Answer %</option>
+              <option value="prompt_frac">By Prompt %</option>
+              <option value="protein_frac">By Protein %</option>
+              <option value="go_text_frac">By GO-text %</option>
+              <option value="text_span">By Text span</option>
+              <option value="protein_span">By Protein span</option>
+              <option value="crossmodal_omega">By Cross-modal ω</option>
               <option value="best_f1">By F1 Score</option>
               <option value="feature_id">By Feature ID</option>
             </select>

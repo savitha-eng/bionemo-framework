@@ -69,8 +69,8 @@ python scripts/diagnostic.py --store $STORE/diag500 --layers 24 28 32 35 \
 
 # --- Step C: subset SAE at the chosen layer ---
 CUDA_VISIBLE_DEVICES=3 python scripts/extract.py --num-proteins 20000 --shuffle --layers 24 \
-    --output $NVME/layer24_subset20k                        # Env A; extract to local NVMe
-python scripts/train.py --cache-dir $NVME/layer24_subset20k --layer 24 \
+    --output cache_dir/activations/layer24_subset20k         # Env A; single-GPU
+python scripts/train.py --cache-dir cache_dir/activations/layer24_subset20k --layer 24 \
     --expansion-factor 8 --top-k 32 --batch-size 4096 --n-epochs 1 \
     --aggregate-loss --dead-count-global --mix-shards 8 --presample-shards 8 --init-pre-bias \
     --checkpoint-dir $OUT/sae_layer24 --wandb               # Env B
@@ -78,14 +78,28 @@ python scripts/eval.py --sae $OUT/sae_layer24/checkpoint.pt --store $STORE/layer
     --layer 24 --out-json $OUT/eval_layer24.json            # Env B (R^2/sparsity/%dead/GO-F1)
 CUDA_VISIBLE_DEVICES=3 python scripts/eval_loss_recovered.py --sae $OUT/sae_layer24/checkpoint.pt \
     --layer 24 --split validation --num-proteins 150        # Env A (CE loss-recovered)
+
+# --- Full-train extraction, 4 GPUs (codonfm/esm2 DDP pattern) ---
+CUDA_VISIBLE_DEVICES=0,1,2,3 torchrun --nproc_per_node=4 scripts/extract.py \
+    --num-proteins 117002 --layers 28 32 \
+    --output cache_dir/activations/train_full_L28_L32       # Env A; per-rank temp dirs merged by rank 0
 ```
 
 ## Storage
 
-Activations are float32 (`hidden=2560` → 10,240 B/token/layer). Measured ~3,600 tokens/protein
-(protein ~535 / go 200 / text ~2,878). Write the durable copy to the shared FS; stage to local
-NVMe for fast extraction writes and training reads. Reserve the `validation` split for eval — never
-extract it into the training store.
+Multi-GPU extraction follows the **codonfm/esm2 DDP pattern**: launch with `torchrun
+--nproc_per_node=N`; each rank extracts a contiguous slice of the selected proteins into
+`<output>/.tmp_rank_<r>/`, then rank 0 merges per-layer shards + the label sidecar + `proteins.parquet`
+into `<output>/` and writes `extract_metadata.json` (the **cache-skip** sentinel — re-running a
+completed dir is a no-op). Write to the recipe's **local cache** on the shared FS
+(`cache_dir/activations/<name>`, gitignored), mirroring Jared's `.cache/activations/<name>` convention.
+
+Activations are float32 in memory (`hidden=2560` → 10,240 B/token/layer raw) but stored as
+**snappy-compressed parquet** (~3.7–4.7 KB/token measured ≈ 2–3× smaller). Measured ~3,600
+tokens/protein (protein ~535 / go 200 / text ~2,878) → full `train` (117,002 proteins) ≈ **420M
+tokens ≈ 1.6–2.0 TB per layer** on disk. `extract.py` measures the actual compressed bytes/token
+from the written shards and reports the real projection in `extract_metadata.json`. Reserve the
+`validation` split for eval — never extract it into the training store.
 
 ## Scripts
 

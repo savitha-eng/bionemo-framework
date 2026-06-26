@@ -54,6 +54,8 @@ def parse_args():  # noqa: D103
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     p.add_argument("--cache-dir", type=str, required=True, help="Path to activation cache (from extract.py)")
+    p.add_argument("--balance-modality", action="store_true",
+                   help="modality-balance at load time: drop <go>, downsample text to ~=protein (no data rewrite)")
     p.add_argument("--layer", type=int, required=True, help="Layer index (validated against cache metadata)")
 
     sae_group = p.add_argument_group("SAE model")
@@ -159,6 +161,18 @@ def main():  # noqa: D103
     store = load_activations(cache_path)
     meta = store.metadata
 
+    # Opt-in MODALITY BALANCING (no data rewrite): drop <go> + downsample text to ~=protein, at load time.
+    if getattr(args, "balance_modality", False):
+        import pyarrow.parquet as _pq
+        tl = _pq.read_table(cache_path.parent / "token_labels.parquet")
+        band = np.asarray(tl.column("position_type").to_pylist(), dtype=object)
+        n_p = int((band == "protein").sum()); n_t = int((band == "text").sum())
+        text_keep = n_p / n_t  # balance text down to the protein count (go dropped)
+        keep_probs = {"go": 0.0, "protein": 1.0, "text": text_keep}
+        store.set_modality_balance(band, keep_probs)
+        print(f"[balance] modality-balanced loader: drop go, text-keep={text_keep:.3f} "
+              f"(protein={n_p:,} text={n_t:,}) -> bio≈text", flush=True)
+
     # Cache validation (BioReason-Pro metadata keys).
     if meta.get("layer") != args.layer:
         raise ValueError(f"Cache layer mismatch: {meta.get('layer')} vs {args.layer}")
@@ -207,6 +221,18 @@ def main():  # noqa: D103
     if use_streaming:
         rank = int(os.environ.get("RANK", 0))
         world_size = int(os.environ.get("WORLD_SIZE", 1))
+        # Init the process group HERE, before the DDP batch-cap all_reduce below. The trainer's own
+        # _setup_distributed is guarded by `if not dist.is_initialized()`, so this is safe + idempotent.
+        # Bug it fixes: without this, dist.is_initialized() is False below -> the batch-cap is silently
+        # skipped -> ranks run UNEVEN batch counts -> last-step all_reduce desync -> teardown SIGABRT
+        # (wandb shows "crashed"). With it, all ranks cap to the global-min batch count and finish clean.
+        if world_size > 1 and dist.is_available() and not dist.is_initialized():
+            from datetime import timedelta
+            # 2h collective timeout: a slow NFS shard read on one rank must not trip the 600s default
+            # NCCL watchdog (which killed the balanced run mid-epoch at step ~1950).
+            dist.init_process_group(backend="nccl", timeout=timedelta(hours=2))
+            torch.cuda.set_device(rank)
+            print(f"[rank {rank}] initialized process group early for DDP batch-cap (2h NCCL timeout)")
         print(f"Streaming from disk (~{est_gb:.0f}GB). "
               f"Peak RAM: ~{args.mix_shards * shard_size * meta['hidden_dim'] * 4 / (1024**3):.1f}GB/process")
         dataloader = store.get_streaming_dataloader(

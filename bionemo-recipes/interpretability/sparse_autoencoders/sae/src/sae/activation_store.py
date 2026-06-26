@@ -51,6 +51,26 @@ class ActivationStoreConfig:
     compression: Optional[str] = "snappy"
 
 
+def shard_table_to_array(table: "pa.Table", hidden_dim: Optional[int] = None) -> np.ndarray:
+    """Reconstruct an ``[n, hidden_dim]`` float32 array from a shard table.
+
+    Supports both the current single ``act`` FixedSizeList column and the legacy
+    one-column-per-dimension (``dim_0..dim_{H-1}``) layout, so old and new stores both read.
+    Direct parquet readers (analysis scripts) should call this instead of stacking ``dim_*``.
+    """
+    names = table.column_names
+    if "act" in names:
+        col = table.column("act").combine_chunks()
+        width = col.type.list_size
+        flat = col.values.to_numpy(zero_copy_only=False)
+        return np.ascontiguousarray(flat).reshape(-1, width).astype(np.float32, copy=False)
+    dim_cols = sorted((c for c in names if c.startswith("dim_")), key=lambda c: int(c.split("_")[1]))
+    if not dim_cols:
+        raise ValueError(f"shard has neither 'act' nor 'dim_*' columns: {names[:5]}")
+    arrays = [table.column(c).to_numpy(zero_copy_only=False) for c in dim_cols]
+    return np.stack(arrays, axis=1).astype(np.float32, copy=False)
+
+
 class ActivationStore:
     """Store and serve activations from disk for SAE training.
 
@@ -238,11 +258,17 @@ class ActivationStore:
         return n_shards
 
     def _save_shard(self, shard_idx: int, data: np.ndarray) -> None:
-        """Save a single shard to Parquet."""
-        # Store as a table with one column per dimension
-        # This is more efficient for columnar reads
-        columns = {f"dim_{i}": data[:, i] for i in range(data.shape[1])}
-        table = pa.table(columns)
+        """Save a single shard to Parquet as one ``act`` FixedSizeList column.
+
+        A single fixed-size-list column is ~6x faster to write and ~35% smaller than one
+        ``dim_<i>`` column per hidden dimension — at large hidden_dim the per-column parquet
+        encoding cost (2560 columns here) dominates and stalls extraction. Reads go through
+        ``shard_table_to_array``, which still accepts the legacy per-dimension layout.
+        """
+        data = np.ascontiguousarray(data, dtype=np.float32)
+        n, width = data.shape
+        arr = pa.FixedSizeListArray.from_arrays(pa.array(data.reshape(-1)), width)
+        table = pa.table({"act": arr})
 
         shard_path = self.path / f"shard_{shard_idx:05d}.parquet"
         pq.write_table(
@@ -291,15 +317,31 @@ class ActivationStore:
         """Number of shard files."""
         return self.metadata["n_shards"]
 
+    def set_modality_balance(self, row_band, keep_probs, seed: int = 0) -> None:
+        """Opt-in: filter rows per shard by modality at LOAD TIME (no data rewrite).
+
+        row_band: global per-row band array aligned to shard concatenation order (e.g. token_labels
+            position_type). keep_probs: {band: keep-probability}, e.g. {"go":0.0,"protein":1.0,"text":0.26}
+            to drop go + downsample text. Bands absent from the dict are kept. Default (unset) = no-op,
+            so other recipes are unaffected. Used for modality-balanced SAE training on the original store.
+        """
+        self._bal_band = np.asarray(row_band, dtype=object)
+        self._bal_keep = dict(keep_probs)
+        self._bal_rng = np.random.default_rng(seed)
+        self._bal_offsets = np.cumsum([0] + [pq.read_metadata(self.path / f"shard_{i:05d}.parquet").num_rows
+                                             for i in range(self.n_shards)])  # robust to a smaller last shard
+
     def _load_shard(self, shard_idx: int) -> np.ndarray:
-        """Load a single shard from Parquet."""
+        """Load a single shard from Parquet (optionally modality-balanced at load time)."""
         shard_path = self.path / f"shard_{shard_idx:05d}.parquet"
         table = pq.read_table(shard_path)
-
-        # Reconstruct array from columns
-        hidden_dim = self.hidden_dim
-        arrays = [table.column(f"dim_{i}").to_numpy() for i in range(hidden_dim)]
-        return np.stack(arrays, axis=1)
+        X = shard_table_to_array(table, self.hidden_dim)
+        if getattr(self, "_bal_band", None) is not None:                  # opt-in modality balancing
+            lo = int(self._bal_offsets[shard_idx])
+            band = self._bal_band[lo:lo + X.shape[0]]
+            probs = np.array([self._bal_keep.get(b, 1.0) for b in band], dtype=np.float64)
+            X = X[self._bal_rng.random(len(band)) < probs]
+        return X
 
     def iter_shards(
         self,

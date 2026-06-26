@@ -33,6 +33,7 @@ import pyarrow.parquet as pq
 import torch
 
 from sae.architectures import TopKSAE
+from sae.activation_store import shard_table_to_array
 
 BANDS = ["protein", "go", "text"]
 
@@ -50,7 +51,7 @@ def main():  # noqa: D103
 
     ck = torch.load(args.sae, map_location="cpu")
     sae = TopKSAE(**ck["model_config"]).to(dev).eval()
-    sae.load_state_dict(ck["model_state_dict"])
+    sae.load_state_dict({(k[7:] if k.startswith("module.") else k): v for k, v in ck["model_state_dict"].items()})
     H = sae.hidden_dim
 
     tl = pq.read_table(Path(args.store) / "token_labels.parquet")
@@ -65,9 +66,7 @@ def main():  # noqa: D103
                     key=lambda q: int(Path(q).stem.split("_")[1]))
     with torch.no_grad():
         for sp in shards:
-            t = pq.read_table(sp)
-            cols = sorted([c for c in t.column_names if c.startswith("dim_")], key=lambda c: int(c.split("_")[1]))
-            X = np.column_stack([t.column(c).to_numpy(zero_copy_only=False) for c in cols]).astype(np.float32)
+            X = shard_table_to_array(pq.read_table(sp)).astype(np.float32)  # handles dim_ + FixedSizeList 'act'
             n = X.shape[0]
             for s in range(0, n, args.encode_batch):
                 e = min(n, s + args.encode_batch)

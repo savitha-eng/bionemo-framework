@@ -44,6 +44,7 @@ import torch
 from sklearn.metrics import roc_auc_score
 
 from sae.architectures import TopKSAE
+from sae.activation_store import shard_table_to_array
 
 BANDS = ["protein", "go", "text"]
 
@@ -63,6 +64,8 @@ def main():  # noqa: D103
     p.add_argument("--go-max-prev", type=float, default=0.5)
     p.add_argument("--max-go-terms", type=int, default=60)
     p.add_argument("--encode-batch", type=int, default=8192)
+    p.add_argument("--max-shards", type=int, default=0,
+                   help="0=all; cap shards (Z residuals are held in memory — avoid OOM on big stores)")
     p.add_argument("--device", default="cuda")
     p.add_argument("--seed", type=int, default=0)
     args = p.parse_args()
@@ -72,7 +75,7 @@ def main():  # noqa: D103
     out.mkdir(parents=True, exist_ok=True)
     ck = torch.load(args.sae, map_location="cpu")
     sae = TopKSAE(**ck["model_config"])
-    sae.load_state_dict(ck["model_state_dict"])
+    sae.load_state_dict({(k[7:] if k.startswith("module.") else k):v for k,v in ck["model_state_dict"].items()})
     sae = sae.to(dev).eval()
     H = sae.hidden_dim
 
@@ -90,6 +93,15 @@ def main():  # noqa: D103
     band_code = np.select([pos_type == b for b in BANDS], list(range(len(BANDS))), default=-1).astype(np.int64)
     band_tokens = np.array([(band_code == i).sum() for i in range(len(BANDS))], dtype=np.float64)  # corpus tot/band
     N = len(tok_pid)
+    if args.max_shards:  # truncate ALL row-aligned arrays to the capped-shard rows (keeps Z + omega indices in range)
+        _sh = sorted(glob.glob(str(Path(args.store) / f"layer{args.layer}" / "shard_*.parquet")),
+                     key=lambda q: int(Path(q).stem.split("_")[1]))[:args.max_shards]
+        R = int(sum(pq.read_metadata(s).num_rows for s in _sh))
+        tok_pid = tok_pid[:R]; tok_tidx = tok_tidx[:R]; pos_type = pos_type[:R]
+        protein_index = protein_index[:R]; band_code = band_code[:R]
+        band_tokens = np.array([(band_code == i).sum() for i in range(len(BANDS))], dtype=np.float64)
+        N = R
+        print(f"[dash] capped to {args.max_shards} shards = {R} tokens")
     print(f"[dash] H={H}, {n_prot} proteins, {N} tokens, band token totals={dict(zip(BANDS, band_tokens.astype(int)))}")
 
     obo = {}
@@ -121,14 +133,14 @@ def main():  # noqa: D103
 
     shards = sorted(glob.glob(str(Path(args.store) / f"layer{args.layer}" / "shard_*.parquet")),
                     key=lambda q: int(Path(q).stem.split("_")[1]))
+    if args.max_shards:   # cap tokens (Z is held in memory) — dashboard needs only a representative subset
+        shards = shards[:args.max_shards]
     bcode_t = torch.from_numpy(band_code).to(dev)
     pidx_t = torch.from_numpy(protein_index).to(dev)
     row0 = 0
     with torch.no_grad():
         for sp in shards:
-            t = pq.read_table(sp)
-            cols = sorted([c for c in t.column_names if c.startswith("dim_")], key=lambda c: int(c.split("_")[1]))
-            X = np.column_stack([t.column(c).to_numpy(zero_copy_only=False) for c in cols]).astype(np.float32)
+            X = shard_table_to_array(pq.read_table(sp)).astype(np.float32)  # handles dim_ + FixedSizeList 'act'
             Z.append(X)
             n = X.shape[0]
             for s in range(0, n, args.encode_batch):

@@ -694,6 +694,11 @@ class Trainer:
                 if self.perf_logger is not None and self.rank == 0:
                     extra_metrics = {
                         "global_batch_size": global_batch_size,
+                        # TRUE global progress (across all ranks) — unambiguous vs the per-rank step count.
+                        # consumed_samples reaches n_tokens at one full epoch (e.g. ~421M), so it's obvious
+                        # whether a full epoch ran regardless of dp_size. (cf. llama3_native_te num_tokens.)
+                        "global_step": self.global_step,
+                        "consumed_samples": (self.global_step + 1) * global_batch_size,
                     }
 
                     # Dead latents tracking - prefer SAE's internal counter (what auxk uses)
@@ -722,7 +727,9 @@ class Trainer:
                     log_dict = {
                         "train/loss": loss.item() * accum_steps,
                         "train/step": self.global_step,
+                        "train/global_step": self.global_step,
                         "train/global_batch_size": global_batch_size,
+                        "train/consumed_samples": (self.global_step + 1) * global_batch_size,
                     }
                     for key, value in loss_dict.items():
                         if key != "total":
