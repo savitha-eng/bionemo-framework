@@ -24,6 +24,7 @@ into <output>/ after all ranks finish.
 from __future__ import annotations
 
 import argparse
+import glob
 import io
 import json
 import math
@@ -121,6 +122,26 @@ def fetch_image(session: requests.Session, urls: list[str], timeout: float, min_
     return None
 
 
+def load_obelics_dataset(dataset: str, split: str):
+    """Load either the HF dataset name or a local parquet file/dir/glob."""
+    path = Path(dataset)
+    has_glob = any(ch in dataset for ch in "*?[]")
+    files: list[str] = []
+    if path.is_dir():
+        files = sorted(str(p) for p in path.rglob("*.parquet"))
+    elif path.is_file():
+        files = [str(path)]
+    elif has_glob:
+        files = sorted(glob.glob(dataset, recursive=True))
+
+    if files:
+        print(f"[dataset] local parquet files={len(files)} first={files[0]}", flush=True)
+        return load_dataset("parquet", data_files={split: files}, split=split, streaming=True)
+
+    print(f"[dataset] hf dataset={dataset} split={split}", flush=True)
+    return load_dataset(dataset, split=split, streaming=True)
+
+
 def write_rank_store(args, rank: int, world: int, local_rank: int) -> dict:
     dev = f"cuda:{local_rank}"
     tdtype = {"bfloat16": torch.bfloat16, "float16": torch.float16, "float32": torch.float32}[args.dtype]
@@ -171,7 +192,7 @@ def write_rank_store(args, rank: int, world: int, local_rank: int) -> dict:
 
     target = args.num_samples // world + (1 if rank < (args.num_samples % world) else 0)
     scan_limit = args.scan_limit or args.num_samples * args.scan_multiplier
-    ds = load_dataset(args.dataset, split=args.split, streaming=True)
+    ds = load_obelics_dataset(args.dataset, args.split)
     session = requests.Session()
     session.headers.update({"User-Agent": "bionemo-saev-llava-extractor/0.1"})
 
