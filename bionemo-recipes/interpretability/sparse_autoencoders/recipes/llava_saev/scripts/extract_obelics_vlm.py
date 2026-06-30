@@ -181,6 +181,7 @@ def write_rank_store(args, rank: int, world: int, local_rank: int) -> dict:
     n_seen = 0
     n_fetch_fail = 0
     n_no_text = 0
+    n_preprocess_fail = 0
     n_tokens = 0
     n_img_tokens = 0
 
@@ -216,7 +217,18 @@ def write_rank_store(args, rank: int, world: int, local_rank: int) -> dict:
             caption = truncate_words(text_body, args.max_text_words)
             messages = [{"role": "user", "content": [{"type": "image"}, {"type": "text", "text": caption}]}]
             text = processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=False)
-            inputs = processor(text=[text], images=[image], return_tensors="pt").to(dev)
+            try:
+                inputs = processor(text=[text], images=[image], return_tensors="pt").to(dev)
+            except Exception as exc:
+                n_preprocess_fail += 1
+                if n_preprocess_fail <= 5:
+                    print(
+                        f"[rank {rank}] skip preprocess_fail={n_preprocess_fail} "
+                        f"idx={idx} mode={getattr(image, 'mode', None)} size={getattr(image, 'size', None)} "
+                        f"error={type(exc).__name__}: {exc}",
+                        flush=True,
+                    )
+                continue
 
             captured.clear()
             _ = model(**inputs)
@@ -249,7 +261,8 @@ def write_rank_store(args, rank: int, world: int, local_rank: int) -> dict:
                 print(
                     f"[rank {rank}] {n_done}/{target} docs, {n_tokens} tokens "
                     f"({100*n_img_tokens/max(n_tokens,1):.1f}% image), "
-                    f"seen={n_seen} fetch_fail={n_fetch_fail} no_text={n_no_text}",
+                    f"seen={n_seen} fetch_fail={n_fetch_fail} no_text={n_no_text} "
+                    f"preprocess_fail={n_preprocess_fail}",
                     flush=True,
                 )
 
@@ -269,11 +282,12 @@ def write_rank_store(args, rank: int, world: int, local_rank: int) -> dict:
             "image_token_id": img_id,
             "rank": rank,
             "world_size": world,
+            "preprocess_fail": n_preprocess_fail,
         }
     )
     print(
         f"[rank {rank}] done docs={n_done} tokens={n_tokens} image={n_img_tokens} "
-        f"fetch_fail={n_fetch_fail} no_text={n_no_text} -> {rank_root}",
+        f"fetch_fail={n_fetch_fail} no_text={n_no_text} preprocess_fail={n_preprocess_fail} -> {rank_root}",
         flush=True,
     )
     return {
@@ -283,6 +297,7 @@ def write_rank_store(args, rank: int, world: int, local_rank: int) -> dict:
         "image_tokens": n_img_tokens,
         "fetch_fail": n_fetch_fail,
         "no_text": n_no_text,
+        "preprocess_fail": n_preprocess_fail,
         "hidden": int(hidden),
         "layer_path": layer_path,
         "image_token_id": img_id,
@@ -304,6 +319,7 @@ def merge_rank_stores(args, world: int):
     total_docs = 0
     total_image = 0
     total_text = 0
+    total_preprocess_fail = 0
     merged_meta = None
     rank_summaries = []
 
@@ -317,6 +333,7 @@ def merge_rank_stores(args, world: int):
         meta = json.loads(meta_path.read_text())
         merged_meta = merged_meta or meta
         total_docs += int(meta.get("n_documents", 0))
+        total_preprocess_fail += int(meta.get("preprocess_fail", 0))
         rank_summaries.append(meta)
 
         pf = pq.ParquetFile(rank_root / "token_labels.parquet")
@@ -352,6 +369,7 @@ def merge_rank_stores(args, world: int):
         "world_size": world,
         "image_tokens": total_image,
         "text_tokens": total_text,
+        "preprocess_fail": total_preprocess_fail,
         "rank_summaries": rank_summaries,
     }
     (final_layer / "metadata.json").write_text(json.dumps(metadata, indent=2))
