@@ -17,7 +17,7 @@ STORE="$ROOT/stores/llava_next_mistral_7b_obelics${SAMPLES}"
 CKPT="$ROOT/ckpts/llava_next_mistral_7b_L16_exp16_k128_obelics${SAMPLES}"
 OUT="$ROOT/out/llava_next_mistral_7b_L16_obelics${SAMPLES}_image-text.json"
 
-torchrun --standalone --nproc_per_node="$GPUS" scripts/extract_obelics_vlm.py \
+python -m torch.distributed.run --standalone --nproc_per_node="$GPUS" scripts/extract_obelics_vlm.py \
   --model "$MODEL" --layer 16 \
   --dataset "$DATASET" --split train \
   --output "$STORE" \
@@ -25,7 +25,7 @@ torchrun --standalone --nproc_per_node="$GPUS" scripts/extract_obelics_vlm.py \
   --max-text-words 128 --shard-size 200000 --dtype float16 \
   --overwrite
 
-torchrun --standalone --nproc_per_node="$GPUS" scripts/train.py \
+python -m torch.distributed.run --standalone --nproc_per_node="$GPUS" scripts/train.py \
   --cache-dir "$STORE/layer16" --layer 16 \
   --model-type topk --expansion-factor 16 --top-k 128 \
   --normalize-input --normalize-loss \
