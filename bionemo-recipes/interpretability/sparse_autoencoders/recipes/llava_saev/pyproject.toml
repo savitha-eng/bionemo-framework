@@ -26,5 +26,9 @@ dependencies = [
     "wandb>=0.24.0",
 ]
 
+[tool.setuptools]
+packages = []
+py-modules = []
+
 [tool.uv.sources]
 sae = { workspace = true }
