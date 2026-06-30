@@ -108,13 +108,13 @@ def obelics_image_urls(ex) -> list[str]:
     return urls
 
 
-def fetch_image(session: requests.Session, urls: list[str], timeout: float) -> Image.Image | None:
+def fetch_image(session: requests.Session, urls: list[str], timeout: float, min_size: int) -> Image.Image | None:
     for url in urls:
         try:
             r = session.get(url, timeout=timeout)
             r.raise_for_status()
             image = Image.open(io.BytesIO(r.content)).convert("RGB")
-            if image.width > 0 and image.height > 0:
+            if image.width >= min_size and image.height >= min_size:
                 return image
         except Exception:
             continue
@@ -210,7 +210,7 @@ def write_rank_store(args, rank: int, world: int, local_rank: int) -> dict:
             if not text_body:
                 n_no_text += 1
                 continue
-            image = fetch_image(session, obelics_image_urls(ex), args.image_timeout)
+            image = fetch_image(session, obelics_image_urls(ex), args.image_timeout, args.min_image_size)
             if image is None:
                 n_fetch_fail += 1
                 continue
@@ -393,6 +393,7 @@ def main():
     p.add_argument("--scan-multiplier", type=int, default=5)
     p.add_argument("--max-text-words", type=int, default=128)
     p.add_argument("--image-timeout", type=float, default=8.0)
+    p.add_argument("--min-image-size", type=int, default=16)
     p.add_argument("--shard-size", type=int, default=200_000)
     p.add_argument("--dtype", default="float16", choices=["bfloat16", "float16", "float32"])
     p.add_argument("--log-every", type=int, default=100)
