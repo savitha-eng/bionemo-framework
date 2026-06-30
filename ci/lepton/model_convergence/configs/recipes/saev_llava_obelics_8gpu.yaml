@@ -1,0 +1,85 @@
+# @package _global_
+defaults:
+  - /base
+  - _self_
+
+log_to_wandb: true
+log_to_kratos: false
+
+container:
+  image: nvcr.io/nvidia/pytorch:26.02-py3
+  registry_auth: lepton-nvidia-jwilber
+
+node_group: yo-bom-lepton-001
+mount_from: node-nfs:fs1
+num_nodes: 1
+device_type: gpu
+num_devices: 8
+gpu_type: h100-sxm
+resource_shape: "${device_type}.${num_devices}x${gpu_type}"
+
+branch: saev-llava-recipe
+commit_sha: ""
+repo_url: "https://github.com/savitha-eng/bionemo-framework.git"
+
+recipe_subdir: llava_saev
+job_name: "saev-llava-obelics-8gpu-${now:%Y%m%d-%H%M%S}"
+
+saev_root: /data/savithas/saev-llava
+saev_model: llava-hf/llava-v1.6-mistral-7b-hf
+saev_dataset: HuggingFaceM4/OBELICS
+saev_num_samples: 100000
+saev_max_steps: 30000
+
+wandb_init_args:
+  project: "sae-v-replication"
+  group: "saev-llava-obelics"
+  job_type: "llava_saev"
+  name: "llava_next_mistral_7b_L16_exp16_k128_obelics100k_steps30000"
+  mode: "online"
+
+environment_variables:
+  - name: WANDB_API_KEY
+    value_from: ${wandb_secret}
+  - name: LEP_LOGIN_CREDENTIALS
+    value_from: SHARED_LEP_LOGIN_CREDENTIALS
+  - name: HF_HOME
+    value: /data/savithas/saev-llava/hf-cache
+  - name: HF_TOKEN
+    value_from: ${hf_token_secret}
+
+mounts:
+  - path: /BioNeMo
+    mount_path: /data
+    from_: ${mount_from}
+
+checkout_script: |
+  set -euo pipefail
+  git clone ${repo_url} bionemo-framework
+  cd bionemo-framework
+  if [ -n "${commit_sha}" ]; then
+    git checkout "${commit_sha}"
+  else
+    git checkout "${branch}"
+  fi
+  cd bionemo-recipes/interpretability/sparse_autoencoders
+  pip install -e sae
+  cd recipes/llava_saev
+  pip install -e .
+
+run_script: |
+  set -euo pipefail
+  cd bionemo-framework/bionemo-recipes/interpretability/sparse_autoencoders/recipes/llava_saev
+  export SAEV_ROOT=${saev_root}
+  export SAEV_MODEL=${saev_model}
+  export SAEV_DATASET=${saev_dataset}
+  export SAEV_NUM_SAMPLES=${saev_num_samples}
+  export SAEV_MAX_STEPS=${saev_max_steps}
+  export SAEV_GPUS=$(nvidia-smi --query-gpu=gpu_name --format=csv,noheader | wc -l)
+  export WANDB_PROJECT=${wandb_init_args.project}
+  export WANDB_MODE=${wandb_init_args.mode}
+  bash run_configs/paper_llava_obelics_8gpu.sh
+
+script: |
+  ${checkout_script}
+  ${run_script}

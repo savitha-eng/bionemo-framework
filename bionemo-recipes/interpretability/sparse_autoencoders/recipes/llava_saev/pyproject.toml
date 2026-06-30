@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llava-saev"
+version = "0.1.0"
+description = "SAE-V-style LLaVA-NeXT sparse-autoencoder recipe using the BioNeMo SAE framework"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    { name = "NVIDIA Clara Discovery" },
+]
+keywords = ["interpretability", "sparse autoencoders", "multimodal", "llava", "sae-v"]
+dependencies = [
+    "sae",
+    "torch>=2.5",
+    "transformers==4.49.0",
+    "accelerate>=1.0",
+    "datasets==2.21.0",
+    "pillow",
+    "pyarrow>=23.0.0",
+    "qwen-vl-utils",
+    "requests",
+    "sentencepiece",
+    "wandb>=0.24.0",
+]
+
+[tool.uv.sources]
+sae = { workspace = true }
