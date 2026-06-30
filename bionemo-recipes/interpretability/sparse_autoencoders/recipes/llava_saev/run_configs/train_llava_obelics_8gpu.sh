@@ -9,6 +9,9 @@ SAMPLES="${SAEV_NUM_SAMPLES:-100000}"
 MAX_STEPS="${SAEV_MAX_STEPS:-30000}"
 GPUS="${SAEV_GPUS:-$(nvidia-smi --query-gpu=gpu_name --format=csv,noheader | wc -l)}"
 BATCH_SIZE="${SAEV_BATCH_SIZE:-4096}"
+WARMUP_STEPS="${SAEV_WARMUP_STEPS:-1500}"
+LR_DECAY_STEPS="${SAEV_LR_DECAY_STEPS:-6000}"
+SEED="${SAEV_SEED:-42}"
 CHECKPOINT_STEPS="${SAEV_CHECKPOINT_STEPS:-5000}"
 RUN_METRIC="${SAEV_RUN_METRIC:-1}"
 
@@ -50,7 +53,8 @@ python -m torch.distributed.run --standalone --nproc_per_node="$GPUS" scripts/tr
   --normalize-input --normalize-loss \
   --auxk 2048 --auxk-coef 0.03125 --dead-tokens-threshold 5000000 \
   --init-pre-bias --aggregate-loss --dead-count-global --mix-shards 8 --presample-shards 8 \
-  --lr 5e-5 --lr-schedule constant --warmup-steps 0 --batch-size "$BATCH_SIZE" \
+  --lr 5e-5 --lr-schedule constant --warmup-steps "$WARMUP_STEPS" --lr-decay-steps "$LR_DECAY_STEPS" \
+  --batch-size "$BATCH_SIZE" --seed "$SEED" \
   --n-epochs 1000000 --max-steps "$MAX_STEPS" \
   --checkpoint-dir "$CKPT" --checkpoint-steps "$CHECKPOINT_STEPS" \
   --dp-size "$GPUS" \

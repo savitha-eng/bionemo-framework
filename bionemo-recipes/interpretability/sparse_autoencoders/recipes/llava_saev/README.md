@@ -20,7 +20,10 @@ SAE-V reports the following LLaVA-NeXT/Mistral SAE-V configuration:
 - train steps: `30000`
 - batch size: `4096`
 - learning rate: `5e-5`
+- warmup steps: `1500`
+- LR decay steps: `6000`
 - scheduler: constant
+- seed: `42`
 
 The batch config in this recipe targets that shape and scale while keeping the
 BioNeMo TopK/AuxK training flags used by the BioReason-Pro SAE work.
