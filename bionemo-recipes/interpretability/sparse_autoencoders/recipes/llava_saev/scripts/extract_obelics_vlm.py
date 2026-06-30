@@ -379,6 +379,9 @@ def merge_rank_stores(args, world: int):
         f"shards={shard_idx} -> {root}",
         flush=True,
     )
+    if not args.keep_rank_stores:
+        for rank in range(world):
+            shutil.rmtree(root / f".tmp_rank_{rank}", ignore_errors=True)
 
 
 def main():
@@ -397,6 +400,7 @@ def main():
     p.add_argument("--shard-size", type=int, default=200_000)
     p.add_argument("--dtype", default="float16", choices=["bfloat16", "float16", "float32"])
     p.add_argument("--log-every", type=int, default=100)
+    p.add_argument("--keep-rank-stores", action="store_true")
     p.add_argument("--overwrite", action="store_true")
     args = p.parse_args()
 
