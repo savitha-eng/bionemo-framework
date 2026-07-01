@@ -30,6 +30,7 @@ import json
 import math
 import os
 import shutil
+from datetime import timedelta
 from pathlib import Path
 
 import numpy as np
@@ -79,13 +80,17 @@ def get_image_token_id(model):
     raise RuntimeError("No image_token_id/image_token_index on config.")
 
 
-def distributed_context():
+def distributed_context(timeout_minutes: int):
     world = int(os.environ.get("WORLD_SIZE", "1"))
     rank = int(os.environ.get("RANK", "0"))
     local_rank = int(os.environ.get("LOCAL_RANK", "0"))
     if world > 1 and not dist.is_initialized():
         torch.cuda.set_device(local_rank)
-        dist.init_process_group("nccl")
+        # Extraction does not exchange tensors across ranks; torchrun is only
+        # used for rank partitioning and final coordination. Gloo avoids NCCL
+        # communicator setup at the final barrier, and a long timeout tolerates
+        # skew from slow/dead image URLs on individual ranks.
+        dist.init_process_group("gloo", timeout=timedelta(minutes=timeout_minutes))
     return rank, world, local_rank
 
 
@@ -142,7 +147,107 @@ def load_obelics_dataset(dataset: str, split: str):
     return load_dataset(dataset, split=split, streaming=True)
 
 
+def rank_root_for(args, rank: int, world: int) -> Path:
+    final_root = Path(args.output)
+    return final_root if world == 1 else final_root / f".tmp_rank_{rank}"
+
+
+def parquet_num_rows(path: Path) -> int | None:
+    try:
+        return pq.read_metadata(path).num_rows
+    except Exception:
+        return None
+
+
+def rank_store_status(args, rank: int, world: int) -> tuple[bool, str, dict | None]:
+    rank_root = rank_root_for(args, rank, world)
+    rank_layer = rank_root / f"layer{args.layer}"
+    meta_path = rank_layer / "metadata.json"
+    labels_path = rank_root / "token_labels.parquet"
+    if not meta_path.exists():
+        return False, f"missing {meta_path}", None
+    if not labels_path.exists():
+        return False, f"missing {labels_path}", None
+
+    try:
+        meta = json.loads(meta_path.read_text())
+    except Exception as exc:
+        return False, f"invalid metadata: {type(exc).__name__}: {exc}", None
+
+    expected_rows = int(meta.get("n_samples", 0))
+    expected_shards = int(meta.get("n_shards", 0))
+    if expected_rows <= 0:
+        return False, f"metadata n_samples is not positive: {expected_rows}", meta
+    if expected_shards <= 0:
+        return False, f"metadata n_shards is not positive: {expected_shards}", meta
+
+    label_rows = parquet_num_rows(labels_path)
+    if label_rows != expected_rows:
+        return False, f"label rows {label_rows} != activation rows {expected_rows}", meta
+
+    shards = sorted(rank_layer.glob("shard_*.parquet"), key=lambda p: int(p.stem.split("_")[1]))
+    if len(shards) != expected_shards:
+        return False, f"shard count {len(shards)} != metadata n_shards {expected_shards}", meta
+
+    shard_rows = 0
+    for shard in shards:
+        rows = parquet_num_rows(shard)
+        if rows is None:
+            return False, f"invalid shard parquet: {shard}", meta
+        shard_rows += rows
+    if shard_rows != expected_rows:
+        return False, f"shard rows {shard_rows} != metadata n_samples {expected_rows}", meta
+
+    return True, "complete", meta
+
+
+def detect_rank_world(args) -> int:
+    root = Path(args.output)
+    ranks = []
+    for p in root.glob(".tmp_rank_*"):
+        try:
+            ranks.append(int(p.name.rsplit("_", 1)[1]))
+        except Exception:
+            continue
+    if not ranks:
+        raise RuntimeError(f"No .tmp_rank_* stores found under {root}")
+    expected = list(range(max(ranks) + 1))
+    if sorted(ranks) != expected:
+        raise RuntimeError(f"Non-contiguous rank stores under {root}: {sorted(ranks)}")
+    return len(expected)
+
+
 def write_rank_store(args, rank: int, world: int, local_rank: int) -> dict:
+    rank_root = rank_root_for(args, rank, world)
+    if world > 1 and args.resume_rank_stores and rank_root.exists():
+        complete, reason, meta = rank_store_status(args, rank, world)
+        if complete:
+            print(
+                f"[rank {rank}] existing complete rank store; skipping extraction "
+                f"docs={meta.get('n_documents')} rows={meta.get('n_samples')} -> {rank_root}",
+                flush=True,
+            )
+            return {
+                "rank": rank,
+                "docs": int(meta.get("n_documents", 0)),
+                "tokens": int(meta.get("n_samples", 0)),
+                "image_tokens": int(meta.get("image_tokens", 0)),
+                "fetch_fail": int(meta.get("fetch_fail", 0)),
+                "no_text": int(meta.get("no_text", 0)),
+                "preprocess_fail": int(meta.get("preprocess_fail", 0)),
+                "hidden": int(meta.get("hidden_dim", 0)),
+                "layer_path": meta.get("hook", ""),
+                "image_token_id": meta.get("image_token_id"),
+            }
+        print(f"[rank {rank}] existing rank store is incomplete ({reason}); rebuilding", flush=True)
+
+    if rank_root.exists():
+        if args.overwrite:
+            shutil.rmtree(rank_root)
+        else:
+            raise RuntimeError(f"{rank_root} already exists and is incomplete; pass --overwrite to rebuild it")
+    rank_root.mkdir(parents=True, exist_ok=True)
+
     dev = f"cuda:{local_rank}"
     tdtype = {"bfloat16": torch.bfloat16, "float16": torch.float16, "float32": torch.float32}[args.dtype]
 
@@ -177,12 +282,6 @@ def write_rank_store(args, rank: int, world: int, local_rank: int) -> dict:
         captured["h"] = (out[0] if isinstance(out, tuple) else out).detach()
 
     handle = layers[args.layer].register_forward_hook(hook)
-
-    final_root = Path(args.output)
-    rank_root = final_root if world == 1 else final_root / f".tmp_rank_{rank}"
-    if rank_root.exists() and args.overwrite:
-        shutil.rmtree(rank_root)
-    rank_root.mkdir(parents=True, exist_ok=True)
 
     layer_dir = rank_root / f"layer{args.layer}"
     store = ActivationStore(layer_dir, ActivationStoreConfig(shard_size=args.shard_size))
@@ -303,6 +402,9 @@ def write_rank_store(args, rank: int, world: int, local_rank: int) -> dict:
             "image_token_id": img_id,
             "rank": rank,
             "world_size": world,
+            "image_tokens": n_img_tokens,
+            "fetch_fail": n_fetch_fail,
+            "no_text": n_no_text,
             "preprocess_fail": n_preprocess_fail,
         }
     )
@@ -328,12 +430,8 @@ def write_rank_store(args, rank: int, world: int, local_rank: int) -> dict:
 def merge_rank_stores(args, world: int):
     root = Path(args.output)
     final_layer = root / f"layer{args.layer}"
-    if final_layer.exists() and args.overwrite:
-        shutil.rmtree(final_layer)
-    final_layer.mkdir(parents=True, exist_ok=True)
 
     schema = pa.schema([("protein_id", pa.string()), ("token_index", pa.int32()), ("position_type", pa.string())])
-    sidecar_writer = pq.ParquetWriter(str(root / "token_labels.parquet"), schema, compression="snappy")
 
     shard_idx = 0
     total_rows = 0
@@ -343,15 +441,28 @@ def merge_rank_stores(args, world: int):
     total_preprocess_fail = 0
     merged_meta = None
     rank_summaries = []
+    rank_entries = []
 
     for rank in range(world):
         rank_root = root / f".tmp_rank_{rank}"
         rank_layer = rank_root / f"layer{args.layer}"
-        meta_path = rank_layer / "metadata.json"
-        if not meta_path.exists():
-            print(f"[merge] missing rank {rank} metadata, skipping", flush=True)
+        complete, reason, meta = rank_store_status(args, rank, world)
+        if not complete:
+            if not args.allow_partial_merge:
+                raise RuntimeError(f"rank {rank} is not mergeable: {reason}")
+            print(f"[merge] rank {rank} is not mergeable ({reason}), skipping", flush=True)
             continue
-        meta = json.loads(meta_path.read_text())
+        rank_entries.append((rank, rank_root, rank_layer, meta))
+
+    if not rank_entries:
+        raise RuntimeError("No rank stores were mergeable.")
+
+    if final_layer.exists() and args.overwrite:
+        shutil.rmtree(final_layer)
+    final_layer.mkdir(parents=True, exist_ok=True)
+    sidecar_writer = pq.ParquetWriter(str(root / "token_labels.parquet"), schema, compression="snappy")
+
+    for rank, rank_root, rank_layer, meta in rank_entries:
         merged_meta = merged_meta or meta
         total_docs += int(meta.get("n_documents", 0))
         total_preprocess_fail += int(meta.get("preprocess_fail", 0))
@@ -374,6 +485,8 @@ def merge_rank_stores(args, world: int):
     sidecar_writer.close()
     if merged_meta is None:
         raise RuntimeError("No rank stores were merged.")
+    if total_image + total_text != total_rows:
+        raise RuntimeError(f"Merged sidecar rows {total_image + total_text} != activation rows {total_rows}")
     metadata = {
         "n_samples": total_rows,
         "hidden_dim": int(merged_meta["hidden_dim"]),
@@ -423,9 +536,19 @@ def main():
     p.add_argument("--log-every", type=int, default=100)
     p.add_argument("--keep-rank-stores", action="store_true")
     p.add_argument("--overwrite", action="store_true")
+    p.add_argument("--resume-rank-stores", action="store_true", help="Skip already finalized per-rank stores")
+    p.add_argument("--merge-only", action="store_true", help="Merge existing .tmp_rank_* stores without extraction")
+    p.add_argument("--merge-world-size", type=int, default=None, help="World size to use for --merge-only")
+    p.add_argument("--allow-partial-merge", action="store_true", help="Merge only complete rank stores")
+    p.add_argument("--dist-timeout-minutes", type=int, default=1440)
     args = p.parse_args()
 
-    rank, world, local_rank = distributed_context()
+    if args.merge_only:
+        world = args.merge_world_size or detect_rank_world(args)
+        merge_rank_stores(args, world)
+        return
+
+    rank, world, local_rank = distributed_context(args.dist_timeout_minutes)
     write_rank_store(args, rank, world, local_rank)
     if world > 1:
         dist.barrier()
