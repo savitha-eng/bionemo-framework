@@ -51,9 +51,11 @@ SYS_PROTEIN = (
     "category — name the SPECIFIC token/pattern, and judge whether it is merely firing on a printed GO "
     "term/accession (label-reading) vs genuine reasoning.")
 KIND_PROTEIN = (
-    "KIND: <one of GO-TERM-TEXT | ACCESSION | REASONING | STRUCTURE | PROTEIN>  "
+    "KIND: <one of GO-TERM-TEXT | ACCESSION | REASONING | STRUCTURE | PROTEIN | SYNTACTIC | POLYSEMANTIC>  "
     "(GO-TERM-TEXT/ACCESSION = it's just reading a printed GO term/id = label-reading; "
-    "REASONING = genuine reasoning content; STRUCTURE = formatting/position; PROTEIN = residues)")
+    "REASONING = genuine reasoning content; STRUCTURE = formatting/position; PROTEIN = residues; "
+    "SYNTACTIC = fires on a grammatical position like conjunctions/punctuation; "
+    "POLYSEMANTIC = no single consistent concept = not cleanly interpretable)")
 SYS_DNA = (
     "You interpret a sparse-autoencoder feature of a DNA variant-effect-prediction LLM (Evo2 DNA embeddings "
     "fed into Qwen). The DNA side is nucleotide tokens (A/C/G/T k-mers, incl. ⟦S⟧/⟦E⟧ segment markers); the "
@@ -61,26 +63,45 @@ SYS_DNA = (
     "pathogenic?') and a short ANSWER (e.g. 'Answer: pathogenic; Congenital myasthenic syndrome'). «token» "
     "marks where the feature fires HARDEST. Name the SPECIFIC token/pattern; do NOT give a generic category.")
 KIND_DNA = (
-    "KIND: <one of NUCLEOTIDE-MOTIF | GENE-NAME | VARIANT-COORD | VERDICT | DISEASE-NAME | STRUCTURE>  "
+    "KIND: <one of NUCLEOTIDE-MOTIF | GENE-NAME | VARIANT-COORD | VERDICT | DISEASE-NAME | STRUCTURE | "
+    "SYNTACTIC | POLYSEMANTIC>  "
     "(NUCLEOTIDE-MOTIF = a DNA k-mer/sequence pattern; GENE-NAME = a gene symbol in text; "
     "VARIANT-COORD = chromosome/position tokens; VERDICT = benign/pathogenic; DISEASE-NAME = a disease term; "
-    "STRUCTURE = formatting/boundary markers like ⟦E⟧ or <|im_start|>)")
+    "STRUCTURE = formatting/boundary markers like ⟦E⟧ or <|im_start|>; "
+    "SYNTACTIC = fires on a grammatical position like conjunctions/punctuation; "
+    "POLYSEMANTIC = no single consistent concept = not cleanly interpretable)")
 
 
 def prompts_for(model):
     return (SYS_DNA, KIND_DNA) if "dna" in (model or "").lower() else (SYS_PROTEIN, KIND_PROTEIN)
 
 
+# high-frequency function words / punctuation / chat markers. A feature whose peaks are dominated by these
+# is usually SYNTACTIC or POLYSEMANTIC, not a clean concept — the labeler should say so, not invent meaning.
+STOPWORDS = {"and", "or", "of", "the", "a", "an", "in", "on", "to", "for", "with", "by", "is", "are",
+             "as", "at", "that", "this", "it", "its", "be", "been", "which", "from", ",", ".", ";", ":",
+             "(", ")", "-", "'", "via", "<|im_start|>", "<|im_end|>", "assistant", "user"}
+
+
 def _label(windows, peak_tokens, sys=SYS_PROTEIN, kind_line=KIND_PROTEIN):
     body = "\n".join("  - " + w for w in windows[:50])
-    pk = Counter(t for t in peak_tokens if t and t.strip()).most_common(8)
+    toks = [t for t in peak_tokens if t and t.strip()]
+    pk = Counter(toks).most_common(8)
     pk_str = ", ".join(f"'{t}'×{n}" for t, n in pk) or "(n/a)"
-    usr = (f"This feature's PEAK token (what it fires hardest on) across the windows: {pk_str}.\n"
+    stop_frac = (sum(1 for t in toks if t.strip().lower() in STOPWORDS) / len(toks)) if toks else 0.0
+    hint = ""
+    if stop_frac >= 0.5:
+        hint = (f"\nNOTE: {stop_frac:.0%} of this feature's peak tokens are high-frequency function words / "
+                f"punctuation / chat markers. That usually means the feature is SYNTACTIC (fires on a "
+                f"grammatical position) or POLYSEMANTIC (no single concept). Do NOT invent a concept for a "
+                f"stopword. Look across ALL windows for a genuinely consistent CONTENT context; if there "
+                f"isn't one, say KIND: POLYSEMANTIC and say plainly it is not a clean, interpretable feature.")
+    usr = (f"This feature's PEAK token (what it fires hardest on) across the windows: {pk_str}.{hint}\n"
            f"Windows (« » = peak):\n{body}\n\n"
            f"Reply in EXACTLY this format:\n"
            f"TRIGGER: <the specific token or short pattern it fires on>\n"
            f"{kind_line}\n"
-           f"MEANING: <ONE precise, non-generic sentence>")
+           f"MEANING: <ONE precise, non-generic sentence; if polysemantic/syntactic, SAY SO plainly>")
     r = _client.chat.completions.create(model=MODEL, temperature=0.1, max_tokens=130,
         messages=[{"role": "system", "content": sys}, {"role": "user", "content": usr}])
     return r.choices[0].message.content.strip(), pk_str
@@ -113,6 +134,18 @@ def _interp(model, fid, bands):
             band_labels[b] = {"label": lab, "peak_activation": round(peak, 2),
                               "n_examples": int(len(bb)), "peak_tokens": bpk}
         out["band_labels"] = band_labels
+        # cross-band SYNTHESIS: is the SAME concept shared across bands (a shared/cross-modal feature),
+        # or does each band mean something different? This is the "embryo is a shared concept" judgment.
+        if len(band_labels) >= 2:
+            per = "\n".join(f"  {b} (peak {v['peak_activation']}): {v['label']}" for b, v in band_labels.items())
+            syn = _client.chat.completions.create(model=MODEL, temperature=0.0, max_tokens=80,
+                messages=[{"role": "system", "content": "You are a mechanistic-interpretability analyst."},
+                          {"role": "user", "content":
+                           f"A single SAE feature fires across these bands of one model:\n{per}\n\n"
+                           f"Is there a SINGLE concept genuinely SHARED across these bands (a shared/cross-"
+                           f"modal feature), or does it mean different things per band / is it syntactic? "
+                           f"Reply EXACTLY as: SHARED: <concept in 1-4 words> | NOT-SHARED: <why in 1 clause>"}])
+            out["shared_concept"] = syn.choices[0].message.content.strip()
     return out
 
 

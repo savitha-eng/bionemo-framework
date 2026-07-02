@@ -277,6 +277,13 @@ const FeatureCard = forwardRef(function FeatureCard({ feature, isHighlighted, fo
             <div style={{ fontSize: '11px', marginTop: '4px' }}>
               {aiLabel.error ? <span style={{ color: '#e88' }}>{aiLabel.error}</span> : (<>
                 <div style={{ color: '#bfe', whiteSpace: 'pre-wrap' }}>🔍 {aiLabel.label}</div>
+                {aiLabel.shared_concept && (
+                  <div style={{ fontSize: '11px', marginTop: '3px', padding: '2px 6px', borderRadius: '4px',
+                    background: aiLabel.shared_concept.startsWith('SHARED') ? 'rgba(118,185,0,0.15)' : 'rgba(120,120,120,0.12)',
+                    color: aiLabel.shared_concept.startsWith('SHARED') ? '#76b900' : '#9aa' }}>
+                    🔗 {aiLabel.shared_concept}
+                  </div>
+                )}
                 {aiLabel.peak_tokens && <div style={{ color: '#888', fontSize: '10px' }}>peak: {aiLabel.peak_tokens}</div>}
                 {aiLabel.band_labels && Object.entries(aiLabel.band_labels).map(([b, v]) => {
                   const icon = { reasoning: '📖', answer: '✅', prompt: '❓', protein: '🧬', dna: '🧬', text: '📝', go: '🏷️' }[b] || '•'
