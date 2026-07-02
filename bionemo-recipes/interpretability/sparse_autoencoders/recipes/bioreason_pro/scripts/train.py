@@ -57,7 +57,9 @@ def parse_args():  # noqa: D103
     p.add_argument("--balance-modality", action="store_true",
                    help="modality-balance at load time: drop <go>, downsample text to ~=protein (no data rewrite)")
     p.add_argument("--balance-protein-frac", type=float, default=0.5,
-                   help="target protein:text token ratio when --balance-modality (0.5=50/50, 0.3=30/70)")
+                   help="target bio:text token ratio when --balance-modality (0.5=50/50, 0.3=30/70)")
+    p.add_argument("--bio-band", type=str, default="protein",
+                   help="name of the bio-modality band in token_labels: 'protein' (protein store) or 'dna' (DNA store)")
     p.add_argument("--layer", type=int, required=True, help="Layer index (validated against cache metadata)")
 
     sae_group = p.add_argument_group("SAE model")
@@ -182,18 +184,27 @@ def main():  # noqa: D103
     store = load_activations(cache_path)
     meta = store.metadata
 
-    # Opt-in MODALITY BALANCING (no data rewrite): drop <go> + downsample text to ~=protein, at load time.
+    # Opt-in MODALITY BALANCING (no data rewrite): drop <go> + downsample text to ~=bio, at load time.
+    # bio_band is "protein" for the protein store, "dna" for the DNA store (whose bio tokens dominate).
     if getattr(args, "balance_modality", False):
         import pyarrow.parquet as _pq
+        bio = getattr(args, "bio_band", "protein")
         tl = _pq.read_table(cache_path.parent / "token_labels.parquet")
         band = tl.column("position_type").to_numpy(zero_copy_only=False)  # to_numpy >> to_pylist on the 421M-row full store
-        n_p = int((band == "protein").sum()); n_t = int((band == "text").sum())
-        frac = args.balance_protein_frac  # target protein fraction of kept tokens
-        text_keep = min(1.0, (n_p / n_t) * ((1.0 - frac) / frac))  # frac=0.5 -> n_p/n_t (50/50); 0.3 -> *2.333 (30/70)
-        keep_probs = {"go": 0.0, "protein": 1.0, "text": text_keep}
+        n_p = int((band == bio).sum()); n_t = int((band == "text").sum())
+        frac = args.balance_protein_frac  # target bio fraction of kept tokens
+        # Downsample whichever modality is OVER its target share (keep the scarcer one whole). The protein
+        # store has text as the majority (downsample text); the DNA store has bio as the majority (~98% DNA,
+        # so we must downsample DNA instead — the old text-only formula would leave it ~98% bio).
+        cur_bio_frac = n_p / max(n_p + n_t, 1)
+        if cur_bio_frac >= frac:  # bio too dominant -> downsample bio, keep all text
+            bio_keep = min(1.0, (frac / (1.0 - frac)) * (n_t / max(n_p, 1))); text_keep = 1.0
+        else:                     # text too dominant -> downsample text, keep all bio
+            bio_keep = 1.0; text_keep = min(1.0, ((1.0 - frac) / frac) * (n_p / max(n_t, 1)))
+        keep_probs = {"go": 0.0, bio: bio_keep, "text": text_keep}
         store.set_modality_balance(band, keep_probs)
-        print(f"[balance] modality-balanced loader: drop go, protein-frac={frac} text-keep={text_keep:.4f} "
-              f"(protein={n_p:,} text={n_t:,})", flush=True)
+        print(f"[balance] modality-balanced loader: drop go, target {bio}-frac={frac} -> "
+              f"{bio}-keep={bio_keep:.4f} text-keep={text_keep:.4f} ({bio}={n_p:,} text={n_t:,})", flush=True)
 
     # Cache validation (BioReason-Pro metadata keys).
     if meta.get("layer") != args.layer:
