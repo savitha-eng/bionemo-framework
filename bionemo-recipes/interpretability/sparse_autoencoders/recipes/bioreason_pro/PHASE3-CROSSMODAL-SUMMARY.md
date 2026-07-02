@@ -62,6 +62,8 @@ Both models are Qwen3-4B (36 layers, hidden 2560); the SAE is trained on the res
 | SAE layer / store | L16 (also L18/20/22/24 extracted) | L16 |
 | Store size | **421.3 M tokens** (2,110 shards) | **151.0 M tokens** (756 shards) |
 | Modality mix (per token) | text 79.5% · **protein 14.9%** · go 5.6% | **dna 98.0%** · text 2.0% |
+| **Exact token counts** | text **334,968,627** · protein **62,960,406** · go **23,400,400** (total **421,329,433**) | dna **147,960,800** · text **3,058,417** (total **151,019,217**) |
+| **DNA sub-band counts** | — | dna_ref **≈73.98 M** · dna_variant **≈73.98 M** (exactly 50/50, matched pairs) · of the 3.06 M text: question **≈2.06 M** · answer **≈0.79 M** · reasoning **≈0.22 M** (empty `<think></think>`) |
 | Per-prompt composition | variable (long reasoning prompts) | **DNA fixed ≈4100 tok** (ref+variant seqs, 2048 nt/side each) · question ≈57 · reasoning ≈6 (empty `<think></think>`) · answer ≈26 |
 | Length caps (VEP) | text ≤10,000 · protein ≤2,000 · 200 go tokens | **DNA 2048 nt/side ×2 seqs** · text ≤1024 (LLM window 8192 only to fit raw DNA) |
 | Reasoning content | prompt/reasoning/answer all populated | **VEP is answer-only** — `<think></think>` is empty (0/300 non-empty); chain-of-thought reasoning lives in the *separate KEGG task*, not VEP |
