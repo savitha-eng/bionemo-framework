@@ -106,14 +106,16 @@ This is the piece that's easy to over-read, so here is the full evidence rather 
 
 **Why the magnitude confound is real and not hand-waving:** protein bio-tokens have **~50× the residual norm of text tokens** (median 2287 vs 45; §4). Any unnormalized/magnitude-weighted similarity is therefore dominated by whatever the bio tokens do, which is exactly the CODE-vs-BIN gap.
 
+**Plain-language version of CODE vs BIN (shopping-cart analogy).** Think of each token's SAE code as a *shopping cart*. **CODE** cosine compares two carts by *dollars spent per aisle* — if both carts dump a lot into one shared aisle, they look similar even if everything else differs. **BIN** cosine compares by *which aisles were visited at all* (checklist, amounts ignored). We measure **CODE high (~0.6–0.8) but BIN low (~0.1)**: bio and text both pour large magnitude into a *handful of shared always-on latents*, but the actual *set* of latents they fire barely overlaps. So the apparent "alignment" is carried by the magnitude of a few loud features, **not** by a shared feature vocabulary. (And §4's 50× protein-vs-text norm gap is exactly why magnitude dominates.)
+
 **Picture — `analysis/crossmodal_geometry_umap.png`:**
 
 ![Cross-modal residual-stream geometry](analysis/crossmodal_geometry_umap.png)
 
 - **(a) Protein**: UMAP (cosine metric) of protein vs text residuals — two **separated clouds** (mean cross-modal cos ≈ 0). Different subspaces.
 - **(b) DNA**: dna vs text residuals **overlap** (cos ≈ 0.3). Shared subspace — yet still no semantic binding (§1).
-- **(c)** residual-norm histograms: protein tokens sit at a much larger magnitude than text; DNA ≈ text.
-- **(d)** RAW / CODE / BIN cross-modal cosine bars: CODE looks aligned, **BIN collapses** — the magnitude artifact, visualized.
+- **(c) residual-norm histogram** — the *length* (‖vector‖) of each token's residual, one curve per modality. Protein tokens sit ~50× to the right (median 2287) of text (45); DNA (45) ≈ text (55). "Longer vector = louder token"; louder tokens dominate any magnitude-weighted similarity.
+- **(d) RAW / CODE / BIN cross-modal cosine bars** — three ways to ask "do bio & text features align?": RAW (raw residuals) ≈ 0; CODE (magnitude-weighted code) looks aligned; **BIN (which features fire, magnitude removed) collapses**. The gap between the CODE and BIN bars *is* the magnitude artifact, visualized.
 
 **Reasons to stay skeptical (stated plainly):**
 - BIN cosine and φ are *sparsity-threshold-dependent* (τ=1.0). A different threshold could shift the co-firing set. We used the same τ across modalities, and the within-modality controls (PP/TT) behave sensibly, but it is one knob.
