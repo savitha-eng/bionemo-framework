@@ -41,14 +41,37 @@ def _win(seq, acts, ctx=8):
     return " ".join(out), peak_tok
 
 
-SYS = ("You interpret a sparse-autoencoder feature of a protein-reasoning LLM. Its reasoning/answer text "
-       "frequently PRINTS Gene-Ontology term names (e.g. 'cytosol', 'protein binding') and GO accessions "
-       "(e.g. 'GO:0005737'). «token» marks where the feature fires HARDEST. Do NOT give a generic biological "
-       "category — name the SPECIFIC token/pattern, and judge whether it is merely firing on a printed GO "
-       "term/accession (label-reading) vs genuine reasoning.")
+# The system prompt + KIND taxonomy are domain-specific. A DNA model has nucleotide/variant/gene tokens,
+# NOT GO terms or protein residues, so it gets its own prompt (otherwise DNA features get force-fit into the
+# protein KINDs, e.g. everything -> STRUCTURE). prompts_for() picks by model name.
+SYS_PROTEIN = (
+    "You interpret a sparse-autoencoder feature of a protein-reasoning LLM. Its reasoning/answer text "
+    "frequently PRINTS Gene-Ontology term names (e.g. 'cytosol', 'protein binding') and GO accessions "
+    "(e.g. 'GO:0005737'). «token» marks where the feature fires HARDEST. Do NOT give a generic biological "
+    "category — name the SPECIFIC token/pattern, and judge whether it is merely firing on a printed GO "
+    "term/accession (label-reading) vs genuine reasoning.")
+KIND_PROTEIN = (
+    "KIND: <one of GO-TERM-TEXT | ACCESSION | REASONING | STRUCTURE | PROTEIN>  "
+    "(GO-TERM-TEXT/ACCESSION = it's just reading a printed GO term/id = label-reading; "
+    "REASONING = genuine reasoning content; STRUCTURE = formatting/position; PROTEIN = residues)")
+SYS_DNA = (
+    "You interpret a sparse-autoencoder feature of a DNA variant-effect-prediction LLM (Evo2 DNA embeddings "
+    "fed into Qwen). The DNA side is nucleotide tokens (A/C/G/T k-mers, incl. ⟦S⟧/⟦E⟧ segment markers); the "
+    "text side is a variant QUESTION (e.g. '...chromosome 1 position 1040717, gene AGRN: benign or "
+    "pathogenic?') and a short ANSWER (e.g. 'Answer: pathogenic; Congenital myasthenic syndrome'). «token» "
+    "marks where the feature fires HARDEST. Name the SPECIFIC token/pattern; do NOT give a generic category.")
+KIND_DNA = (
+    "KIND: <one of NUCLEOTIDE-MOTIF | GENE-NAME | VARIANT-COORD | VERDICT | DISEASE-NAME | STRUCTURE>  "
+    "(NUCLEOTIDE-MOTIF = a DNA k-mer/sequence pattern; GENE-NAME = a gene symbol in text; "
+    "VARIANT-COORD = chromosome/position tokens; VERDICT = benign/pathogenic; DISEASE-NAME = a disease term; "
+    "STRUCTURE = formatting/boundary markers like ⟦E⟧ or <|im_start|>)")
 
 
-def _label(windows, peak_tokens):
+def prompts_for(model):
+    return (SYS_DNA, KIND_DNA) if "dna" in (model or "").lower() else (SYS_PROTEIN, KIND_PROTEIN)
+
+
+def _label(windows, peak_tokens, sys=SYS_PROTEIN, kind_line=KIND_PROTEIN):
     body = "\n".join("  - " + w for w in windows[:50])
     pk = Counter(t for t in peak_tokens if t and t.strip()).most_common(8)
     pk_str = ", ".join(f"'{t}'×{n}" for t, n in pk) or "(n/a)"
@@ -56,27 +79,26 @@ def _label(windows, peak_tokens):
            f"Windows (« » = peak):\n{body}\n\n"
            f"Reply in EXACTLY this format:\n"
            f"TRIGGER: <the specific token or short pattern it fires on>\n"
-           f"KIND: <one of GO-TERM-TEXT | ACCESSION | REASONING | STRUCTURE | PROTEIN>  "
-           f"(GO-TERM-TEXT/ACCESSION = it's just reading a printed GO term/id = label-reading; "
-           f"REASONING = genuine reasoning content; STRUCTURE = formatting/position; PROTEIN = residues)\n"
+           f"{kind_line}\n"
            f"MEANING: <ONE precise, non-generic sentence>")
     r = _client.chat.completions.create(model=MODEL, temperature=0.1, max_tokens=130,
-        messages=[{"role": "system", "content": SYS}, {"role": "user", "content": usr}])
+        messages=[{"role": "system", "content": sys}, {"role": "user", "content": usr}])
     return r.choices[0].message.content.strip(), pk_str
 
 
 # candidate per-band split, in display order. Only bands actually present for the feature are labeled,
 # so protein dashboards yield reasoning/answer(/prompt/protein) and DNA yields dna/text automatically.
-BAND_ORDER = ["reasoning", "answer", "prompt", "protein", "dna", "text", "go"]
+BAND_ORDER = ["reasoning", "answer", "prompt", "question", "protein", "dna", "text", "go"]
 
 
 def _interp(model, fid, bands):
     ex = _examples(model)
+    sys, kind_line = prompts_for(model)  # DNA vs protein taxonomy
     sub = ex[ex.feature_id == int(fid)].sort_values("max_activation", ascending=False)
     if not len(sub):
         return {"error": f"feature {fid} not found in {model}"}
     ws = [_win(r.sequence, r.activations) for _, r in sub.head(50).iterrows()]
-    label, pk_str = _label([w for w, _ in ws], [t for _, t in ws])
+    label, pk_str = _label([w for w, _ in ws], [t for _, t in ws], sys, kind_line)
     out = {"feature_id": int(fid), "label": label, "peak_tokens": pk_str,
            "windows": [w for w, _ in ws[:8]]}  # show the actual highlighted phrases
     if bands:  # label each band the feature fires on SEPARATELY (reasoning vs answer, etc.)
@@ -87,7 +109,7 @@ def _interp(model, fid, bands):
             bws = [_win(r.sequence, r.activations) for _, r in bb.iterrows()]
             # per-band peak activation, so the UI can flag a band the feature barely touches
             peak = float(bb["max_activation"].max()) if "max_activation" in bb else 0.0
-            lab, bpk = _label([w for w, _ in bws], [t for _, t in bws])
+            lab, bpk = _label([w for w, _ in bws], [t for _, t in bws], sys, kind_line)
             band_labels[b] = {"label": lab, "peak_activation": round(peak, 2),
                               "n_examples": int(len(bb)), "peak_tokens": bpk}
         out["band_labels"] = band_labels

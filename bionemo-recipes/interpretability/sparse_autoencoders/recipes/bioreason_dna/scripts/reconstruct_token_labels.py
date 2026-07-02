@@ -36,6 +36,8 @@ def main():  # noqa: D103
     p.add_argument("--store", required=True)
     p.add_argument("--out", required=True)
     p.add_argument("--num-examples", type=int, default=2000, help="reconstruct labels for the first N examples")
+    p.add_argument("--no-qa-split", action="store_true",
+                   help="keep one 'text' band instead of splitting into question/answer at the assistant turn")
     p.add_argument("--batch-size", type=int, default=8)
     p.add_argument("--max-length-text", type=int, default=8192)
     p.add_argument("--truncate-dna-per-side", type=int, default=1024)
@@ -56,6 +58,12 @@ def main():  # noqa: D103
     S = tok.convert_tokens_to_ids(DNA_START_TOKEN)
     P = tok.convert_tokens_to_ids(DNA_PAD_TOKEN)
     E = tok.convert_tokens_to_ids(DNA_END_TOKEN)
+    # chat-turn boundary: the LAST <|im_start|> begins the assistant turn (system, user, then assistant),
+    # so text tokens before it = the QUESTION (user prompt) and from it onward = the ANSWER (assistant
+    # reasoning+verdict). Lets the dashboard show dna / question / answer bands separately.
+    IM_START = tok.convert_tokens_to_ids("<|im_start|>")
+    THINK_END = tok.convert_tokens_to_ids("</think>")
+    split_qa = not args.no_qa_split and isinstance(IM_START, int) and IM_START >= 0
 
     tr, va, te = load_chat_dataset(dataset_path=args.dataset_path, dataset_config=None, task="vep",
                                    truncate_dna_per_side=args.truncate_dna_per_side, num_proc=4)
@@ -88,7 +96,19 @@ def main():  # noqa: D103
             abs_index = np.nonzero(keep_np)[0]
             token_index = (abs_index - abs_index.min()) if abs_index.size else abs_index
             is_dna = ((row == S) | (row == P) | (row == E))[keep].cpu().numpy()
-            bands = np.where(is_dna, "dna", "text")
+            if split_qa:
+                row_np = row.cpu().numpy()
+                im_pos = np.where(row_np == IM_START)[0]
+                asst_start = int(im_pos.max()) if im_pos.size else len(row_np)  # assistant turn start
+                th_pos = np.where(row_np == THINK_END)[0]
+                th_pos = th_pos[th_pos >= asst_start]
+                think_end = int(th_pos.max()) if th_pos.size else asst_start  # end of the <think>...</think> span
+                # question = user turn; reasoning = <think>..</think> span (empty for VEP); answer = after </think>
+                text_role = np.where(abs_index < asst_start, "question",
+                                     np.where(abs_index <= think_end, "reasoning", "answer"))
+                bands = np.where(is_dna, "dna", text_role)
+            else:
+                bands = np.where(is_dna, "dna", "text")
             sid = str(ds[gi].get("sequence_id", f"row{gi}"))
             # checksum vs the store's examples.parquet
             if int(is_dna.sum()) != int(ck_nd[gi]) or int((~is_dna).sum()) != int(ck_nt[gi]) or sid != str(ck_sid[gi]):
@@ -112,7 +132,9 @@ def main():  # noqa: D103
     })
     pq.write_table(tbl, args.out)
     print(f"[recon] wrote {args.out}: {len(band_out):,} rows over {n} examples "
-          f"(dna={band_out.count('dna'):,} text={band_out.count('text'):,})")
+          f"(dna={band_out.count('dna'):,} text={band_out.count('text'):,} "
+          f"question={band_out.count('question'):,} reasoning={band_out.count('reasoning'):,} "
+          f"answer={band_out.count('answer'):,})")
 
 
 if __name__ == "__main__":

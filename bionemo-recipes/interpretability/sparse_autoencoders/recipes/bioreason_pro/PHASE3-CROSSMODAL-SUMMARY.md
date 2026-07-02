@@ -25,6 +25,8 @@ Metric: per-feature **φ co-activation** — does feature _k_ fire on the bio to
 
 **Why this matters:** DNA (unlike protein) *does* share residual subspace with text (raw cosine 0.37 vs ~0 for protein), so we expected DNA fusion features to be learnable. They are not — the subspace sharing is driven by these high-magnitude boundary/content features, not by concept binding. So the null holds even in the favorable case. Fusion in these models lives in attention, not in per-token residual features.
 
+> **Open caveat (being tested):** the DNA SAE was trained **unbalanced** (98% DNA / 2% text — see §4), so text/cross-modal features got little gradient signal. The DNA null could partly reflect *under-trained text features* rather than a true absence of fusion. A **balanced DNA SAE** (70% DNA / 30% text) is training now; re-running φ on it is the rigorous control. The protein cross-modal result is *not* subject to this caveat — it used a balanced SAE.
+
 ## 2. Does Matryoshka / modality-weighting improve feature quality?
 
 7-way comparison at L16 (all converged step-10000 checkpoints; identical shard sample; NIM-free metric = high peak activation + low firing frequency + wide token span, split by modality).
@@ -49,12 +51,116 @@ BioReason-**DNA** (Evo2-1B → projector → Qwen3-4B) is a much better SAE targ
 
 ---
 
+## 4. Data & training statistics
+
+Both models are Qwen3-4B (36 layers, hidden 2560); the SAE is trained on the residual stream at one layer. "Tokens" = kept (non-pad) activation rows in the store.
+
+| | **Protein (BioReason-Pro)** | **DNA (BioReason-DNA)** |
+|---|---|---|
+| Bio encoder | ESM3 → 2-layer MLP projector | Evo2-1B (`blocks.20.mlp.l3`) → 2-layer MLP projector |
+| Training corpus | CAFA-5, **117,002 proteins** (train split) | VEP non-SNV, **36,088 sequences** |
+| SAE layer / store | L16 (also L18/20/22/24 extracted) | L16 |
+| Store size | **421.3 M tokens** (2,110 shards) | **151.0 M tokens** (756 shards) |
+| Modality mix (per token) | text 79.5% · **protein 14.9%** · go 5.6% | **dna 98.0%** · text 2.0% |
+| Per-prompt composition | variable (long reasoning prompts) | **DNA fixed ≈4100 tok** (ref+variant seqs, 2048 nt/side each) · question ≈57 · reasoning ≈6 (empty `<think></think>`) · answer ≈26 |
+| Length caps (VEP) | text ≤10,000 · protein ≤2,000 · 200 go tokens | **DNA 2048 nt/side ×2 seqs** · text ≤1024 (LLM window 8192 only to fit raw DNA) |
+| Reasoning content | prompt/reasoning/answer all populated | **VEP is answer-only** — `<think></think>` is empty (0/300 non-empty); chain-of-thought reasoning lives in the *separate KEGG task*, not VEP |
+| Bio-token residual norm (median ‖·‖) | **≈ 2287** | ≈ 45 |
+| Text-token residual norm (median ‖·‖) | ≈ 45 | ≈ 55 |
+| SAE arch | TopK, expansion 16 → 40,960 latents, k=128, normalize-input/loss | same |
+| **Modality balancing** | **`balance_modality=True`, protein-frac 0.5** (text down-sampled so protein ≈ 50% of the mix; `<go>` dropped) | **`balance_modality=False`** — raw 98/2 mix (bio-dominant *was* the intended target for max feature strength) |
+
+Two consequences of the mix + balancing that matter for everything below:
+- **The protein SAE was balanced; the DNA SAE was not.** So the DNA cross-modal null carries the "under-trained text" caveat in §1; the protein one does not. The balanced DNA SAE now training removes this asymmetry.
+- **Protein bio-tokens carry ~50× the residual magnitude of text tokens** (median 2287 vs 45). DNA and text are comparable (45 vs 55). This magnitude gap is the crux of §6.
+
+## 5. Methods we tried (glossary)
+
+**SAE families**
+- **Flat TopK** — the baseline. Keep the top-`k` latents *per token* (k=128); everything else zeroed. One flat dictionary of 40,960 features.
+- **BatchTopK** — keep the top `k×batch` activations across the *whole batch* (not per token), with an EMA threshold at inference. Lets some tokens use more latents than others; usually a bit better reconstruction at matched sparsity.
+- **Matryoshka SAE** — impose *nested prefixes* on the dictionary: the loss is summed over reconstructions that use only the first ½, ¼, ⅛, … of the latents (fixed groups `[0.5, 0.25, 0.125, 0.0625, 0.0625]`). Forces the earliest latents to be the most general/important — a coarse-to-fine code. **Per-token Matryoshka** (`matry-pertoken`) applies this with per-token TopK; **BatchTopK-Matryoshka** (`mbtk-k64`, `mbtk-k32`) combines nested prefixes with batch-level TopK at two sparsities (the "MAIRA-2" recipe).
+
+**Balancing / loss-weighting techniques** (all aimed at the weak-minority-modality problem)
+- **Modality balancing at load time** (`--balance-modality`) — no data rewrite; down-sample the *over-represented* modality per shard so the kept mix hits a target bio-fraction (`--balance-protein-frac`), and drop `<go>`. For protein this down-samples text (text is the majority); for DNA it down-samples DNA (the new `--bio-band dna` path — the majority there).
+- **Per-prefix modality-weighted loss** (`mw-*`) — only with Matryoshka. Each nested prefix `b` gets its own convex loss `α_b·FVU_bio + (1−α_b)·FVU_text`, with tokens self-classified as bio/text via a calibrated direction. Variants: `mw-coarse` (bio up-weighted in the coarse prefixes: α=`0.8,0.65,0.5,0.5,0.5`), `mw-fine` (bio up-weighted in fine prefixes), `mw-uniform` (α=0.5 everywhere, i.e. a plain balanced control). The idea was to *reserve* coarse/global capacity for the weak bio modality. **Result (§2): it did not help** — the bio-up-weighted variant matched the flat baseline.
+
+## 6. The cosine-vs-magnitude story (and why to be skeptical of it)
+
+This is the piece that's easy to over-read, so here is the full evidence rather than a one-liner. For features that fire on **both** modalities we measured the rank-paired mean cosine of their top tokens in three representations, cross-modal (bio↔text, "PT") and within-modality (PP, TT) as positive controls:
+
+| condition | what it is | **Protein L16** | **DNA L16** |
+|---|---|---:|---:|
+| **RAW_PT** | cosine of raw **residual** vectors, bio vs text | **−0.06** | **0.37** |
+| RAW_PP / RAW_TT | raw residuals, within bio / within text | 0.99 / 0.54 | 0.66 / 0.48 |
+| **CODE_PT** | cosine of **SAE code** vectors (magnitude-weighted), bio vs text | **0.77** | **0.56** |
+| CODE_PP / CODE_TT | code vectors, within-modality | 1.00 / 0.97 | 0.69 / 0.69 |
+| **BIN_PT** | cosine of **binarized** codes (fires / doesn't — magnitude removed), bio vs text | **0.19** | **0.10** |
+| BIN_PP / BIN_TT | binarized, within-modality | 0.74 / 0.41 | 0.31 / 0.31 |
+
+**The reasoning, step by step:**
+1. **RAW_PT** ≈ 0 for protein (−0.06) and only 0.37 for DNA. In the raw residual stream, protein tokens are essentially **orthogonal** to text; DNA partially overlaps. So at the representation the SAE actually sees, there is little shared direction to bind onto — especially for protein.
+2. **CODE_PT** looks encouraging (0.77 / 0.56) — "the features align after all!". **But CODE cosine is magnitude-weighted**: a handful of always-on, high-magnitude latents dominate the dot product. 
+3. **BIN_PT** removes magnitude (just: does the latent fire, yes/no). It **collapses to 0.19 / 0.10**. So the *set* of latents a feature uses barely overlaps across modalities — the high CODE_PT was carried by the magnitudes of a few ubiquitous latents, **not** by a shared concept vocabulary.
+4. Independently, the per-feature **φ co-activation** test (§1) — which asks whether a latent fires on bio and text of the *same samples*, base-rate-controlled — finds essentially **zero** selective cross-modal latents. φ and BIN agree.
+
+**Why the magnitude confound is real and not hand-waving:** protein bio-tokens have **~50× the residual norm of text tokens** (median 2287 vs 45; §4). Any unnormalized/magnitude-weighted similarity is therefore dominated by whatever the bio tokens do, which is exactly the CODE-vs-BIN gap.
+
+**Picture — `analysis/crossmodal_geometry_umap.png`:**
+
+![Cross-modal residual-stream geometry](analysis/crossmodal_geometry_umap.png)
+
+- **(a) Protein**: UMAP (cosine metric) of protein vs text residuals — two **separated clouds** (mean cross-modal cos ≈ 0). Different subspaces.
+- **(b) DNA**: dna vs text residuals **overlap** (cos ≈ 0.3). Shared subspace — yet still no semantic binding (§1).
+- **(c)** residual-norm histograms: protein tokens sit at a much larger magnitude than text; DNA ≈ text.
+- **(d)** RAW / CODE / BIN cross-modal cosine bars: CODE looks aligned, **BIN collapses** — the magnitude artifact, visualized.
+
+**Reasons to stay skeptical (stated plainly):**
+- BIN cosine and φ are *sparsity-threshold-dependent* (τ=1.0). A different threshold could shift the co-firing set. We used the same τ across modalities, and the within-modality controls (PP/TT) behave sensibly, but it is one knob.
+- "Orthogonal residuals" is measured on **co-firing** features' top tokens, not the whole stream; it's a statement about where these features live, not a global claim.
+- The cleanest test doesn't rely on cosine geometry at all: **causal activation patching** (does patching bio activations into a text-only forward change the answer?). That's the recommended confirmation, and the **balanced DNA SAE** removes the training-imbalance objection to the DNA half. Until those land, treat §6 as *strong correlational evidence*, not proof.
+
+## 7. The auto-interpret prompt (live dashboard button)
+
+The 🔍 Auto-interpret button sends a feature's top-50 activation windows (peak token marked with `«…»`) to Llama-3.1-70B via NIM and asks for a structured label. The prompt is **domain-specific** — DNA and protein get different system prompts + KIND taxonomies (otherwise DNA features get force-fit into protein categories, e.g. everything → STRUCTURE). It also labels **each band separately** (dna / question / reasoning / answer, or protein / reasoning / answer).
+
+**System prompt — DNA models:**
+> You interpret a sparse-autoencoder feature of a DNA variant-effect-prediction LLM (Evo2 DNA embeddings fed into Qwen). The DNA side is nucleotide tokens (A/C/G/T k-mers, incl. ⟦S⟧/⟦E⟧ segment markers); the text side is a variant QUESTION (e.g. '...chromosome 1 position 1040717, gene AGRN: benign or pathogenic?') and a short ANSWER (e.g. 'Answer: pathogenic; Congenital myasthenic syndrome'). «token» marks where the feature fires HARDEST. Name the SPECIFIC token/pattern; do NOT give a generic category.
+
+**System prompt — protein models:**
+> You interpret a sparse-autoencoder feature of a protein-reasoning LLM. Its reasoning/answer text frequently PRINTS Gene-Ontology term names (e.g. 'cytosol', 'protein binding') and GO accessions (e.g. 'GO:0005737'). «token» marks where the feature fires HARDEST. Do NOT give a generic biological category — name the SPECIFIC token/pattern, and judge whether it is merely firing on a printed GO term/accession (label-reading) vs genuine reasoning.
+
+**User message (both):**
+```
+This feature's PEAK token (what it fires hardest on) across the windows: {peak_tokens}.
+Windows (« » = peak):
+  - {window 1}
+  - {window 2}
+  ... (up to 50)
+
+Reply in EXACTLY this format:
+TRIGGER: <the specific token or short pattern it fires on>
+{KIND line — see taxonomy below}
+MEANING: <ONE precise, non-generic sentence>
+```
+
+**KIND taxonomy:**
+- **DNA:** `NUCLEOTIDE-MOTIF | GENE-NAME | VARIANT-COORD | VERDICT | DISEASE-NAME | STRUCTURE`
+- **Protein:** `GO-TERM-TEXT | ACCESSION | REASONING | STRUCTURE | PROTEIN` (GO-TERM-TEXT/ACCESSION flag label-reading vs genuine reasoning)
+
+Settings: `temperature=0.1`, `max_tokens=130`, top-50 windows, ±8-token context. Source: `scripts/autointerp_server.py`.
+
+---
+
 ## Artifacts
 
 - Protein cross-modal (full 117k, L24): `multimodal_dashboard/public/crossmodal/crossmodal_l24_matryoshka_full.json`
 - DNA cross-modal (full 36k, L16): `/data/savithas/dna_sae/crossmodal_dna_FULL.json`
 - Matryoshka quality atlases (7 variants): `/data/savithas/phase3_full/qual_atlas/<variant>/`
-- DNA feature dashboard: `?model=dna_l16_vep` (with live auto-interpret button)
+- Cross-modal geometry figure + script: `analysis/crossmodal_geometry_umap.png`, `scripts/geometry_umap.py`
+- Geometry tables (RAW/CODE/BIN): `scripts/eq7_verify.py` logs (`eq7_dna_ep3final_8sh.log`, `eq7_verify_l16*.log`)
+- Balanced DNA SAE (control, in progress): `/data/savithas/dna_sae/sae-dna-l16-vep-balanced/`
+- DNA feature dashboard: `?model=dna_l16_vep` (live auto-interpret button; per-band dna/text — question/answer split being added)
 
 ## Optional next step
 
