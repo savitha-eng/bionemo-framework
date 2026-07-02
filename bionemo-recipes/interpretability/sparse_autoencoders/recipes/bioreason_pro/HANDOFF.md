@@ -1,5 +1,8 @@
 # BioReason-Pro SAE — handoff / continuation doc
 
+> **Quick status:** see **[STATUS.md](STATUS.md)** (updated 2026-06-29) for the current "where are we" review —
+> what's accomplished, what's running, what's viewable. This doc holds the deep conventions/methods.
+
 **Purpose:** a self-contained brief so a *new* Claude session (e.g. on a fresh dev pod) or a teammate can
 pick up this work. The chat history does NOT transfer between pods, but (a) this doc lives on shared NFS
 (`/data/savithas`, readable from any pod) and (b) the memory dir is also on shared NFS
@@ -12,6 +15,77 @@ _Last updated: 2026-06-23 by the session that built the rigorous interpretabilit
 > **⚠️ NEW-POD FIRST STEPS (read §2.1 + §2.2):** much of the 8k analysis lived on `/scratch` (pod-local).
 > A copy job mirrored it to `/data/savithas/phase3_subset_8k/` (persists). On a new pod, use the
 > `/data` paths, NOT `/scratch`. Verify the copy finished: `tail /data/savithas/phase3_train_interp/preserve.log`.
+
+---
+
+## 0. LATEST STATE, CONVENTIONS & METHODS (2026-06-26) — read this first
+
+### 0.1 What exists now
+- **Depth sweep — 14 SAEs, L12 through L35** (exp16, top_k=128), full-data trained. Dashboards for all:
+  `multimodal_dashboard/public/l##_exp16/`, viewable as `?model=l##_exp16` (vite on :5174).
+- **k-sweep** (L28): `l28_k32`, `l28_k64` — lower k gives FEWER multi-token features (k=128 is best).
+- **Modality-balanced SAE** (L24, 50/50 protein:text): `l24_balanced`; a 30/70 variant is the better follow-up.
+- **Activation stores:** `cache_dir/activations/train_full_L24_L26_L28_L30_L32` (+ `_L16_L18_L20_L22`,
+  `_L12_L14`, `_L33_L34_L35`), ~1.6 TB/layer, 117,002 proteins / 421M tokens. `token_labels.parquet`
+  (position_type protein|go|text) at each store root, row-aligned to shard concatenation order.
+
+### 0.2 INTERPRETATION CONVENTIONS (easy to get wrong — be strict)
+- **Variance explained: ALWAYS report `var_exp_norm` (normalized FVU), NEVER raw `var_exp`.** Raw is ~0.99 for
+  every healthy SAE (a few high-variance residual dims dominate) → meaningless; quoting it is a red flag. The
+  honest, loss-aligned metric is **normalized**: healthy range here **~0.81–0.91**.
+- **Dead latents — TWO different numbers, don't conflate:** (1) **Training `dead_latents (%)`** (wandb) on the
+  *training* distribution — healthy ~0.25–11%, and it STARTS high (e.g. 78% @ step ~2000) and falls via AuxK,
+  so judge the END. (2) **`dead-everywhere`** (`per_band_coverage.py`) on the *natural eval* store — a
+  *balanced* SAE reads ~77% here from distribution shift, not breakage. Report both, labeled.
+- **Reasoning traces: train on the FULL teacher-forced sequence — prompt + `<think>`reasoning`</think>` +
+  answer (ALL tokens)** (Jared/Goodfire practice — don't special-case reasoning). Caveat: reasoning =
+  GPT-5-distilled SFT targets (imitation), an on-distribution proxy, not the model's rollouts → generation-mode
+  is the clean version for *reasoning* claims. Biology unaffected (causal masking; inputs). `<think>`/`</think>`
+  (ids 151667/151668) split the text band into prompt/reasoning/answer.
+- **Cross-modal: `crossmodal_omega` is ARTIFACT-PRONE — don't trust it** (spikes for unimodal/dense features;
+  L32 "541 cross-modal" and balanced-L24 "32" were artifacts). Use **band-mass** (protein_frac>0.2 AND
+  text_frac>0.2) or **per-protein co-occurrence** (`crossmodal_cooccur.py`, SAE-V Eq.7 within-sample). By those,
+  genuine protein↔text fusion is **rare at every layer** (~80 band-mass features, ~0 cosine alignment).
+- **`<go>` graph tokens are a fixed ontology reduction, NOT per-protein GO terms** — don't interpret them;
+  GO info the model uses comes from TEXT (`go_pred`). Ablation: GO-graph channel is unused (ΔCE=0).
+
+### 0.3 KEY RESULTS
+- **Depth:** pure-protein features peak at the EXTREMES — input L12 (145) and final L35 (195) — thin in the
+  deep middle (L30–34 ≈ 62–85). Reasoning-specialized features peak sharply at **L24**.
+- **Causal fusion (headline)** — `analysis/INPUT_ABLATION.md`: zeroing the protein embedding raises CE on the
+  model's OWN reasoning by **+0.16 (≈15%, t=31, 93% of 300 proteins)**, answer +0.07. The model fuses protein
+  structure into its reasoning — **deeper than tool-calling**. GO-graph embed unused (ΔCE=0).
+- **SAE-vs-causal tension:** SAE *features* show NO protein↔text fusion (≈0 cosine, all layers), yet the model
+  causally fuses → standard SAEs decompose the cross-modal direction into unimodal features.
+- **Modality balancing (50/50):** healthy (~11% train-dead, var_exp_norm 0.906); protein-firing coverage
+  3.6%→7.9% (8k eval); 13× protein-dominant (555 eval); did NOT recover fusion (band-mass 80→84). 50/50 is
+  aggressive (77% dead-everywhere on natural data); 30/70 is the gentler tradeoff.
+
+### 0.4 HOW WE TRAIN
+- **Extract** (`run_extract.sh` → `extract.py`, Env A, 8×H100 DDP): SFT `use_unsloth=False`, hook
+  `text_model.model.layers[L]`, drop pads → ActivationStore + token_labels.
+- **Train** (`run_sae.sh <L> <exp> <auxk> [topk]` → `train.py`, Env B, torchrun 8 GPU): TopK exp16 k128,
+  `--normalize-input --normalize-loss --aggregate-loss --dead-count-global --mix-shards 10 --presample-shards 8
+  --init-pre-bias --auxk 2048`. **NCCL inits with a 2h timeout** (slow NFS read else trips the 600s watchdog →
+  mid-epoch SIGABRT; this killed the balanced run @ step ~1950). End-of-epoch SIGABRT is benign — `run_*.sh`
+  promotes the latest step-ckpt to `checkpoint_final.pt`; **clean stale checkpoints before re-running**.
+- **Modality balancing:** prefer **resave** (`rebalance_store.py --drop-go --text-keep <p>` →
+  `run_prebalanced.sh <store> <L> <epochs> <tag>`) — reads the full store ONCE, trains fast. (In-loader
+  `train.py --balance-modality` works but re-reads the full store every epoch → slow.) text-keep: 0.188=50/50,
+  0.44=30/70.
+- **Lepton:** `lep job create -n <UNIQUE-name> --node-group yo-bom-lepton-001 --resource-shape gpu.8xh100-sxm
+  --container-image nvcr.io/nvidia/pytorch:26.02-py3 --image-pull-secrets lepton-nvidia-pstjohn
+  --mount /BioNeMo:/data:node-nfs:fs1 --command "bash <script>"`. **Unique names** (two same-named runs →
+  wandb confusion — happened with `sae-l24-exp16-balanced`).
+
+### 0.5 SCRIPTS & DASHBOARD QUIRKS
+- `per_band_coverage.py` (coverage+dead; **report eval size**: 8k store=7,999 prot, dashboard subset=555),
+  `crossmodal_cooccur.py` (streams to full 117k), `ablation_eval.py` (fusion), `rebalance_store.py`,
+  `make_role_sidecar.py`, `add_{span,go_text,go_terms,role}_metric.py`, `dashboard.py`/`build_dashboard.py`.
+- Dashboard examples = **±48-token windows centered on the PEAK** → a single window is bio OR text, never both;
+  for cross-modal you need a FULL-sequence view. `--drop-go` excludes go-centered examples. UMAP is laid out by
+  modality (reasoning vs answer don't spatially separate — both text). **Hard-refresh/incognito** after a
+  rebuild (DuckDB caches the parquet).
 
 ---
 

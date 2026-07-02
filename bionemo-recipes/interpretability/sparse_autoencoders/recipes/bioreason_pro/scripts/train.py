@@ -56,11 +56,26 @@ def parse_args():  # noqa: D103
     p.add_argument("--cache-dir", type=str, required=True, help="Path to activation cache (from extract.py)")
     p.add_argument("--balance-modality", action="store_true",
                    help="modality-balance at load time: drop <go>, downsample text to ~=protein (no data rewrite)")
+    p.add_argument("--balance-protein-frac", type=float, default=0.5,
+                   help="target protein:text token ratio when --balance-modality (0.5=50/50, 0.3=30/70)")
     p.add_argument("--layer", type=int, required=True, help="Layer index (validated against cache metadata)")
 
     sae_group = p.add_argument_group("SAE model")
     sae_group.add_argument("--model-type", type=str, default="topk", choices=["topk", "relu"])
     sae_group.add_argument("--expansion-factor", type=int, default=8)
+    sae_group.add_argument("--matryoshka-groups", type=str, default=None,
+                           help="comma-separated group fractions for a Matryoshka TopK SAE, e.g. "
+                                "'0.5,0.25,0.125,0.0625,0.0625' (MAIRA-2 scheme). Omit for vanilla TopK.")
+    sae_group.add_argument("--batch-topk", action="store_true",
+                           help="BatchTopK sparsity (top k*batch across the batch, EMA inference threshold) "
+                                "instead of per-token TopK — the MAIRA-2 multimodal recipe.")
+    sae_group.add_argument("--matryoshka-stochastic", action="store_true",
+                           help="sample Matryoshka prefix bounds each step (Pareto) instead of fixed.")
+    sae_group.add_argument("--matryoshka-modality-weights", type=str, default=None,
+                           help="per-prefix protein weight alpha (comma list, one per group), e.g. "
+                                "'0.8,0.65,0.5,0.5,0.5' (protein up-weighted in coarse prefixes). Each prefix "
+                                "loss = alpha*FVU_protein + (1-alpha)*FVU_text; tokens self-classified via "
+                                "protein_dir calibrated from a presample. Requires --balance-modality.")
     sae_group.add_argument("--top-k", type=int, default=32)
     sae_group.add_argument("--normalize-input", action=argparse.BooleanOptionalAction, default=False)
     sae_group.add_argument("--auxk", type=int, default=None)
@@ -131,6 +146,12 @@ def build_sae(args, input_dim: int) -> torch.nn.Module:  # noqa: D103
             aggregate_loss=args.aggregate_loss,
             dead_count_global=args.dead_count_global,
             normalize_loss=args.normalize_loss,
+            matryoshka_groups=([float(g) for g in args.matryoshka_groups.split(",")]
+                               if getattr(args, "matryoshka_groups", None) else None),
+            batch_topk=getattr(args, "batch_topk", False),
+            matryoshka_stochastic=getattr(args, "matryoshka_stochastic", False),
+            matryoshka_modality_weights=([float(a) for a in args.matryoshka_modality_weights.split(",")]
+                                         if getattr(args, "matryoshka_modality_weights", None) else None),
         )
     elif args.model_type == "relu":
         return ReLUSAE(input_dim=input_dim, hidden_dim=hidden_dim, l1_coeff=args.l1_coeff)
@@ -165,13 +186,14 @@ def main():  # noqa: D103
     if getattr(args, "balance_modality", False):
         import pyarrow.parquet as _pq
         tl = _pq.read_table(cache_path.parent / "token_labels.parquet")
-        band = np.asarray(tl.column("position_type").to_pylist(), dtype=object)
+        band = tl.column("position_type").to_numpy(zero_copy_only=False)  # to_numpy >> to_pylist on the 421M-row full store
         n_p = int((band == "protein").sum()); n_t = int((band == "text").sum())
-        text_keep = n_p / n_t  # balance text down to the protein count (go dropped)
+        frac = args.balance_protein_frac  # target protein fraction of kept tokens
+        text_keep = min(1.0, (n_p / n_t) * ((1.0 - frac) / frac))  # frac=0.5 -> n_p/n_t (50/50); 0.3 -> *2.333 (30/70)
         keep_probs = {"go": 0.0, "protein": 1.0, "text": text_keep}
         store.set_modality_balance(band, keep_probs)
-        print(f"[balance] modality-balanced loader: drop go, text-keep={text_keep:.3f} "
-              f"(protein={n_p:,} text={n_t:,}) -> bio≈text", flush=True)
+        print(f"[balance] modality-balanced loader: drop go, protein-frac={frac} text-keep={text_keep:.4f} "
+              f"(protein={n_p:,} text={n_t:,})", flush=True)
 
     # Cache validation (BioReason-Pro metadata keys).
     if meta.get("layer") != args.layer:
@@ -196,6 +218,34 @@ def main():  # noqa: D103
     sae = build_sae(args, input_dim)
     print(f"SAE: {args.model_type} input_dim={input_dim} hidden_dim={sae.hidden_dim} "
           f"(expansion={args.expansion_factor}, top_k={args.top_k})")
+
+    # Calibrate the protein/text classifier for per-prefix modality-weighted loss (opt-in). Reads RAW
+    # shard-0 (before the balance filter scrambles row alignment), computes the protein-minus-text
+    # direction in per-token-normalized space, sets sae.protein_dir/protein_thresh, and VALIDATES
+    # classification accuracy against the true band labels — only trustworthy because protein/text are
+    # near-orthogonal (RAW_PT~0). If accuracy is low, the modality weighting would be noise.
+    if getattr(args, "matryoshka_modality_weights", None):
+        import pyarrow.parquet as _pq
+        from sae.activation_store import shard_table_to_array
+        _tl = _pq.read_table(cache_path.parent / "token_labels.parquet")
+        _cb = _tl.column("position_type").to_numpy(zero_copy_only=False)
+        _s0 = sorted(cache_path.glob("shard_*.parquet"))[0]
+        _X = torch.from_numpy(shard_table_to_array(_pq.read_table(_s0)).astype("float32"))
+        _b = _cb[: _X.shape[0]]
+        _xn = (_X - _X.mean(-1, keepdim=True)) / (_X.std(-1, keepdim=True) + 1e-8)
+        _pm = torch.from_numpy(_b == "protein"); _tm = torch.from_numpy(_b == "text")
+        if int(_pm.sum()) < 100 or int(_tm.sum()) < 100:
+            raise ValueError(f"modality calibration: too few protein/text tokens in shard 0 ({int(_pm.sum())}/{int(_tm.sum())})")
+        _dir = _xn[_pm].mean(0) - _xn[_tm].mean(0); _dir = _dir / (_dir.norm() + 1e-8)
+        _proj = _xn @ _dir
+        _thr = 0.5 * (_proj[_pm].median() + _proj[_tm].median())
+        _sel = _pm | _tm
+        _acc = ((_proj > _thr)[_sel] == _pm[_sel]).float().mean().item()
+        sae.protein_dir.copy_(_dir); sae.protein_thresh.fill_(float(_thr))
+        print(f"[modality-weights] alpha schedule={args.matryoshka_modality_weights} | "
+              f"protein/text classifier accuracy={_acc:.3f} (protein={int(_pm.sum())} text={int(_tm.sum())})", flush=True)
+        if _acc < 0.9:
+            print(f"[modality-weights] WARNING: classifier accuracy {_acc:.3f} < 0.90 — modality weighting will be noisy!", flush=True)
 
     if args.init_pre_bias and hasattr(sae, "init_pre_bias_from_data"):
         print("Initializing pre_bias from geometric median of data...")

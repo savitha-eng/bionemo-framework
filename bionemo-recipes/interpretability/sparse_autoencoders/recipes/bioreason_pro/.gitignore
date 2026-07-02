@@ -1,5 +1,6 @@
-.venv/
+# generated dashboard data (12GB+ of parquet) — served locally, never committed
+multimodal_dashboard/public/
+multimodal_dashboard/node_modules/
+# local activation cache
 cache_dir/
-__pycache__/
-*.pyc
-outputs/
+*.pt

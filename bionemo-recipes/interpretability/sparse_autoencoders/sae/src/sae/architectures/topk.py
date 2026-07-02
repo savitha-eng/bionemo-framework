@@ -87,6 +87,11 @@ class TopKSAE(SparseAutoencoder):
         init_encoder_from_decoder: bool = True,
         init_pre_bias: bool = True,
         decoder_impl: str = "dense",
+        matryoshka_groups: Optional[list] = None,
+        batch_topk: bool = False,
+        matryoshka_stochastic: bool = False,
+        batchtopk_ema: float = 0.99,
+        matryoshka_modality_weights: Optional[list] = None,
     ):
         """Initialize the Top-K SAE with encoder, decoder, and optional auxiliary loss.
 
@@ -110,6 +115,44 @@ class TopKSAE(SparseAutoencoder):
         if decoder_impl not in ("dense", "triton"):
             raise ValueError(f"decoder_impl must be 'dense' or 'triton', got {decoder_impl!r}")
         self.decoder_impl = decoder_impl
+        # MATRYOSHKA (opt-in): list of group FRACTIONS of hidden_dim, e.g. [0.5, 0.25, 0.125, 0.0625, 0.0625]
+        # (MAIRA-2's scheme). Each nested PREFIX of latents must independently reconstruct x; the recon
+        # loss is the mean FVU over prefixes. This pressures low-index latents to learn the most general
+        # features (they appear in every prefix) -> a coarse->fine hierarchy + much less feature absorption.
+        # None (default) = vanilla TopK, behavior unchanged. Inference (encode/decode) is identical to
+        # TopK, so Matryoshka checkpoints load in plain TopKSAE for the dashboard/eval.
+        self.matryoshka_groups = matryoshka_groups
+        self.matryoshka_bounds = None
+        if matryoshka_groups is not None:
+            if decoder_impl == "triton":
+                raise ValueError("matryoshka_groups requires decoder_impl='dense' (the nested prefixes need dense decode)")
+            cum, acc = [], 0.0
+            for g in matryoshka_groups:
+                acc += g
+                cum.append(max(1, min(hidden_dim, int(round(acc * hidden_dim)))))
+            cum[-1] = hidden_dim  # final prefix is always the full dictionary
+            self.matryoshka_bounds = sorted(set(cum))
+        # BatchTopK (opt-in): keep the top (k * batch) activations across the WHOLE batch instead of
+        # exactly k per token -> variable per-token sparsity, each latent fires only when relevant
+        # (the MAIRA-2 / dictionary_learning recipe). Inference uses a calibrated EMA threshold.
+        self.batch_topk = batch_topk
+        self.batchtopk_ema = batchtopk_ema
+        self.register_buffer("batchtopk_threshold", torch.zeros(1))
+        # Matryoshka with STOCHASTIC prefixes (opt-in): sample prefix bounds each step (Pareto-favoring-short)
+        # instead of fixed -> smooth gradient pressure across latent indices (the noanabeshima variant).
+        self.matryoshka_stochastic = matryoshka_stochastic
+        if (batch_topk or matryoshka_stochastic) and decoder_impl == "triton":
+            raise ValueError("batch_topk / matryoshka_stochastic require decoder_impl='dense'")
+        # Per-prefix MODALITY-WEIGHTED loss (opt-in): each prefix b's recon loss becomes a convex combo
+        # alpha_b * FVU_protein + (1-alpha_b) * FVU_text, with alpha_b (protein weight) from
+        # matryoshka_modality_weights. Lets a nested band prioritize the weak modality (protein) so it
+        # gets strong coarse latents. Tokens are self-classified protein/text via `protein_dir`
+        # (set from a presample by train.py); default (None / zero dir) = uniform, behavior unchanged.
+        self.matryoshka_modality_weights = matryoshka_modality_weights
+        self.register_buffer("protein_dir", torch.zeros(input_dim))
+        self.register_buffer("protein_thresh", torch.zeros(1))
+        if matryoshka_modality_weights is not None and matryoshka_stochastic:
+            raise ValueError("matryoshka_modality_weights needs FIXED prefixes (incompatible with matryoshka_stochastic)")
         # False (default = previous per-token reduction) | True (batch-level aggregate FVU/auxk
         # ratio; opt in to fix dead latents starved by the per-token ratio on rare high-var tokens).
         self.aggregate_loss = aggregate_loss
@@ -150,7 +193,43 @@ class TopKSAE(SparseAutoencoder):
             "aggregate_loss": self.aggregate_loss,
             "dead_count_global": self.dead_count_global,
             "normalize_loss": self.normalize_loss,
+            "matryoshka_groups": self.matryoshka_groups,
+            "batch_topk": self.batch_topk,
+            "matryoshka_stochastic": self.matryoshka_stochastic,
+            "batchtopk_ema": self.batchtopk_ema,
+            "matryoshka_modality_weights": self.matryoshka_modality_weights,
         }
+
+    def _sparsify(self, codes_relu: torch.Tensor) -> torch.Tensor:
+        """Apply sparsity to ReLU pre-codes: per-token TopK (default) or BatchTopK (opt-in).
+
+        BatchTopK keeps the top (top_k * batch) activations across the WHOLE batch during training and
+        updates an EMA threshold; at eval it applies that fixed threshold (deterministic per token).
+        """
+        if not self.batch_topk:
+            v, i = torch.topk(codes_relu, self.top_k, dim=-1)
+            return torch.zeros_like(codes_relu).scatter(-1, i, v)
+        flat = codes_relu.reshape(-1)
+        if self.training:
+            nk = min(max(1, self.top_k * codes_relu.shape[0]), flat.numel())
+            thr = torch.topk(flat, nk, sorted=False).values.min().detach()
+            with torch.no_grad():
+                if float(self.batchtopk_threshold) == 0.0:
+                    self.batchtopk_threshold.fill_(float(thr))
+                else:
+                    self.batchtopk_threshold.mul_(self.batchtopk_ema).add_((1 - self.batchtopk_ema) * thr)
+        else:
+            thr = self.batchtopk_threshold
+        return codes_relu * (codes_relu >= thr)
+
+    def _prefix_bounds(self) -> list:
+        """Matryoshka prefix boundaries: fixed (default) or stochastic (Pareto-favoring-short) per step."""
+        if not self.matryoshka_stochastic:
+            return self.matryoshka_bounds
+        n = len(self.matryoshka_groups)  # number of nested prefixes
+        cuts = (torch.rand(n - 1, device=self.encoder.weight.device) ** 2 * self.hidden_dim).long()
+        cuts = sorted(set(int(c) for c in cuts.clamp(1, self.hidden_dim - 1).tolist()))
+        return cuts + [self.hidden_dim]
 
     def _init_encoder_from_decoder(self) -> None:
         """Initialize encoder weights as transpose of decoder weights.
@@ -234,12 +313,7 @@ class TopKSAE(SparseAutoencoder):
         """
         pre_act, _ = self.encode_pre_act(x)
         codes = torch.relu(pre_act)
-
-        # Apply top-k
-        top_k_vals, top_k_indices = torch.topk(codes, self.top_k, dim=-1)
-        codes_sparse = torch.zeros_like(codes).scatter(-1, top_k_indices, top_k_vals)
-
-        return codes_sparse
+        return self._sparsify(codes)
 
     def decode(self, codes: torch.Tensor, info: Optional[Dict[str, torch.Tensor]] = None) -> torch.Tensor:
         """Decode sparse codes.
@@ -268,13 +342,12 @@ class TopKSAE(SparseAutoencoder):
         pre_act, info = self.encode_pre_act(x)
         codes_relu = torch.relu(pre_act)
 
-        # Apply top-k
-        top_k_vals, top_k_indices = torch.topk(codes_relu, self.top_k, dim=-1)
-        codes = torch.zeros_like(codes_relu).scatter(-1, top_k_indices, top_k_vals)
-
-        if self.decoder_impl == "triton":
+        if self.decoder_impl == "triton" and not self.batch_topk:
+            top_k_vals, top_k_indices = torch.topk(codes_relu, self.top_k, dim=-1)
+            codes = torch.zeros_like(codes_relu).scatter(-1, top_k_indices, top_k_vals)
             recon = self._decode_topk_triton(top_k_vals, top_k_indices, info)
         else:
+            codes = self._sparsify(codes_relu)
             recon = self.decode(codes, info)
         return recon, codes
 
@@ -319,9 +392,9 @@ class TopKSAE(SparseAutoencoder):
         pre_act, info = self.encode_pre_act(x)
         codes_relu = torch.relu(pre_act)
 
-        # Apply top-k
-        top_k_vals, top_k_indices = torch.topk(codes_relu, self.top_k, dim=-1)
-        codes = torch.zeros_like(codes_relu).scatter(-1, top_k_indices, top_k_vals)
+        codes = self._sparsify(codes_relu)
+        # top_k_indices kept for the dead-latent stats path (works for batch-topk too)
+        top_k_indices = codes.nonzero(as_tuple=False)[:, 1] if self.batch_topk else torch.topk(codes_relu, self.top_k, dim=-1).indices
 
         recon = self.decode(codes, info)
 
@@ -516,15 +589,66 @@ class TopKSAE(SparseAutoencoder):
         # normalize_loss=True computes the FVU in NORMALIZED space (recon_norm vs x_norm) so every
         # token is weighted equally regardless of raw magnitude -- the objective then matches the
         # honest normalized variance_explained metric (otherwise high-norm tokens dominate the grad).
-        x_l, recon_l = self._loss_targets(x, recon, norm_info)
-        if not self.aggregate_loss:
-            mse = (recon_l - x_l).pow(2).mean(dim=-1)
-            x_var = (x_l - self.pre_bias).pow(2).mean(dim=-1)
-            recon_loss = (mse / (x_var + 1e-8)).mean()
+        def _fvu(target, pred):
+            if not self.aggregate_loss:
+                m = (pred - target).pow(2).mean(dim=-1)
+                v = (target - self.pre_bias).pow(2).mean(dim=-1)
+                return (m / (v + 1e-8)).mean()
+            m = (pred - target).pow(2).mean()
+            v = (target - self.pre_bias).pow(2).mean()
+            return m / (v + 1e-8)
+
+        if self.matryoshka_bounds is not None:
+            # MATRYOSHKA: each nested prefix of latents must reconstruct x on its own; loss = mean FVU
+            # over prefixes (the full-dictionary prefix == the standard recon, so `recon` above is reused
+            # for metrics/auxk). decode() is linear, so prefix recon = decode(codes with latents>=b zeroed).
+            # _prefix_bounds() = fixed bounds, or stochastic (Pareto-sampled) per step if enabled.
+            # If matryoshka_modality_weights is set + protein_dir calibrated: each prefix's FVU is a convex
+            # combo alpha*FVU_protein + (1-alpha)*FVU_text, tokens self-classified via protein_dir.
+            mw = self.matryoshka_modality_weights
+            use_mw = mw is not None and bool(float(self.protein_dir.abs().sum()) > 0)
+            is_prot = None
+            if use_mw:
+                xn = (x - norm_info["mu"]) / norm_info["std"] if (self.normalize_input and norm_info) else x
+                is_prot = (xn @ self.protein_dir) > float(self.protein_thresh)
+
+            def _fvu_masked(target, pred, mask):
+                if int(mask.sum()) == 0:
+                    return None
+                t, p = target[mask], pred[mask]
+                if not self.aggregate_loss:
+                    m = (p - t).pow(2).mean(dim=-1)
+                    v = (t - self.pre_bias).pow(2).mean(dim=-1)
+                    return (m / (v + 1e-8)).mean()
+                m = (p - t).pow(2).mean()
+                v = (t - self.pre_bias).pow(2).mean()
+                return m / (v + 1e-8)
+
+            prefix_losses = []
+            for i, b in enumerate(self._prefix_bounds()):
+                if b >= self.hidden_dim:
+                    recon_p = recon  # full prefix already computed
+                else:
+                    codes_p = codes.clone()
+                    codes_p[:, b:] = 0.0
+                    recon_p = self.decode(codes_p, norm_info)
+                x_l, recon_pl = self._loss_targets(x, recon_p, norm_info)
+                if use_mw:
+                    a = float(mw[min(i, len(mw) - 1)])  # protein weight for this prefix
+                    fp = _fvu_masked(x_l, recon_pl, is_prot)
+                    ft = _fvu_masked(x_l, recon_pl, ~is_prot)
+                    if fp is None:
+                        prefix_losses.append(ft)
+                    elif ft is None:
+                        prefix_losses.append(fp)
+                    else:
+                        prefix_losses.append(a * fp + (1 - a) * ft)
+                else:
+                    prefix_losses.append(_fvu(x_l, recon_pl))
+            recon_loss = torch.stack(prefix_losses).mean()
         else:
-            mse = (recon_l - x_l).pow(2).mean()
-            x_var = (x_l - self.pre_bias).pow(2).mean()
-            recon_loss = mse / (x_var + 1e-8)
+            x_l, recon_l = self._loss_targets(x, recon, norm_info)
+            recon_loss = _fvu(x_l, recon_l)
 
         # Sparsity metric (for logging)
         l0 = (codes != 0).float().sum(dim=-1).mean()

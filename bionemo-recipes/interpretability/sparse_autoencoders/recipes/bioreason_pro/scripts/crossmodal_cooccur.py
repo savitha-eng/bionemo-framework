@@ -24,6 +24,7 @@ def main():
     p.add_argument("--tau", type=float, default=2.0, help="min activation to count as 'fires' in a band")
     p.add_argument("--min-proteins", type=int, default=5, help="co-fire in >=this many samples to be cross-modal")
     p.add_argument("--topk", type=int, default=8, help="K for the Eq.7 within-sample paired cosine")
+    p.add_argument("--dump-json", default=None, help="write the full cross-modal feature list to this JSON (for the explorer page)")
     p.add_argument("--pair", default="protein-text",
                    choices=["protein-text", "protein-go", "go-text", "protein-reasoning",
                             "protein-answer", "protein-prompt", "go-reasoning", "go-answer"])
@@ -40,57 +41,62 @@ def main():
     if use_role and not lp.exists():
         raise SystemExit(f"[cooccur] {labels_file} missing — run make_role_sidecar.py --store {args.store} first")
     tl = pq.read_table(lp)
-    row_pid = np.asarray(tl.column("protein_id").to_pylist(), dtype=object)
-    row_band = np.asarray(tl.column(col).to_pylist(), dtype=object)
+    row_pid = tl.column("protein_id").to_numpy(zero_copy_only=False)   # to_numpy >> to_pylist on 421M rows
+    row_band = tl.column(col).to_numpy(zero_copy_only=False)
     shards = sorted(glob.glob(str(Path(args.store) / f"layer{args.layer}" / "shard_*.parquet")),
                     key=lambda q: int(Path(q).stem.split("_")[1]))[:args.shards]
     R = sum(pq.read_metadata(s).num_rows for s in shards)
     row_pid, row_band = row_pid[:R], row_band[:R]
-    X = np.concatenate([shard_table_to_array(pq.read_table(s)) for s in shards], axis=0)[:R].astype(np.float32)
 
     ck = torch.load(args.sae, map_location="cpu")
     sae = TopKSAE(**ck["model_config"]).to(dev).eval()
-    sae.load_state_dict({(k[7:] if k.startswith("module.") else k): v for k, v in ck["model_state_dict"].items()})
+    sae.load_state_dict({(k[7:] if k.startswith("module.") else k): v for k, v in ck["model_state_dict"].items()}, strict=False)
     H = sae.hidden_dim
 
-    # group rows by protein (contiguous-ish; just bucket)
-    order = np.argsort(row_pid, kind="stable")
-    pids, starts = np.unique(row_pid[order], return_index=True)
-    groups = np.split(order, starts[1:])
-    # NOTE: normalize per-protein inside the loop (normalizing all ~8M tokens on GPU OOMs)
+    # STREAM per-protein from ordered shards (proteins are contiguous in token order) -> holds ONE
+    # protein in RAM at a time, so this scales to the full 117k-protein / 421M-token store (no OOM).
+    def stream_proteins():
+        buf_X, buf_b, cur, row0 = [], [], None, 0
+        for sp in shards:
+            Xs = shard_table_to_array(pq.read_table(sp)).astype(np.float32)
+            n = Xs.shape[0]
+            ps = row_pid[row0:row0 + n]; bs = row_band[row0:row0 + n]; row0 += n
+            bnd = [0] + (np.where(ps[1:] != ps[:-1])[0] + 1).tolist() + [n]
+            for k in range(len(bnd) - 1):
+                s, e = bnd[k], bnd[k + 1]; p = ps[s]
+                if cur is None:
+                    cur = p
+                if p != cur:
+                    yield np.concatenate(buf_X), np.concatenate(buf_b); buf_X, buf_b, cur = [], [], p
+                buf_X.append(Xs[s:e]); buf_b.append(bs[s:e])
+        if buf_X:
+            yield np.concatenate(buf_X), np.concatenate(buf_b)
 
     cofire = np.zeros(H, dtype=np.int32)          # # samples where feature fires on BOTH bands (>tau)
     cos_sum = np.zeros(H, dtype=np.float64); cos_n = np.zeros(H, dtype=np.int32)
     fire_a = np.zeros(H, dtype=np.int32); fire_b = np.zeros(H, dtype=np.int32)  # single-band sample counts
+    n_samples = 0
     with torch.no_grad():
-        for g in groups:
-            rb = row_band[g]
-            ia = g[rb == ba]; ib = g[rb == bb]
+        for Xp, bp in stream_proteins():
+            n_samples += 1
+            ia = np.where(bp == ba)[0]; ib = np.where(bp == bb)[0]
             if len(ia) == 0 or len(ib) == 0:
                 continue
-            Xa = torch.from_numpy(X[ia]).to(dev); Xb = torch.from_numpy(X[ib]).to(dev)  # per-protein, small
-            ca = sae.encode(Xa)   # (na, H)
-            cb = sae.encode(Xb)
-            amax = ca.max(0).values; bmax = cb.max(0).values
-            fa = (amax > args.tau).cpu().numpy(); fb = (bmax > args.tau).cpu().numpy()
+            Xa = torch.from_numpy(Xp[ia]).to(dev); Xb = torch.from_numpy(Xp[ib]).to(dev)
+            ca = sae.encode(Xa); cb = sae.encode(Xb)
+            fa = (ca.max(0).values > args.tau).cpu().numpy(); fb = (cb.max(0).values > args.tau).cpu().numpy()
             fire_a += fa; fire_b += fb
             both = fa & fb
             cofire += both
-            # Eq.7 within-sample cosine for features co-firing in THIS sample
             fi = np.where(both)[0]
             if len(fi):
-                # shared k so the rank-paired tensors match even when a band is short (< K tokens)
                 k = min(args.topk, ca.shape[0], cb.shape[0])
-                ta = torch.topk(ca[:, fi], k, dim=0).indices  # (k, nf)
-                tb = torch.topk(cb[:, fi], k, dim=0).indices
-                Xan = torch.nn.functional.normalize(Xa, dim=1)  # per-protein normalize (no global OOM)
-                Xbn = torch.nn.functional.normalize(Xb, dim=1)
-                za = Xan[ta]   # (k, nf, d)
-                zb = Xbn[tb]
-                cs = (za * zb).sum(-1).mean(0).cpu().numpy()  # rank-paired cosine, mean over K -> (nf,)
+                ta = torch.topk(ca[:, fi], k, dim=0).indices; tb = torch.topk(cb[:, fi], k, dim=0).indices
+                Xan = torch.nn.functional.normalize(Xa, dim=1); Xbn = torch.nn.functional.normalize(Xb, dim=1)
+                cs = (Xan[ta] * Xbn[tb]).sum(-1).mean(0).cpu().numpy()   # rank-paired Eq.7 cosine
                 cos_sum[fi] += cs; cos_n[fi] += 1
-
-    n_samples = len(groups)
+            if n_samples % 5000 == 0:
+                print(f"  [{args.pair}] {n_samples} proteins...", flush=True)
     xm = cofire >= args.min_proteins
     cos_mean = np.where(cos_n > 0, cos_sum / np.maximum(cos_n, 1), 0.0)
     print(f"[cooccur] pair={args.pair} samples={n_samples} tau={args.tau} K={args.topk}")
@@ -102,6 +108,20 @@ def main():
     for f in top:
         if cofire[f] >= args.min_proteins:
             print(f"    F{int(f):<6} cofire={int(cofire[f])}/{n_samples}  cos={cos_mean[f]:.3f}  (fires {ba} in {int(fire_a[f])}, {bb} in {int(fire_b[f])})")
+
+    if args.dump_json:
+        import json
+        xf = np.where(xm)[0]
+        xf = xf[np.argsort(-cos_mean[xf])]  # most-aligned first
+        feats = [{"feature_id": int(f), "cofire": int(cofire[f]), "cofire_frac": round(float(cofire[f]) / n_samples, 4),
+                  "cosine": round(float(cos_mean[f]), 3), f"fire_{ba}": int(fire_a[f]), f"fire_{bb}": int(fire_b[f])}
+                 for f in xf]
+        out = {"pair": args.pair, "layer": args.layer, "n_samples": int(n_samples), "n_latents": int(H),
+               "tau": args.tau, "topk": args.topk, "min_proteins": args.min_proteins,
+               "n_cofire": int(xm.sum()), "n_aligned_0.3": int((xm & (cos_mean > 0.3)).sum()),
+               "n_aligned_0.5": int((xm & (cos_mean > 0.5)).sum()), "features": feats}
+        json.dump(out, open(args.dump_json, "w"), indent=2)
+        print(f"[cooccur] dumped {len(feats)} cross-modal features -> {args.dump_json}", flush=True)
 
 
 if __name__ == "__main__":

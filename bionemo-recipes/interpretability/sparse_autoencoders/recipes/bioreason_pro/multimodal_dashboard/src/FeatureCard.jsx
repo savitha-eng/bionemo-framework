@@ -187,7 +187,10 @@ const FeatureCard = forwardRef(function FeatureCard({ feature, isHighlighted, fo
   const examplesCacheRef = useRef(null)
   const scrollGroupRef = useRef([])
   const [alignMode, setAlignMode] = useState('start')
+  const [bandLimits, setBandLimits] = useState({})  // per-band: how many examples to show (expandable)
   const [hoveredToken, setHoveredToken] = useState(null)
+  const [aiLabel, setAiLabel] = useState(null)
+  const [aiLoading, setAiLoading] = useState(false)
 
   // If forceExpanded changes to true, expand the card
   useEffect(() => {
@@ -251,8 +254,47 @@ const FeatureCard = forwardRef(function FeatureCard({ feature, isHighlighted, fo
                 F1: {bestF1.toFixed(2)}
               </span>
             )}
+            <button
+              title="Generate an autointerp label for this feature live (NIM)"
+              onClick={async (e) => {
+                e.stopPropagation(); setAiLoading(true); setAiLabel(null)
+                const model = new URLSearchParams(window.location.search).get('model') || ''
+                try {
+                  const r = await fetch(`${window.location.protocol}//${window.location.hostname}:5199/autointerp`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ model, feature_id: feature.feature_id, bands: true }),
+                  })
+                  const d = await r.json(); setAiLabel(d)
+                } catch (err) { setAiLabel({ error: '(autointerp server offline — tunnel/start port 5199)' }) }
+                setAiLoading(false)
+              }}
+              style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '4px', border: '1px solid #76b900',
+                       background: 'transparent', color: '#76b900', cursor: 'pointer', whiteSpace: 'nowrap' }}
+            >{aiLoading ? '⏳ interpreting…' : '🔍 Auto-interpret'}</button>
           </div>
           <div style={styles.description}>{description}</div>
+          {aiLabel && (
+            <div style={{ fontSize: '11px', marginTop: '4px' }}>
+              {aiLabel.error ? <span style={{ color: '#e88' }}>{aiLabel.error}</span> : (<>
+                <div style={{ color: '#bfe', whiteSpace: 'pre-wrap' }}>🔍 {aiLabel.label}</div>
+                {aiLabel.peak_tokens && <div style={{ color: '#888', fontSize: '10px' }}>peak: {aiLabel.peak_tokens}</div>}
+                {aiLabel.band_labels && Object.entries(aiLabel.band_labels).map(([b, v]) => {
+                  const icon = { reasoning: '📖', answer: '✅', prompt: '❓', protein: '🧬', dna: '🧬', text: '📝', go: '🏷️' }[b] || '•'
+                  return (
+                    <div key={b} style={{ marginTop: '4px', paddingLeft: '6px', borderLeft: '2px solid #345' }}>
+                      <div style={{ color: '#9cf', fontSize: '10px', fontWeight: 600 }}>
+                        {icon} {b} <span style={{ color: '#678', fontWeight: 400 }}>(peak {v.peak_activation}, n={v.n_examples})</span>
+                      </div>
+                      <div style={{ color: '#bfe', whiteSpace: 'pre-wrap', fontSize: '10px' }}>{v.label}</div>
+                    </div>
+                  )
+                })}
+                {(aiLabel.windows || []).slice(0, 6).map((w, i) => (
+                  <div key={i} style={{ fontFamily: 'monospace', color: '#9a9', fontSize: '10px', margin: '1px 0' }}>{w}</div>
+                ))}
+              </>)}
+            </div>
+          )}
         </div>
         <div style={styles.stats}>
           <div style={styles.stat}>
@@ -384,13 +426,14 @@ const FeatureCard = forwardRef(function FeatureCard({ feature, isHighlighted, fo
                   ;(byBand[b] = byBand[b] || []).push(ex)
                 }
                 const bandsPresent = ['protein', 'go', 'prompt', 'reasoning', 'answer', 'text'].filter(b => byBand[b]?.length)
-                const perBand = bandsPresent.length > 1 ? 3 : 6  // show fewer per band when fusing
+                const perBand = bandsPresent.length > 1 ? 5 : 10  // default shown per band; expandable below
                 // peak activation per band + the overall top, so WEAK (spurious) bands can be flagged
                 const bandPeak = b => Math.max(...byBand[b].map(e => e.max_activation || 0))
                 const topPeak = Math.max(...bandsPresent.map(bandPeak), 1e-9)
                 return bandsPresent.map(b => {
                   const meta = BAND_META[b] || { label: b.toUpperCase(), color: '#666' }
-                  const bandExamples = byBand[b].slice(0, perBand)
+                  const limit = bandLimits[b] ?? perBand
+                  const bandExamples = byBand[b].slice(0, limit)
                   const peak = bandPeak(b)
                   const weak = peak < 0.3 * topPeak  // fires <30% as strongly as the feature's dominant band
                   const { anchor: alignAnchor, totalLength } = computeAlignInfo(bandExamples, alignMode)
@@ -401,6 +444,7 @@ const FeatureCard = forwardRef(function FeatureCard({ feature, isHighlighted, fo
                         {meta.label} examples ({byBand[b].length}) · peak {peak.toFixed(1)}
                         {weak && <span style={{ fontWeight: 400, fontStyle: 'italic', color: '#999' }}> — weak / likely spurious</span>}
                       </div>
+                      <div style={bandExamples.length > 8 ? { maxHeight: 520, overflowY: 'auto', paddingRight: 4 } : undefined}>
                       {bandExamples.map((ex, i) => (
                         <div key={`${b}-${i}`} style={styles.example}>
                           <div style={styles.exampleMeta}>
@@ -439,6 +483,23 @@ const FeatureCard = forwardRef(function FeatureCard({ feature, isHighlighted, fo
                           />
                         </div>
                       ))}
+                      </div>
+                      {byBand[b].length > perBand && (
+                        <button
+                          onClick={e => {
+                            e.stopPropagation()
+                            setBandLimits(prev => ({
+                              ...prev,
+                              [b]: (prev[b] ?? perBand) >= byBand[b].length ? perBand : byBand[b].length,
+                            }))
+                          }}
+                          style={{ fontSize: 11, margin: '2px 0 6px', padding: '2px 8px', cursor: 'pointer',
+                                   background: 'transparent', border: `1px solid ${meta.color}`, color: meta.color,
+                                   borderRadius: 4 }}
+                        >
+                          {limit >= byBand[b].length ? `show top ${perBand}` : `show all ${byBand[b].length}`}
+                        </button>
+                      )}
                     </div>
                   )
                 })

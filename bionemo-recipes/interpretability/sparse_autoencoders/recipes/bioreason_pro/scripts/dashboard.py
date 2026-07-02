@@ -68,11 +68,25 @@ def parse_args():  # noqa: D103
     p.add_argument("--max-length-protein", type=int, default=2000)
     p.add_argument("--encode-batch", type=int, default=8192)
     p.add_argument("--device", default="cpu")
+    p.add_argument("--bands", default="protein,go,text",
+                   help="position_type bands. This window-decoder is protein/text specific; for the DNA "
+                        "store (dna,text) the DNA tokens are opaque evo2 embeddings with no per-token "
+                        "text, so build_dashboard.py already emits the (band-tagged) feature_examples.")
     return p.parse_args()
 
 
 def main():  # noqa: D103
     args = parse_args()
+    bands = [b.strip() for b in args.bands.split(",") if b.strip()]
+    # This window-decoder reconstructs protein-token/text windows via the bioreason_pro SFT tokenizer +
+    # protein sequences. The DNA store has no protein sequences and its DNA tokens are opaque evo2
+    # embeddings (no per-token text), so decoding windows is undefined there. build_dashboard.py already
+    # writes a band-tagged feature_examples.parquet for the DNA dashboard; use that instead.
+    if "dna" in bands:
+        raise SystemExit(
+            "[dashboard] DNA store detected (--bands includes 'dna'). This protein/text window decoder "
+            "does not apply to DNA (opaque evo2-embedding tokens). Use build_dashboard.py's "
+            "feature_examples.parquet output for the DNA dashboard.")
     sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
     import bioreason_pro_sae.data as brp_data
     from bioreason_pro_sae.model_loader import _install_unsloth_stub
@@ -137,21 +151,23 @@ def main():  # noqa: D103
     print(f"[dashboard] reproduced token ids for {len(pid_to_ids)} proteins")
 
     # ---- load store: activations + per-token labels ----
+    # NOTE: to_numpy >> to_pylist on tens-of-M rows, and cap to first-N proteins via CONTIGUITY
+    # (proteins are contiguous in store order) instead of np.isin on a 29M-element object array (minutes).
     tl = pq.read_table(Path(args.store) / "token_labels.parquet")
-    row_pid = np.asarray(tl.column("protein_id").to_pylist(), dtype=object)
-    row_tidx = np.asarray(tl.column("token_index").to_pylist(), dtype=np.int64)
-    row_band = np.asarray(tl.column("position_type").to_pylist(), dtype=object)
-    n_rows = len(row_pid)
-
+    row_pid_full = tl.column("protein_id").to_numpy(zero_copy_only=False)
+    n_rows = len(row_pid_full)
     shards = sorted(glob.glob(str(Path(args.store) / f"layer{args.layer}" / "shard_*.parquet")),
                     key=lambda q: int(Path(q).stem.split("_")[1]))
-    if args.num_proteins:  # cap rows + shards to the first-N proteins (contiguous leading rows)
-        _keep = np.isin(row_pid, np.asarray(list(pid_to_ids), dtype=object))
-        R = int(_keep.sum())
-        row_pid, row_tidx, row_band = row_pid[:R], row_tidx[:R], row_band[:R]
+    if args.num_proteins:  # R = first row of the (num_proteins)-th distinct protein (leading-contiguous)
+        change = np.ones(n_rows, dtype=bool); change[1:] = row_pid_full[1:] != row_pid_full[:-1]
+        starts = np.flatnonzero(change)
+        R = int(starts[args.num_proteins]) if args.num_proteins < len(starts) else n_rows
         n_rows = R
         _ss = int(pq.read_metadata(shards[0]).num_rows)
         shards = shards[: (R // _ss) + 2]
+    row_pid = row_pid_full[:n_rows]
+    row_tidx = tl.column("token_index").to_numpy(zero_copy_only=False)[:n_rows].astype(np.int64)
+    row_band = tl.column("position_type").to_numpy(zero_copy_only=False)[:n_rows]
     X = np.concatenate([shard_table_to_array(pq.read_table(sp)) for sp in shards], axis=0)[:n_rows]
     assert X.shape[0] == n_rows, f"store rows {X.shape[0]} != labels {n_rows}"
 
@@ -307,7 +323,7 @@ def main():  # noqa: D103
 
     tbl = pa.table({
         "feature_id": pa.array([r["feature_id"] for r in rows_out], pa.int32()),
-        "example_rank": pa.array([r["example_rank"] for r in rows_out], pa.int8()),
+        "example_rank": pa.array([r["example_rank"] for r in rows_out], pa.int16()),  # int8 overflows past 127 examples
         "protein_id": pa.array([r["protein_id"] for r in rows_out]),
         "band": pa.array([r["band"] for r in rows_out]),
         "sequence": pa.array([r["sequence"] for r in rows_out]),
