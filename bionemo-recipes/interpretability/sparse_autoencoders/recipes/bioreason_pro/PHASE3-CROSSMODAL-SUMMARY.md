@@ -117,6 +117,8 @@ This is the piece that's easy to over-read, so here is the full evidence rather 
 - **(c) residual-norm histogram** — the *length* (‖vector‖) of each token's residual, one curve per modality. Protein tokens sit ~50× to the right (median 2287) of text (45); DNA (45) ≈ text (55). "Longer vector = louder token"; louder tokens dominate any magnitude-weighted similarity.
 - **(d) RAW / CODE / BIN cross-modal cosine bars** — three ways to ask "do bio & text features align?": RAW (raw residuals) ≈ 0; CODE (magnitude-weighted code) looks aligned; **BIN (which features fire, magnitude removed) collapses**. The gap between the CODE and BIN bars *is* the magnitude artifact, visualized.
 
+**Robustness of the eq7 numbers:** the paper's cosine metric (top-K 5, δ=1) was re-run on **1,912 DNA samples** (exceeds SAE-V Table 5's 1,000); RAW/CODE/BIN came out 0.372 / 0.556 / 0.101 — **identical** to the earlier 383-sample run, so these are not small-sample artifacts. Note φ (§1) is our own co-activation metric, *not* the paper's cosine — we report both and they agree.
+
 **Reasons to stay skeptical (stated plainly):**
 - BIN cosine and φ are *sparsity-threshold-dependent* (τ=1.0). A different threshold could shift the co-firing set. We used the same τ across modalities, and the within-modality controls (PP/TT) behave sensibly, but it is one knob.
 - "Orthogonal residuals" is measured on **co-firing** features' top tokens, not the whole stream; it's a statement about where these features live, not a global claim.
