@@ -89,7 +89,9 @@ Two consequences of the mix + balancing that matter for everything below:
 
 ## 6. The cosine-vs-magnitude story (and why to be skeptical of it)
 
-This is the piece that's easy to over-read, so here is the full evidence rather than a one-liner. For features that fire on **both** modalities we measured the rank-paired mean cosine of their top tokens in three representations, cross-modal (bio↔text, "PT") and within-modality (PP, TT) as positive controls:
+**What SAE-V actually computes (Algorithm 1).** Per feature `k`, SAE-V collects the tokens whose SAE activation `z_jk > δ`, keeps the top-K text tokens and top-K vision tokens (ranked by `z_jk`), and computes the mean pairwise cosine of their **raw hidden states `h_j`** — *not* the SAE codes. The SAE only *selects and ranks* which tokens participate; the vectors compared are the model's raw activations. So SAE-V's cross-modal weight `ω_k` **is** our `RAW_PT`. `CODE_PT` / `BIN_PT` / φ (below) are *our extensions* that probe the shared SAE feature basis — SAE-V never computes them.
+
+This is the piece that's easy to over-read, so here is the full evidence rather than a one-liner. For features that fire on **both** modalities we measured the mean cosine of their top tokens in three representations, cross-modal (bio↔text, "PT") and within-modality (PP, TT) as positive controls:
 
 | condition | what it is | **Protein L16** | **DNA L16** |
 |---|---|---:|---:|
@@ -108,7 +110,9 @@ This is the piece that's easy to over-read, so here is the full evidence rather 
 
 **Why the magnitude confound is real and not hand-waving:** protein bio-tokens have **~50× the residual norm of text tokens** (median 2287 vs 45; §4). Any unnormalized/magnitude-weighted similarity is therefore dominated by whatever the bio tokens do, which is exactly the CODE-vs-BIN gap.
 
-**Plain-language version of CODE vs BIN (shopping-cart analogy).** Think of each token's SAE code as a *shopping cart*. **CODE** cosine compares two carts by *dollars spent per aisle* — if both carts dump a lot into one shared aisle, they look similar even if everything else differs. **BIN** cosine compares by *which aisles were visited at all* (checklist, amounts ignored). We measure **CODE high (~0.6–0.8) but BIN low (~0.1)**: bio and text both pour large magnitude into a *handful of shared always-on latents*, but the actual *set* of latents they fire barely overlaps. So the apparent "alignment" is carried by the magnitude of a few loud features, **not** by a shared feature vocabulary. (And §4's 50× protein-vs-text norm gap is exactly why magnitude dominates.)
+**Plain-language version of CODE vs BIN (shopping-cart analogy).** Think of each token's SAE code as a *shopping cart*. **CODE** cosine compares two carts by *dollars spent per aisle* — if both carts dump a lot into one shared aisle, they look similar even if everything else differs. **BIN** cosine compares by *which aisles were visited at all* (checklist, amounts ignored). We measure **CODE high (~0.6–0.8) but BIN low (~0.1)**: bio and text both pour large magnitude into a *handful of shared always-on latents* (e.g. features 23574/17954/35358 with mean-activation ~150, firing on 15–95% of tokens), but the actual *set* of latents they fire barely overlaps. So the apparent "alignment" is carried by the magnitude of a few loud features, **not** by a shared feature vocabulary.
+
+> **Two distinct magnitude effects (don't conflate them):** (i) the **raw** residual norm gap — protein tokens ~50× text (§4) — is a property of the *raw* stream; because the SAE normalizes each token's input (`normalize_input`) and cosine is scale-invariant per vector, this gap does **not** drive CODE_PT. (ii) The CODE_PT inflation comes from a few **ubiquitous high-code-activation features** *within* the code vector. Both are "magnitude," but only (ii) causes the CODE≫BIN gap; (i) matters instead for why unnormalized reconstruction / balancing is dominated by protein.
 
 **Picture — `analysis/crossmodal_geometry_umap.png`:**
 
@@ -116,7 +120,7 @@ This is the piece that's easy to over-read, so here is the full evidence rather 
 
 - **(a) Protein**: UMAP (cosine metric) of protein vs text residuals — two **separated clouds** (mean cross-modal cos ≈ 0). Different subspaces.
 - **(b) DNA**: dna vs text residuals **overlap** (cos ≈ 0.3). Shared subspace — yet still no semantic binding (§1).
-- **(c) residual-norm histogram** — the *length* (‖vector‖) of each token's residual, one curve per modality. Protein tokens sit ~50× to the right (median 2287) of text (45); DNA (45) ≈ text (55). "Longer vector = louder token"; louder tokens dominate any magnitude-weighted similarity.
+- **(c) residual-norm histogram** — the *length* (‖vector‖) of each token's *raw* residual, one curve per modality. Protein tokens sit ~50× to the right (median 2287) of text (45); DNA (45) ≈ text (55). This is a fact about the *raw* stream (relevant to reconstruction/balancing); it is *not* what drives the CODE_PT gap in (d), since cosine is scale-invariant and the SAE normalizes its input.
 - **(d) RAW / CODE / BIN cross-modal cosine bars** — three ways to ask "do bio & text features align?": RAW (raw residuals) ≈ 0; CODE (magnitude-weighted code) looks aligned; **BIN (which features fire, magnitude removed) collapses**. The gap between the CODE and BIN bars *is* the magnitude artifact, visualized.
 
 **Robustness of the eq7 numbers:** the paper's cosine metric (top-K 5, δ=1) was re-run on **1,912 DNA samples** (exceeds SAE-V Table 5's 1,000); RAW/CODE/BIN came out 0.372 / 0.556 / 0.101 — **identical** to the earlier 383-sample run, so these are not small-sample artifacts. Note φ (§1) is our own co-activation metric, *not* the paper's cosine — we report both and they agree.
@@ -125,6 +129,19 @@ This is the piece that's easy to over-read, so here is the full evidence rather 
 - BIN cosine and φ are *sparsity-threshold-dependent* (τ=1.0). A different threshold could shift the co-firing set. We used the same τ across modalities, and the within-modality controls (PP/TT) behave sensibly, but it is one knob.
 - "Orthogonal residuals" is measured on **co-firing** features' top tokens, not the whole stream; it's a statement about where these features live, not a global claim.
 - The cleanest test doesn't rely on cosine geometry at all: **causal activation patching** (does patching bio activations into a text-only forward change the answer?). That's the recommended confirmation, and the **balanced DNA SAE** removes the training-imbalance objection to the DNA half. Until those land, treat §6 as *strong correlational evidence*, not proof.
+
+### Why SAE-V's cosine works on vision-language models but ≈0 here
+
+SAE-V validated on LLaVA-Next and Chameleon, where cross-modal cosine is high. The difference is **whether the two modalities are angularly aligned in the residual stream** — not whether we project. We *do* project protein embeddings into the text space (ESM3 → 2-layer MLP → Qwen 2560-dim), exactly like LLaVA — but **same dimensionality ≠ same directions**, and cosine measures direction.
+
+| model | bio encoder pre-aligned to text? | fusion | cross-modal cosine |
+|---|---|---|---|
+| Chameleon | shared discrete token codebook (early fusion) | one space from layer 0 | works |
+| LLaVA-Next | **yes** — CLIP is image↔text contrastive | projector | works |
+| BioReason-Pro | **no** — ESM3 is protein-only, never sees text | projector | ≈ 0 (protein ⊥ text) |
+| BioReason-DNA | partial — Evo2 is a sequence model (more language-like) | projector | 0.37 (in between) |
+
+Two reasons the projection lands protein in a near-orthogonal region rather than aligned with text: (1) **ESM3 isn't text-aligned** (CLIP was trained on text; ESM3 wasn't), so the projector bridges an arbitrary gap with no directional-alignment pressure; (2) **the task only needs attention-readability** — the LLM reads protein via cross-attention, which requires protein tokens to be *addressable*, not *text-like in direction* (placing them in a distinct high-magnitude subspace is a fine solution, consistent with the 50× norm and ≈0 cosine; this part is a mechanistic hypothesis). Net: SAE-V's cosine assumes the LLaVA/Chameleon aligned-space regime, which does not hold for a protein encoder — so it structurally cannot see fusion here even if it exists, which is why we rely on φ / BIN in the shared feature basis instead.
 
 ## 7. The auto-interpret prompt (live dashboard button)
 
