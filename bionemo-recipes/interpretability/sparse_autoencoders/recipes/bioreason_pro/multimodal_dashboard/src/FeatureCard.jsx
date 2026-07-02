@@ -420,7 +420,9 @@ const FeatureCard = forwardRef(function FeatureCard({ feature, isHighlighted, fo
               {(() => {
                 // Group examples BY BAND so cross-modal features show BOTH their protein and text parts.
                 const BAND_META = {
-                  dna:       { label: 'DNA',       color: '#0891b2' },
+                  dna:         { label: 'DNA',          color: '#0891b2' },
+                  dna_ref:     { label: 'DNA (ref)',    color: '#0891b2' },
+                  dna_variant: { label: 'DNA (variant)', color: '#e11d48' },
                   protein:   { label: 'PROTEIN',   color: '#2563eb' },
                   go:        { label: 'GO',        color: '#16a34a' },
                   prompt:    { label: 'PROMPT (question)', color: '#64748b' },
@@ -435,7 +437,7 @@ const FeatureCard = forwardRef(function FeatureCard({ feature, isHighlighted, fo
                   ;(byBand[b] = byBand[b] || []).push(ex)
                 }
                 // 'dna' + 'question' included so DNA features show their DNA-side and question-side activations
-                const bandsPresent = ['dna', 'protein', 'go', 'prompt', 'question', 'reasoning', 'answer', 'text'].filter(b => byBand[b]?.length)
+                const bandsPresent = ['dna_ref', 'dna_variant', 'dna', 'protein', 'go', 'prompt', 'question', 'reasoning', 'answer', 'text'].filter(b => byBand[b]?.length)
                 const perBand = bandsPresent.length > 1 ? 5 : 10  // default shown per band; expandable below
                 // peak activation per band + the overall top, so WEAK (spurious) bands can be flagged
                 const bandPeak = b => Math.max(...byBand[b].map(e => e.max_activation || 0))

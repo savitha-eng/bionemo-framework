@@ -109,7 +109,7 @@ def _label(windows, peak_tokens, sys=SYS_PROTEIN, kind_line=KIND_PROTEIN):
 
 # candidate per-band split, in display order. Only bands actually present for the feature are labeled,
 # so protein dashboards yield reasoning/answer(/prompt/protein) and DNA yields dna/text automatically.
-BAND_ORDER = ["reasoning", "answer", "prompt", "question", "protein", "dna", "text", "go"]
+BAND_ORDER = ["reasoning", "answer", "prompt", "question", "protein", "dna_ref", "dna_variant", "dna", "text", "go"]
 
 
 def _interp(model, fid, bands):

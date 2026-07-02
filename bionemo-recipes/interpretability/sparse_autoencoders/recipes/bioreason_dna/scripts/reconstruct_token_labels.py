@@ -106,7 +106,12 @@ def main():  # noqa: D103
                 # question = user turn; reasoning = <think>..</think> span (empty for VEP); answer = after </think>
                 text_role = np.where(abs_index < asst_start, "question",
                                      np.where(abs_index <= think_end, "reasoning", "answer"))
-                bands = np.where(is_dna, "dna", text_role)
+                # DNA: 2 segments per example (roles=[reference, variant]); split by <|DNA_START|> count.
+                # segment 0 = reference strand, segment 1 = variant strand.
+                seg_abs = np.cumsum(row_np == S) - 1           # segment index per abs position
+                seg_kept = seg_abs[abs_index]                  # per kept token
+                dna_role = np.where(seg_kept <= 0, "dna_ref", "dna_variant")
+                bands = np.where(is_dna, dna_role, text_role)
             else:
                 bands = np.where(is_dna, "dna", "text")
             sid = str(ds[gi].get("sequence_id", f"row{gi}"))
@@ -132,9 +137,9 @@ def main():  # noqa: D103
     })
     pq.write_table(tbl, args.out)
     print(f"[recon] wrote {args.out}: {len(band_out):,} rows over {n} examples "
-          f"(dna={band_out.count('dna'):,} text={band_out.count('text'):,} "
-          f"question={band_out.count('question'):,} reasoning={band_out.count('reasoning'):,} "
-          f"answer={band_out.count('answer'):,})")
+          f"(dna_ref={band_out.count('dna_ref'):,} dna_variant={band_out.count('dna_variant'):,} "
+          f"dna={band_out.count('dna'):,} question={band_out.count('question'):,} "
+          f"reasoning={band_out.count('reasoning'):,} answer={band_out.count('answer'):,})")
 
 
 if __name__ == "__main__":
