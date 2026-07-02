@@ -185,6 +185,16 @@ Settings: `temperature=0.1`, `max_tokens=130`, top-50 windows, ±8-token context
 - Balanced DNA SAE (control, in progress): `/data/savithas/dna_sae/sae-dna-l16-vep-balanced/`
 - DNA feature dashboard: `?model=dna_l16_vep` (live auto-interpret button; per-band dna/text — question/answer split being added)
 
-## Optional next step
+## Next steps
 
-The one experiment that would give *positive* evidence for where fusion lives is **causal activation patching** across the modality boundary (patch bio-token activations into a text-only forward and measure answer shift). Both cross-modal verdicts point to attention-mediated fusion; patching would confirm the mechanism directly. Scoped but not yet run.
+**1. Causal activation patching.** The one experiment that would give *positive* evidence for where fusion lives — patch bio-token activations into a text-only forward and measure the answer shift. Both cross-modal verdicts point to attention-mediated fusion; patching would confirm the mechanism directly. Scoped but not yet run.
+
+**2. Alignment as the missing ingredient (the key follow-up).** Our whole cross-modal result reframes to a testable claim: **SAE cross-modal features require a representation where the two modalities are *directionally aligned*.** SAE-V's cosine (and, we argue, feature-level fusion itself) works on LLaVA-Next / Chameleon because their image tokens are angularly aligned with text — CLIP is image↔text contrastive, Chameleon shares a token space (§6). BioReason-Pro's projector was never given that alignment pressure — it only had to make protein tokens *attendable* — so protein lands in a near-orthogonal subspace and no cross-modal features form.
+
+The natural fix is to add the **CLIP piece** that's missing. [**Prot2Text-V2**](https://arxiv.org/abs/2505.11194) (Protein Function Prediction with Multimodal Contrastive Alignment) is almost exactly BioReason's architecture — ESM-3B → lightweight nonlinear projector → LLaMA-3.1-8B — *plus* **H-SCALE**, a CLIP-style contrastive stage that aligns pooled protein embeddings with their text descriptions before instruction tuning. That's the protein analog of CLIP: it should move protein from the "not aligned → cosine ≈ 0" regime toward the "aligned → cosine meaningful" regime.
+
+Concrete experiments, cheapest first:
+- **Run our existing SAE pipeline on an aligned model (Prot2Text-V2 or similar).** No retraining on our side — a *domain-matched* aligned control (same modalities as BioReason, but with alignment), isolating "alignment" as the variable rather than "protein vs images." Does an aligned bio-text model yield the cross-modal SAE features BioReason-Pro lacks?
+- **Add a contrastive alignment stage to BioReason's projector** (H-SCALE-style: align protein-token reps with GO/function text), then re-run the SAE + φ.
+
+Both outcomes are publishable: fusion features appear under alignment → *"alignment is the prerequisite for cross-modal SAE features in bio models"*; they still don't → *"even sequence-level alignment doesn't induce per-token feature fusion"* (a deeper statement about attention-mediated integration). Caveat: H-SCALE aligns at the **sequence level** (pooled), so whether it induces *per-token* cross-modal features is exactly the open question.
