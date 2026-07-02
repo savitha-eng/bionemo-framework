@@ -284,6 +284,13 @@ const FeatureCard = forwardRef(function FeatureCard({ feature, isHighlighted, fo
                     🔗 {aiLabel.shared_concept}
                   </div>
                 )}
+                {aiLabel.protein_enrichment && aiLabel.protein_enrichment.length > 0 && (
+                  <div style={{ fontSize: '11px', marginTop: '3px', padding: '2px 6px', borderRadius: '4px',
+                    background: 'rgba(37,99,235,0.15)', color: '#93c5fd' }}>
+                    🧬 protein enrichment: {aiLabel.protein_enrichment.map(e =>
+                      `${e.name || e.go} (${e.k}/${e.n}, p=${e.p < 1e-4 ? e.p.toExponential(1) : e.p.toFixed(4)})`).join(' · ')}
+                  </div>
+                )}
                 {aiLabel.peak_tokens && <div style={{ color: '#888', fontSize: '10px' }}>peak: {aiLabel.peak_tokens}</div>}
                 {aiLabel.band_labels && Object.entries(aiLabel.band_labels).map(([b, v]) => {
                   const icon = { reasoning: '📖', answer: '✅', prompt: '❓', protein: '🧬', dna: '🧬', text: '📝', go: '🏷️' }[b] || '•'

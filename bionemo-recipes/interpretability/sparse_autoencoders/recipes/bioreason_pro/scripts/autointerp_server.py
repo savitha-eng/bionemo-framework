@@ -26,6 +26,52 @@ def _examples(model):
     return _cache[model]
 
 
+# ---- protein-feature ENRICHMENT (reliable, no-LLM): which GO term is statistically over-represented
+# among the proteins a feature fires on, vs a random background (Fisher exact). Local go_ids, instant. ----
+_PROTEINS = ("/data/savithas/phase3-wt/bionemo-recipes/interpretability/sparse_autoencoders/recipes/"
+             "bioreason_pro/cache_dir/activations/train_full_L16_L18_L20_L22/proteins.parquet")
+_OBO = "/data/savithas/bioreason-pro/bioreason2/dataset/go-basic.obo"
+_go_state = {}
+
+
+def _protein_go():
+    if not _go_state:
+        import numpy as _np
+        from collections import Counter as _C
+        prot = pq.read_table(_PROTEINS).to_pandas()
+        gmap = {r.protein_id: (json.loads(r.go_ids) if isinstance(r.go_ids, str) else list(r.go_ids or []))
+                for r in prot.itertuples()}
+        names, cur = {}, None
+        if os.path.exists(_OBO):
+            for line in open(_OBO):
+                line = line.strip()
+                if line == "[Term]":
+                    cur = {}
+                elif line.startswith("id: GO:") and cur is not None:
+                    cur["id"] = line[4:]
+                elif line.startswith("name:") and cur is not None and "id" in cur:
+                    names[cur["id"]] = line[6:]
+        bg = list(_np.random.default_rng(0).choice(list(gmap), size=min(2000, len(gmap)), replace=False))
+        _go_state.update(gmap=gmap, names=names, bg=_C(t for pid in bg for t in gmap.get(pid, [])), nbg=len(bg))
+    return _go_state
+
+
+def _protein_enrichment(pids, top=3):
+    from collections import Counter
+    from scipy.stats import fisher_exact
+    st = _protein_go(); n, N = len(pids), st["nbg"]
+    fg = Counter(t for pid in pids for t in st["gmap"].get(pid, []))
+    out = []
+    for term, k in fg.items():
+        if k < 2:
+            continue
+        K = max(st["bg"].get(term, 1), k)  # background count (+guard so table is valid)
+        p = float(fisher_exact([[k, n - k], [K - k, (N - n) - (K - k)]], alternative="greater")[1])
+        out.append({"go": term, "name": st["names"].get(term, ""), "k": k, "n": n, "p": p})
+    out.sort(key=lambda d: d["p"])
+    return out[:top]
+
+
 def _win(seq, acts, ctx=8):
     """Return (window_with_peak_marked, peak_token)."""
     toks = seq.split(" ") if isinstance(seq, str) else list(seq)
@@ -134,6 +180,17 @@ def _interp(model, fid, bands):
             band_labels[b] = {"label": lab, "peak_activation": round(peak, 2),
                               "n_examples": int(len(bb)), "peak_tokens": bpk}
         out["band_labels"] = band_labels
+        # protein-band features get an ENRICHMENT-grounded label (which GO term is over-represented among
+        # the proteins it fires on) — reliable, no-hallucination, complements the raw-AA LLM guess.
+        if "protein" in present:
+            pb = sub[sub.band == "protein"].nlargest(20, "max_activation")
+            pids = list(dict.fromkeys(pb.protein_id.tolist()))
+            try:
+                enr = _protein_enrichment(pids)
+                if enr:
+                    out["protein_enrichment"] = enr
+            except Exception as e:  # noqa: BLE001
+                out["protein_enrichment_error"] = f"{type(e).__name__}: {e}"
         # cross-band SYNTHESIS: is the SAME concept shared across bands (a shared/cross-modal feature),
         # or does each band mean something different? This is the "embryo is a shared concept" judgment.
         if len(band_labels) >= 2:
