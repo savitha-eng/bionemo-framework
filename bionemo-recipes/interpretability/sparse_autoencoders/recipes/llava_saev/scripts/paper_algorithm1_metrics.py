@@ -169,7 +169,7 @@ def collect_algorithm1_state(args, sae: TopKSAE, row_band, row_sample):
             for start in range(0, x.shape[0], args.batch_size):
                 end = min(start + args.batch_size, x.shape[0])
                 global_rows = np.arange(row0 + start, row0 + end, dtype=np.int64)
-                xb = torch.from_numpy(np.ascontiguousarray(x[start:end])).to(args.device)
+                xb = torch.from_numpy(np.ascontiguousarray(x[start:end]).copy()).to(args.device)
                 vals_t, feats_t = sparse_topk(sae, xb)
                 vals = vals_t.float().cpu().numpy()
                 feats = feats_t.cpu().numpy().astype(np.int64, copy=False)
