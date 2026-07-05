@@ -56,20 +56,60 @@ def _protein_go():
     return _go_state
 
 
-def _protein_enrichment(pids, top=3):
+def _protein_enrichment(pids, top=3, min_k=2):
     from collections import Counter
     from scipy.stats import fisher_exact
     st = _protein_go(); n, N = len(pids), st["nbg"]
     fg = Counter(t for pid in pids for t in st["gmap"].get(pid, []))
     out = []
     for term, k in fg.items():
-        if k < 2:
+        if k < min_k:
             continue
         K = max(st["bg"].get(term, 1), k)  # background count (+guard so table is valid)
         p = float(fisher_exact([[k, n - k], [K - k, (N - n) - (K - k)]], alternative="greater")[1])
         out.append({"go": term, "name": st["names"].get(term, ""), "k": k, "n": n, "p": p})
     out.sort(key=lambda d: d["p"])
     return out[:top]
+
+
+# ---- UniProt keyword/domain enrichment (richer/structural vocab; reads a pre-warmed cache) ----
+_UCACHE = "/data/savithas/phase3_full/uniprot_cache.json"
+_up_state = {}
+
+
+def _uniprot_bg():
+    """Load the UniProt cache + background keyword/domain frequencies over the same 2000-protein GO background."""
+    if not _up_state:
+        import numpy as _np
+        from collections import Counter as _C
+        cache = json.load(open(_UCACHE)) if os.path.exists(_UCACHE) else {}
+        st = _protein_go()
+        bg = list(_np.random.default_rng(0).choice(list(st["gmap"]), size=min(2000, len(st["gmap"])), replace=False))
+        bgkw = _C(kw for p in bg for kw in cache.get(p, {}).get("keywords", []))
+        bgdm = _C(dm for p in bg for dm in cache.get(p, {}).get("domains", []))
+        _up_state.update(cache=cache, bgkw=bgkw, bgdm=bgdm, nbg=len(bg))
+    return _up_state
+
+
+def _uniprot_enrichment(pids, top=3, min_k=2):
+    from collections import Counter
+    from scipy.stats import fisher_exact
+    st = _uniprot_bg(); cache = st["cache"]
+    pids = [p for p in pids if p in cache]  # only cached proteins (pre-warmed)
+    n, N = len(pids), st["nbg"]
+    if n == 0:
+        return []
+    def enrich(field, bg):
+        fg = Counter(v for p in pids for v in cache[p].get(field, []))
+        rows = []
+        for term, k in fg.items():
+            if k < min_k or not term:
+                continue
+            K = max(bg.get(term, 1), k)
+            pv = float(fisher_exact([[k, n - k], [K - k, (N - n) - (K - k)]], alternative="greater")[1])
+            rows.append({"term": term, "k": k, "n": n, "p": pv})
+        rows.sort(key=lambda d: d["p"]); return rows[:top]
+    return {"keywords": enrich("keywords", st["bgkw"]), "domains": enrich("domains", st["bgdm"])}
 
 
 def _win(seq, acts, ctx=8):
@@ -182,9 +222,8 @@ def _interp(model, fid, bands):
         out["band_labels"] = band_labels
         # protein-band features get an ENRICHMENT-grounded label (which GO term is over-represented among
         # the proteins it fires on) — reliable, no-hallucination, complements the raw-AA LLM guess.
+        # (a) protein-TOKEN enrichment: proteins whose PROTEIN tokens the feature fires on (protein features)
         if "protein" in present:
-            # use ALL stored protein examples (dashboard keeps top ~50 by activation), not just top-20 —
-            # more proteins = more Fisher power AND a truer theme (top-few can miss the dominant one).
             pb = sub[sub.band == "protein"].sort_values("max_activation", ascending=False)
             pids = list(dict.fromkeys(pb.protein_id.tolist()))
             try:
@@ -193,6 +232,23 @@ def _interp(model, fid, bands):
                     out["protein_enrichment"] = enr
             except Exception as e:  # noqa: BLE001
                 out["protein_enrichment_error"] = f"{type(e).__name__}: {e}"
+            try:
+                up = _uniprot_enrichment(pids)  # keyword/domain enrichment (richer/structural)
+                if up and (up.get("keywords") or up.get("domains")):
+                    out["uniprot_enrichment"] = up
+            except Exception as e:  # noqa: BLE001
+                out["uniprot_enrichment_error"] = f"{type(e).__name__}: {e}"
+        # (b) SAMPLE-level enrichment: GO terms of the proteins of the SAMPLES the feature fires on (ANY band).
+        # For a TEXT/reasoning feature this reveals if it specializes by protein function (a sample-level
+        # cross-modal association). Caveat: a feature that fires on printed GO-term text enriches trivially
+        # (label-reading) — read alongside KIND (reasoning vs GO-TERM-TEXT).
+        try:
+            spids = list(dict.fromkeys(sub.sort_values("max_activation", ascending=False).protein_id.tolist()))
+            senr = _protein_enrichment(spids, min_k=3)
+            if senr:
+                out["sample_enrichment"] = senr
+        except Exception as e:  # noqa: BLE001
+            out["sample_enrichment_error"] = f"{type(e).__name__}: {e}"
         # cross-band SYNTHESIS: is the SAME concept shared across bands (a shared/cross-modal feature),
         # or does each band mean something different? This is the "embryo is a shared concept" judgment.
         if len(band_labels) >= 2:

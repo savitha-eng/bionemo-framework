@@ -287,7 +287,21 @@ const FeatureCard = forwardRef(function FeatureCard({ feature, isHighlighted, fo
                 {aiLabel.protein_enrichment && aiLabel.protein_enrichment.length > 0 && (
                   <div style={{ fontSize: '11px', marginTop: '3px', padding: '2px 6px', borderRadius: '4px',
                     background: 'rgba(37,99,235,0.15)', color: '#93c5fd' }}>
-                    🧬 protein enrichment: {aiLabel.protein_enrichment.map(e =>
+                    🧬 protein-token GO: {aiLabel.protein_enrichment.map(e =>
+                      `${e.name || e.go} (${e.k}/${e.n}, p=${e.p < 1e-4 ? e.p.toExponential(1) : e.p.toFixed(4)})`).join(' · ')}
+                  </div>
+                )}
+                {aiLabel.uniprot_enrichment && (aiLabel.uniprot_enrichment.keywords?.length || aiLabel.uniprot_enrichment.domains?.length) ? (
+                  <div style={{ fontSize: '11px', marginTop: '3px', padding: '2px 6px', borderRadius: '4px',
+                    background: 'rgba(20,120,180,0.15)', color: '#7dd3fc' }}>
+                    🔬 UniProt: {[...(aiLabel.uniprot_enrichment.keywords||[]), ...(aiLabel.uniprot_enrichment.domains||[])]
+                      .sort((a,b)=>a.p-b.p).slice(0,4).map(e => `${e.term} (${e.k}/${e.n}, p=${e.p<1e-4?e.p.toExponential(1):e.p.toFixed(4)})`).join(' · ')}
+                  </div>
+                ) : null}
+                {aiLabel.sample_enrichment && aiLabel.sample_enrichment.length > 0 && (
+                  <div style={{ fontSize: '11px', marginTop: '3px', padding: '2px 6px', borderRadius: '4px',
+                    background: 'rgba(139,92,246,0.15)', color: '#c4b5fd' }}>
+                    🧩 sample-protein GO (what the samples are about): {aiLabel.sample_enrichment.map(e =>
                       `${e.name || e.go} (${e.k}/${e.n}, p=${e.p < 1e-4 ? e.p.toExponential(1) : e.p.toFixed(4)})`).join(' · ')}
                   </div>
                 )}
