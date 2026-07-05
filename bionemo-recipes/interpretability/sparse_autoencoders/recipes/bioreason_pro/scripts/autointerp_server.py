@@ -183,7 +183,9 @@ def _interp(model, fid, bands):
         # protein-band features get an ENRICHMENT-grounded label (which GO term is over-represented among
         # the proteins it fires on) — reliable, no-hallucination, complements the raw-AA LLM guess.
         if "protein" in present:
-            pb = sub[sub.band == "protein"].nlargest(20, "max_activation")
+            # use ALL stored protein examples (dashboard keeps top ~50 by activation), not just top-20 —
+            # more proteins = more Fisher power AND a truer theme (top-few can miss the dominant one).
+            pb = sub[sub.band == "protein"].sort_values("max_activation", ascending=False)
             pids = list(dict.fromkeys(pb.protein_id.tolist()))
             try:
                 enr = _protein_enrichment(pids)
