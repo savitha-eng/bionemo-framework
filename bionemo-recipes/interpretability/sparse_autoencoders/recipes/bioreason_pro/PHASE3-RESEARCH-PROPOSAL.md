@@ -8,7 +8,7 @@ Bring SAE interpretability to **multimodal biology–language models** — LLMs 
 
 ## Why it's novel, and why we care
 
-Sparse autoencoders are the standard way to pull interpretable features out of a transformer, and over the past year they've been applied to vision–language models (SAE-V, Lou et al. 2025; Pach et al. 2025; crosscoders, Lindsey et al. 2024). No one has done this for **biology–language fusion models**; the recent bio-SAE review (Orlov et al. 2026) lists "scaling SAE analysis to multimodal architectures" as an open priority, but only in the vision sense.
+Sparse autoencoders are the standard way to pull interpretable features out of a transformer. We haven't found any prior work applying them to **biology–language fusion models**. The relevant multimodal-SAE literature is thin: the Orlov et al. bio-SAE systematic review (bioRxiv, March 2026) names "scaling SAE analysis to multimodal architectures" as a top-4 field priority and doesn't even consider biology + natural-language fusion, and the closest published methodological precedent is SAE-V (Lou et al., ICML 2025) on vision–language MLLMs — we lift their cross-modal feature-weighting metric directly.
 
 There's also a reason the business should care. When we fuse a biology model into an LLM (BioReason = Evo 2 + Qwen; BioReason-Pro = ESM3 + Qwen; Peter's DNA-tokenizer MoE on Nemotron), is the model really *combining* biology and language into something new, or doing a dressed-up version of tool-calling — reading the encoder's output like a lookup and largely ignoring the rest? That bears directly on whether multimodal bio models are worth the investment over a cheaper pipeline that just calls a bio tool, and SAEs give us a direct way to check.
 
