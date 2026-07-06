@@ -29,4 +29,7 @@ The effect is robust and layer-independent: unbalanced, protein gets a couple do
 
 ## Token geometry across layers (raw vs SAE)
 
-*(UMAP grid — raw residual vs unbalanced code vs balanced code, per layer — rendering; will be added here when the run completes.)*
+Balancing changes *which* features carry protein (above), but it doesn't change where the tokens sit. At every layer, protein and text separate in the raw residual stream, and the SAE codes inherit that separation whether the loss is unbalanced or balanced. The modality split is a property of the encoder that the SAE preserves at all depths — which is the same reason the raw-activation cross-modal metric reads near zero throughout (see the main proposal).
+
+![UMAP grid](analysis/figures/fig_layer_umap_grid.png)
+> **Token geometry across layers.** Rows = layers (L14–L32); columns = raw residual, unbalanced SAE code, balanced SAE code (same protein+text tokens, UMAP). Blue = protein, purple = text. Protein and text form separate regions in every panel — the separation is there in the raw residuals and survives encoding regardless of balancing.

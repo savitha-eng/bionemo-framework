@@ -74,9 +74,12 @@ def main():
     umap2d = None
     if not a.no_umap:
         import umap
+        from sklearn.decomposition import PCA
 
         def umap2d(M):
             Mn = M / (np.linalg.norm(M, axis=1, keepdims=True) + 1e-9)
+            if Mn.shape[1] > 50:   # PCA pre-reduction (UMAP docs recommend for high-dim) — ~10x faster
+                Mn = PCA(n_components=50, svd_solver="randomized", random_state=0).fit_transform(Mn)
             return umap.UMAP(n_neighbors=30, min_dist=0.3, metric="cosine", random_state=0).fit_transform(Mn)
 
     per_layer = {}   # N -> dict with tf/pf arrays (unbal,bal), 2D embeddings, counts (NO big code matrices)
