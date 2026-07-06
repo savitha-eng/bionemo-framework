@@ -14,7 +14,7 @@ There's also a reason the business should care. When we fuse a biology model int
 
 ## What I've found so far
 
-I focused on BioReason-Pro (ESM3 + Qwen) and got the whole pipeline working. Three things stand out.
+I built the full pipeline on BioReason-Pro (ESM3 + Qwen) — activation extraction, SAE training, and feature interpretation. Three findings stand out.
 
 **Balancing the modalities is the key training lever.** Protein tokens are ~50× larger in norm than text and are a small slice of the data, so a naively trained SAE mostly ignores them. Rebalancing the mix to ~50/50 protein:text raises the number of protein features from ~100 to ~1,800 (Figure 1); at the individual-feature level, the protein-selective region of the dictionary goes from nearly empty to populated (Figure 2). The SAE gains a dedicated protein vocabulary instead of forcing protein onto text-owned features.
 
@@ -26,7 +26,7 @@ I focused on BioReason-Pro (ESM3 + Qwen) and got the whole pipeline working. Thr
 
 **The model does learn real, interpretable reasoning features.** My interpretation pipeline labels a feature by the proteins it fires on and what they have in common, and it surfaces clean concepts from the model's reasoning — a "cell junction" feature, an "embryonic development" feature, a "transport / localization" feature — that line up with the proteins the concept applies to. The protein-side labels are still preliminary (many features are weak or fire too often to trust), so I treat them as candidates to verify.
 
-**The headline result: fusion doesn't appear to happen at the feature level.** Looking for features that tie a biological concept to its text, I find only structural markers. The standard cross-modal metric (from SAE-V) compares the model's raw activations, and in BioReason-Pro the protein and text activations point in almost entirely separate directions — the SAE inherits that separation regardless of balancing (Figure 3), so the metric reads near zero almost automatically (Figure 4; the DNA model overlaps somewhat more). This looks like a property of the encoder: the vision–language models where fusion showed up use encoders trained against text (CLIP), whereas ESM3 and Evo 2 have never seen text. My working hypothesis is that cross-modal features only emerge once the two modalities are actually aligned — which is directly testable.
+**The headline result: fusion doesn't appear to happen at the feature level.** Looking for features that tie a biological concept to its text, I find only structural markers. The standard cross-modal metric (from SAE-V) compares the model's raw activations, and in BioReason-Pro the protein and text activations point in almost entirely separate directions — the SAE inherits that separation regardless of balancing (Figure 3), so the metric reads near zero by construction (Figure 4; the DNA model overlaps somewhat more). This looks like a property of the encoder: the vision–language models where fusion showed up use encoders trained against text (CLIP), whereas ESM3 and Evo 2 have never seen text. My working hypothesis is that cross-modal features only emerge once the two modalities are actually aligned — which is directly testable.
 
 ![Figure 3](analysis/figures/fig6_raw_vs_sae_umap.png)
 > **Figure 3.** Same tokens, raw vs SAE (UMAP). The raw residual (a) already separates the modalities; the SAE codes inherit it whether the loss is unbalanced (b) or balanced (c). Balancing changes *which* features carry protein, not the token-level geometry.
@@ -39,7 +39,7 @@ I focused on BioReason-Pro (ESM3 + Qwen) and got the whole pipeline working. Thr
 This is where the novelty is — interpretability methods built for the multimodal case, not borrowed wholesale from the single-modality setting.
 
 - **Test the alignment hypothesis directly.** Run the same pipeline on **Prot2Text-V2**, which has BioReason's shape (protein encoder → adapter → LLM) but was explicitly trained to align protein and text. Cross-modal features appearing there but not in BioReason would be strong support. Baselines alongside it: reproduce SAE-V on LLaVA-Next to confirm the metric behaves, and run the DNA model.
-- **A modality-aware SAE architecture.** My balancing and Matryoshka experiments were a first pass and told me the fix is probably structural, not another loss tweak. I want to try a **mixture-of-experts SAE** — an expert per modality plus a shared "fusion" expert — so each modality gets its own capacity and cross-modal fusion becomes something we *measure* (does the fusion expert fire?) instead of hunt for.
+- **A modality-aware SAE architecture.** My balancing and Matryoshka experiments were a first pass, and they point to a structural fix rather than another loss tweak. I want to try a **mixture-of-experts SAE** — an expert per modality plus a shared "fusion" expert — so each modality gets its own capacity and cross-modal fusion becomes something we *measure* (does the fusion expert fire?) instead of hunt for.
 - **Complementary analyses:** how reasoning features evolve across layers, how SAE features compare to what attention is doing, and grounding protein features in structure via AlphaFold / OpenFold.
 
 ## Applying it to our models
