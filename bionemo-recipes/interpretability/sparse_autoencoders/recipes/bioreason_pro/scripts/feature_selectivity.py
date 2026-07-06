@@ -84,15 +84,21 @@ def main():
 
     fig, ax = plt.subplots(1, 2, figsize=(13, 6.2), sharex=True, sharey=True)
     for A, (tag, tf, pf, ps, ts, live) in zip(ax, panels):
-        A.scatter(tf + eps, pf + eps, s=6, alpha=0.35, c="#334155", edgecolors="none")
+        prot_m = (pf > 0.01) & (tf < 0.001)      # protein-selective (top-left)
+        text_m = (tf > 0.01) & (pf < 0.001)      # text-selective (bottom-right)
+        rest_m = ~(prot_m | text_m)
+        A.scatter(tf[rest_m] + eps, pf[rest_m] + eps, s=5, alpha=0.2, c="#cbd5e1", edgecolors="none")
+        A.scatter(tf[text_m] + eps, pf[text_m] + eps, s=11, alpha=0.55, c="#9333ea",
+                  edgecolors="none", label=f"text-selective ({ts})")
+        A.scatter(tf[prot_m] + eps, pf[prot_m] + eps, s=16, alpha=0.8, c="#2563eb",
+                  edgecolors="none", label=f"protein-selective ({ps})")
         A.set_xscale("log"); A.set_yscale("log")
         A.plot([eps, 1], [eps, 1], ls="--", lw=0.8, c="#94a3b8")   # shared diagonal
-        A.axhspan(0.01, 1, xmax=0.0, alpha=0)   # no-op keeps limits
         A.set_xlim(eps * 0.8, 1); A.set_ylim(eps * 0.8, 1)
         A.set_xlabel("fires on TEXT tokens (fraction)")
-        A.set_title(f"{tag}\n{ps} protein-selective feats (top-left) · {ts} text-selective", fontsize=11)
-        # shade the protein-selective corner
-        A.axhline(0.01, color="#2563eb", lw=0.6, ls=":"); A.axvline(0.001, color="#2563eb", lw=0.6, ls=":")
+        A.set_title(f"{tag}", fontsize=12)
+        A.legend(loc="lower left", fontsize=9, framealpha=0.9, markerscale=1.6)
+        A.axhline(0.01, color="#2563eb", lw=0.5, ls=":"); A.axvline(0.001, color="#2563eb", lw=0.5, ls=":")
     ax[0].set_ylabel("fires on PROTEIN tokens (fraction)")
     fig.suptitle(f"Layer {a.layer}: per-feature modality selectivity — balancing populates the "
                  f"protein-selective corner", fontsize=12)
