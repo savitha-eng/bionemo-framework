@@ -33,3 +33,18 @@ Balancing changes *which* features carry protein (above), but it doesn't change 
 
 ![UMAP grid](analysis/figures/fig_layer_umap_grid.png)
 > **Token geometry across layers.** Rows = layers (L14–L32); columns = raw residual, unbalanced SAE code, balanced SAE code (same protein+text tokens, UMAP). Blue = protein, purple = text. Protein and text form separate regions in every panel — the separation is there in the raw residuals and survives encoding regardless of balancing.
+
+## A representational limit on the protein side
+
+Balancing gives protein more *dedicated features*, but it does not make individual protein tokens more *distinguishable from each other*. Measuring, at layer 16, how many distinct features each modality uses and how spread out its codes are (mean pairwise cosine distance):
+
+| | distinct features used: protein | text | code spread: protein | text |
+|---|---:|---:|---:|---:|
+| unbalanced | 232 | 15,797 | 0.007 | 0.358 |
+| balanced   | 1,277 | 9,479 | 0.006 | 0.024 |
+
+Two things stand out. First, the wide text spread under the unbalanced loss (0.358) is text monopolising the dictionary — text tokens activate essentially the whole live dictionary (~15,800 features) and are finely differentiated, while protein is squeezed into ~232 and collapses. Balancing reclaims that capacity for protein (232 → 1,277 distinct features).
+
+Second, and more important: **protein code spread stays near zero in both cases (~0.006), even with 5.5× more protein features.** This is the ESM3 signature — protein token embeddings are nearly collinear (self-cosine ~0.99), so every protein token's code is dominated by the same high-magnitude component. The signal that separates one protein from another is real but small (enrichment tests still find protein-selective features, e.g. a protein-kinase feature at p=3.6e-14), just swamped per-token.
+
+This is a limitation of the *encoder*, not the SAE, and it reframes our Matryoshka result. The MAIRA-2 radiology Matryoshka-SAE (Bouzid, Bannur et al., ICML 2025) worked because its image encoder is trained against text — high-diversity, aligned. Our Matryoshka attempt didn't beat flat BatchTopK because the protein representation is collapsed and unaligned. So the bottleneck isn't the SAE variant; it's the encoder — which is exactly why the alignment experiment (Prot2Text-V2) and a per-modality expert that whitens off the shared component are the right next moves.
