@@ -15,12 +15,15 @@ I've focused on BioReason-Pro (ESM3 + Qwen) and gotten the whole pipeline workin
 ![Figure 1](analysis/figures/fig1_balancing.png)
 > **Figure 1.** Modality loss-balancing at layer 16: protein-selective features rise ~100 → ~1,800, and the modalities separate cleanly rather than the dictionary being dominated by text.
 
+![Figure 2](analysis/figures/fig4_sae_code_umap.png)
+> **Figure 2.** The same effect in the SAE's own feature space (UMAP of feature codes for the same protein/text tokens). Under the unbalanced loss the protein tokens collapse into a thin sliver of code space; with the balanced loss they open into their own structured region — protein-preferring features jump from a handful to hundreds.
+
 **The model does learn real, interpretable reasoning features.** I built an interpretation pipeline that labels a feature by looking at which proteins it fires on and what those proteins have in common. It's surfacing clean, specific concepts from the model's reasoning — a "cell junction" feature, an "embryonic development" feature, an "establishment of localization / transport" feature — and these aren't trivial keyword matches. They recur across the model's reasoning and line up with exactly the proteins the concept applies to. Doing this on a *biology* reasoning model — and tying the features back to protein function — is new; the SAE method itself is the same standard approach recent reasoning-interpretability work uses (e.g. Goodfire's DeepSeek-R1 study).
 
 **The most interesting result is about how the model fuses the two modalities — and so far, it doesn't, at least not the way you'd expect.** I went looking for features that tie a biological concept to its text, and beyond structural markers I haven't found any. Working out why is, I think, the real result. The standard cross-modal metric (from SAE-V) compares the model's raw activations, and in BioReason-Pro the protein and text activations point in almost entirely separate directions (the DNA model overlaps somewhat more), so that metric reads near zero almost automatically. This looks like a property of the encoder rather than a flaw in the method: the vision-language models where fusion showed up use encoders trained against text (CLIP), whereas ESM3 and Evo 2 have never seen text — we project them into the LLM's space, but that doesn't make them point the same way. My working hypothesis is that cross-modal features only emerge once the two modalities are actually aligned, and that's something I can test directly (below).
 
-![Figure 2](analysis/figures/fig3_geometry.png)
-> **Figure 2.** Layer-16 activations (UMAP). Protein (ESM3) and text form near-separate clusters (left); DNA (Evo 2) and text overlap more (right) — which is why a raw-activation cross-modal metric reads near zero for an encoder that was never aligned to text.
+![Figure 3](analysis/figures/fig3_geometry.png)
+> **Figure 3.** Layer-16 activations (UMAP). Protein (ESM3) and text form near-separate clusters (left); DNA (Evo 2) and text overlap more (right) — which is why a raw-activation cross-modal metric reads near zero for an encoder that was never aligned to text.
 
 I'd flag two honest caveats. The protein-feature labels are still preliminary — many protein features are weak or fire too often to trust — so I treat them as candidates to verify, not conclusions. And the labeler currently keys on a feature's single strongest token, which sometimes misses recurring phrases; that's a fix I already have in mind.
 
