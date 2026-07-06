@@ -15,8 +15,8 @@ I've focused on BioReason-Pro (ESM3 + Qwen) and gotten the whole pipeline workin
 ![Figure 1](analysis/figures/fig1_balancing.png)
 > **Figure 1.** Modality loss-balancing at layer 16: protein-selective features rise ~100 → ~1,800, and the modalities separate cleanly rather than the dictionary being dominated by text.
 
-![Figure 2](analysis/figures/fig4_sae_code_umap.png)
-> **Figure 2.** The same effect in the SAE's own feature space (UMAP of feature codes for the same protein/text tokens). Under the unbalanced loss the protein tokens collapse into a thin sliver of code space; with the balanced loss they open into their own structured region — protein-preferring features jump from a handful to hundreds.
+![Figure 2](analysis/figures/fig5_feature_selectivity.png)
+> **Figure 2.** The same effect at the level of individual SAE features. Each dot is one feature: x = fraction of text tokens it fires on, y = fraction of protein tokens. Protein-selective features live in the top-left. Under the unbalanced loss that corner is nearly empty (~15 features); balancing fills it (~660) — the SAE gains a dedicated protein vocabulary instead of forcing protein onto text-owned features.
 
 **The model does learn real, interpretable reasoning features.** I built an interpretation pipeline that labels a feature by looking at which proteins it fires on and what those proteins have in common. It's surfacing clean, specific concepts from the model's reasoning — a "cell junction" feature, an "embryonic development" feature, an "establishment of localization / transport" feature — and these aren't trivial keyword matches. They recur across the model's reasoning and line up with exactly the proteins the concept applies to. Doing this on a *biology* reasoning model — and tying the features back to protein function — is new; the SAE method itself is the same standard approach recent reasoning-interpretability work uses (e.g. Goodfire's DeepSeek-R1 study).
 
