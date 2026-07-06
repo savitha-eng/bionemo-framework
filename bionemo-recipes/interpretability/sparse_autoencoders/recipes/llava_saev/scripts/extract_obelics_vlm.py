@@ -98,33 +98,125 @@ def truncate_words(text: str, max_words: int) -> str:
     return " ".join(str(text).split()[:max_words])
 
 
+def text_spans(ex) -> list[dict]:
+    spans = []
+    for idx, text in enumerate(ex.get("texts") or []):
+        if text and str(text).strip():
+            spans.append({"index": idx, "text": str(text).strip()})
+    return spans
+
+
 def obelics_text(ex) -> str | None:
-    texts = ex.get("texts") or []
-    spans = [str(t).strip() for t in texts if t and str(t).strip()]
+    spans = [span["text"] for span in text_spans(ex)]
     if not spans:
         return None
     return " ".join(spans)
 
 
+def obelics_image_entries(ex) -> list[tuple[int, str]]:
+    entries = []
+    for idx, url in enumerate(ex.get("images") or []):
+        if isinstance(url, str) and url.startswith(("http://", "https://")):
+            entries.append((idx, url))
+    return entries
+
+
 def obelics_image_urls(ex) -> list[str]:
-    urls = []
-    for u in ex.get("images") or []:
-        if isinstance(u, str) and u.startswith(("http://", "https://")):
-            urls.append(u)
-    return urls
+    return [url for _, url in obelics_image_entries(ex)]
 
 
-def fetch_image(session: requests.Session, urls: list[str], timeout: float, min_size: int) -> Image.Image | None:
-    for url in urls:
+def parse_jsonish(value):
+    if not isinstance(value, str):
+        return value
+    try:
+        return json.loads(value)
+    except Exception:
+        return value
+
+
+def doc_url(ex) -> str | None:
+    general = parse_jsonish(ex.get("general_metadata"))
+    if isinstance(general, dict) and general.get("url"):
+        return str(general["url"])
+    metadata = parse_jsonish(ex.get("metadata"))
+    if isinstance(metadata, list):
+        for item in metadata:
+            if isinstance(item, dict) and item.get("document_url"):
+                return str(item["document_url"])
+    return None
+
+
+def image_metadata(ex, image_index: int | None, image_url: str | None) -> dict:
+    metadata = parse_jsonish(ex.get("metadata"))
+    if isinstance(metadata, list):
+        if image_index is not None and 0 <= image_index < len(metadata) and isinstance(metadata[image_index], dict):
+            return metadata[image_index]
+        for item in metadata:
+            if not isinstance(item, dict):
+                continue
+            if image_url in {item.get("src"), item.get("unformatted_src")}:
+                return item
+    return {}
+
+
+def local_text_context(ex, image_index: int | None, window: int = 2) -> dict:
+    spans = text_spans(ex)
+    if not spans:
+        return {"near_text": None, "near_text_source": "missing", "text_spans": []}
+    if image_index is None:
+        joined = " ".join(span["text"] for span in spans)
+        return {"near_text": joined, "near_text_source": "document", "text_spans": spans}
+
+    ordered = sorted(spans, key=lambda span: (abs(int(span["index"]) - image_index), int(span["index"])))
+    nearby = [span for span in ordered if abs(int(span["index"]) - image_index) <= window]
+    selected = nearby or ordered[:1]
+    selected = sorted(selected, key=lambda span: int(span["index"]))
+    return {
+        "near_text": " ".join(span["text"] for span in selected),
+        "near_text_source": f"within_{window}_slots" if nearby else "nearest_text_span",
+        "text_spans": spans,
+    }
+
+
+def fetch_image(
+    session: requests.Session,
+    entries: list[tuple[int, str]],
+    timeout: float,
+    min_size: int,
+) -> tuple[Image.Image, str, int] | None:
+    for image_index, url in entries:
         try:
             r = session.get(url, timeout=timeout)
             r.raise_for_status()
             image = Image.open(io.BytesIO(r.content)).convert("RGB")
             if image.width >= min_size and image.height >= min_size:
-                return image
+                return image, url, image_index
         except Exception:
             continue
     return None
+
+
+def sample_manifest_schema() -> pa.Schema:
+    return pa.schema(
+        [
+            ("sample_id", pa.string()),
+            ("dataset_index", pa.int64()),
+            ("rank", pa.int32()),
+            ("rank_success_index", pa.int32()),
+            ("image_index", pa.int32()),
+            ("image_url", pa.string()),
+            ("image_width", pa.int32()),
+            ("image_height", pa.int32()),
+            ("all_image_urls_json", pa.string()),
+            ("text", pa.string()),
+            ("text_preview", pa.string()),
+            ("near_image_text", pa.string()),
+            ("near_image_text_source", pa.string()),
+            ("text_spans_json", pa.string()),
+            ("image_metadata_json", pa.string()),
+            ("document_url", pa.string()),
+        ]
+    )
 
 
 def load_obelics_dataset(dataset: str, split: str):
@@ -184,6 +276,12 @@ def rank_store_status(args, rank: int, world: int) -> tuple[bool, str, dict | No
     label_rows = parquet_num_rows(labels_path)
     if label_rows != expected_rows:
         return False, f"label rows {label_rows} != activation rows {expected_rows}", meta
+    manifest_path = rank_root / "sample_manifest.parquet"
+    if manifest_path.exists():
+        manifest_rows = parquet_num_rows(manifest_path)
+        expected_docs = int(meta.get("n_documents", 0))
+        if manifest_rows != expected_docs:
+            return False, f"manifest rows {manifest_rows} != metadata n_documents {expected_docs}", meta
 
     shards = sorted(rank_layer.glob("shard_*.parquet"), key=lambda p: int(p.stem.split("_")[1]))
     if len(shards) != expected_shards:
@@ -288,6 +386,8 @@ def write_rank_store(args, rank: int, world: int, local_rank: int) -> dict:
 
     schema = pa.schema([("protein_id", pa.string()), ("token_index", pa.int32()), ("position_type", pa.string())])
     sidecar = pq.ParquetWriter(str(rank_root / "token_labels.parquet"), schema, compression="snappy")
+    manifest_schema = sample_manifest_schema()
+    manifest = pq.ParquetWriter(str(rank_root / "sample_manifest.parquet"), manifest_schema, compression="snappy")
 
     target = args.num_samples // world + (1 if rank < (args.num_samples % world) else 0)
     scan_limit = args.scan_limit or args.num_samples * args.scan_multiplier
@@ -330,10 +430,12 @@ def write_rank_store(args, rank: int, world: int, local_rank: int) -> dict:
             if not text_body:
                 n_no_text += 1
                 continue
-            image = fetch_image(session, obelics_image_urls(ex), args.image_timeout, args.min_image_size)
-            if image is None:
+            entries = obelics_image_entries(ex)
+            fetched = fetch_image(session, entries, args.image_timeout, args.min_image_size)
+            if fetched is None:
                 n_fetch_fail += 1
                 continue
+            image, image_url, image_index = fetched
             caption = truncate_words(text_body, args.max_text_words)
             messages = [{"role": "user", "content": [{"type": "image"}, {"type": "text", "text": caption}]}]
             text = processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=False)
@@ -373,6 +475,50 @@ def write_rank_store(args, rank: int, world: int, local_rank: int) -> dict:
                     schema=schema,
                 )
             )
+            local_context = local_text_context(ex, image_index)
+            img_meta = image_metadata(ex, image_index, image_url)
+            manifest.write_batch(
+                pa.record_batch(
+                    [
+                        pa.array([pid], pa.string()),
+                        pa.array([idx], pa.int64()),
+                        pa.array([rank], pa.int32()),
+                        pa.array([n_done], pa.int32()),
+                        pa.array([image_index], pa.int32()),
+                        pa.array([image_url], pa.string()),
+                        pa.array([int(image.width)], pa.int32()),
+                        pa.array([int(image.height)], pa.int32()),
+                        pa.array([json.dumps([url for _, url in entries], ensure_ascii=False)], pa.string()),
+                        pa.array([text_body], pa.string()),
+                        pa.array([text_body[:800]], pa.string()),
+                        pa.array([local_context["near_text"]], pa.string()),
+                        pa.array([local_context["near_text_source"]], pa.string()),
+                        pa.array([json.dumps(local_context["text_spans"], ensure_ascii=False)], pa.string()),
+                        pa.array(
+                            [
+                                json.dumps(
+                                    {
+                                        k: img_meta.get(k)
+                                        for k in (
+                                            "alt_text",
+                                            "formatted_filename",
+                                            "src",
+                                            "unformatted_src",
+                                            "original_width",
+                                            "original_height",
+                                        )
+                                        if img_meta.get(k) is not None
+                                    },
+                                    ensure_ascii=False,
+                                )
+                            ],
+                            pa.string(),
+                        ),
+                        pa.array([doc_url(ex)], pa.string()),
+                    ],
+                    schema=manifest_schema,
+                )
+            )
             n_done += 1
             n_tokens += S
             n_img_tokens += int((bands == "image").sum())
@@ -389,6 +535,7 @@ def write_rank_store(args, rank: int, world: int, local_rank: int) -> dict:
     handle.remove()
     flush(force=True)
     sidecar.close()
+    manifest.close()
     store.finalize(
         metadata={
             "model": args.model,
@@ -406,6 +553,7 @@ def write_rank_store(args, rank: int, world: int, local_rank: int) -> dict:
             "fetch_fail": n_fetch_fail,
             "no_text": n_no_text,
             "preprocess_fail": n_preprocess_fail,
+            "sample_manifest": "sample_manifest.parquet",
         }
     )
     print(
@@ -461,6 +609,15 @@ def merge_rank_stores(args, world: int):
         shutil.rmtree(final_layer)
     final_layer.mkdir(parents=True, exist_ok=True)
     sidecar_writer = pq.ParquetWriter(str(root / "token_labels.parquet"), schema, compression="snappy")
+    manifest_paths = [rank_root / "sample_manifest.parquet" for _, rank_root, _, _ in rank_entries]
+    merge_manifests = all(path.exists() for path in manifest_paths)
+    if not merge_manifests and any(path.exists() for path in manifest_paths):
+        print("[merge] some rank manifests are missing; final sample_manifest.parquet will not be written", flush=True)
+    manifest_writer = (
+        pq.ParquetWriter(str(root / "sample_manifest.parquet"), sample_manifest_schema(), compression="snappy")
+        if merge_manifests
+        else None
+    )
 
     for rank, rank_root, rank_layer, meta in rank_entries:
         merged_meta = merged_meta or meta
@@ -476,6 +633,11 @@ def merge_rank_stores(args, world: int):
             total_image += int((band == "image").sum())
             total_text += int((band == "text").sum())
 
+        if manifest_writer is not None:
+            mf = pq.ParquetFile(rank_root / "sample_manifest.parquet")
+            for batch in mf.iter_batches(batch_size=20_000):
+                manifest_writer.write_table(pa.Table.from_batches([batch], schema=sample_manifest_schema()))
+
         for sp in sorted(rank_layer.glob("shard_*.parquet"), key=lambda p: int(p.stem.split("_")[1])):
             rows = pq.read_metadata(sp).num_rows
             total_rows += rows
@@ -483,6 +645,8 @@ def merge_rank_stores(args, world: int):
             shard_idx += 1
 
     sidecar_writer.close()
+    if manifest_writer is not None:
+        manifest_writer.close()
     if merged_meta is None:
         raise RuntimeError("No rank stores were merged.")
     if total_image + total_text != total_rows:
@@ -506,6 +670,8 @@ def merge_rank_stores(args, world: int):
         "preprocess_fail": total_preprocess_fail,
         "rank_summaries": rank_summaries,
     }
+    if merge_manifests:
+        metadata["sample_manifest"] = "sample_manifest.parquet"
     (final_layer / "metadata.json").write_text(json.dumps(metadata, indent=2))
     (root / "extract_metadata.json").write_text(json.dumps(metadata, indent=2))
     print(
