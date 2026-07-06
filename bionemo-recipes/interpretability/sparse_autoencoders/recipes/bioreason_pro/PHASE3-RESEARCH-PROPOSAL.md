@@ -6,11 +6,18 @@
 
 Sparse autoencoders (SAEs) are the standard tool for pulling interpretable, monosemantic features out of a transformer's activations. Over the past year they've been extended to multimodal models — but only vision–language ones. SAE-V (Lou et al., ICML 2025), on vision-language MLLMs, is the closest methodological precedent, and we lift its cross-modal feature-weighting metric directly. We haven't found any prior work applying SAEs to **biology–language fusion models** — LLMs with a protein or DNA foundation model fused in. The Orlov et al. bio-SAE systematic review (bioRxiv, March 2026) names "scaling SAE analysis to multimodal architectures" as a top-4 field priority and doesn't even consider biology + natural-language fusion.
 
-That gap is worth closing for two reasons. **Scientifically**, these models raise a question no one has answered: when we fuse a biology encoder into an LLM (BioReason = Evo 2 + Qwen; BioReason-Pro = ESM3 + Qwen; Peter's DNA-tokenizer MoE on Nemotron), does the model actually *integrate* biology and language into shared features, or is it a dressed-up tool-call — reading the encoder like a lookup and reasoning in text? SAEs are the most direct way to look inside and check. **Practically**, the answer tells us whether multimodal bio models earn their cost over a cheaper pipeline that just calls a bio tool, and the methods this work produces carry straight to our own multimodal models.
+That gap is worth closing for two reasons. **Scientifically**, these models raise a question no one has answered: when we fuse a biology encoder into an LLM (BioReason = Evo 2 + Qwen; BioReason-Pro = ESM3 + Qwen; Peter's DNA-tokenizer MoE on Nemotron), does the model actually *integrate* biology and language into shared features, or does it just read the encoder's output once as a fixed input and do all its real reasoning in text — functionally not much more than calling a bio tool and reasoning over the result? SAEs are the most direct way to look inside and check. **Practically**, the answer tells us whether multimodal bio models earn their cost over a cheaper pipeline that just calls a bio tool, and the methods this work produces carry straight to our own multimodal models.
 
 ## Proposed outcome
 
-A short workshop paper — the first SAE interpretability study of biology–language fusion models — contributing three things: (1) a training recipe and the modality-balancing method needed to make an SAE represent both modalities at all; (2) a mechanistic result on whether and how these models fuse the two modalities; and (3) a modality-aware SAE architecture. The recipe and methods are model-agnostic, so they're useful for the team's own multimodal models either way. Natural venues are mechanistic-interpretability and bio-ML workshops, with room to grow into a full paper.
+Two results are already in hand, and together they're enough for a blog post or short workshop paper:
+
+1. a training recipe and the modality-balancing method that make an SAE represent both modalities at all; and
+2. the mechanistic result on whether — and where — these models fuse biology and language.
+
+A third contribution, a modality-aware mixture-of-experts SAE, is a bonus: if it works, it grows this into a full paper. Either way the recipe and methods are model-agnostic, so they're useful for the team's own multimodal models.
+
+There's real community appetite for this kind of writeup. Goodfire's [*Under the Hood of a Reasoning Model*](https://www.goodfire.ai/blog/under-the-hood-of-a-reasoning-model) interpreted DeepSeek-R1 with SAEs and drew a lot of interest; ours would be the first to do it on a *biology* reasoning model and tie the features back to protein function. Natural venues are mechanistic-interpretability and bio-ML workshops.
 
 ## Work so far
 
