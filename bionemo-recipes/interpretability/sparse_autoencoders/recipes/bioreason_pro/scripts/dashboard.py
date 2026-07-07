@@ -210,7 +210,7 @@ def main():  # noqa: D103
 
     ck = torch.load(args.sae, map_location="cpu")
     sae = TopKSAE(**ck["model_config"]).to(dev).eval()
-    sae.load_state_dict({(k[7:] if k.startswith("module.") else k):v for k,v in ck["model_state_dict"].items()})
+    sae.load_state_dict({(k[7:] if k.startswith("module.") else k):v for k,v in ck["model_state_dict"].items()}, strict=False)
     H = sae.hidden_dim
 
     # ---- Pass 1: per-(protein, feature) max activation ----
