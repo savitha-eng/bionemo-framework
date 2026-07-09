@@ -1,0 +1,1064 @@
+[
+  {
+    "feature": 33415,
+    "go_auc": 0.824,
+    "go_term": "catalytic activity",
+    "n_proteins": 25,
+    "reasoning_concepts": [
+      {
+        "concept": "metabol",
+        "frac": 0.56,
+        "bg": 0.3,
+        "k": 14
+      },
+      {
+        "concept": "zincfinger",
+        "frac": 0.32,
+        "bg": 0.07,
+        "k": 8
+      }
+    ]
+  },
+  {
+    "feature": 36071,
+    "go_auc": 0.816,
+    "go_term": "catalytic activity",
+    "n_proteins": 25,
+    "reasoning_concepts": [
+      {
+        "concept": "metabol",
+        "frac": 0.8,
+        "bg": 0.3,
+        "k": 20
+      },
+      {
+        "concept": "phosphat",
+        "frac": 0.6,
+        "bg": 0.28,
+        "k": 15
+      },
+      {
+        "concept": "transferas",
+        "frac": 0.52,
+        "bg": 0.23,
+        "k": 13
+      },
+      {
+        "concept": "redox",
+        "frac": 0.4,
+        "bg": 0.14,
+        "k": 10
+      },
+      {
+        "concept": "mitochond",
+        "frac": 0.4,
+        "bg": 0.13,
+        "k": 10
+      }
+    ]
+  },
+  {
+    "feature": 4719,
+    "go_auc": 0.799,
+    "go_term": "catalytic activity",
+    "n_proteins": 25,
+    "reasoning_concepts": [
+      {
+        "concept": "channel",
+        "frac": 0.64,
+        "bg": 0.31,
+        "k": 16
+      },
+      {
+        "concept": "metabol",
+        "frac": 0.64,
+        "bg": 0.3,
+        "k": 16
+      },
+      {
+        "concept": "transferas",
+        "frac": 0.48,
+        "bg": 0.23,
+        "k": 12
+      },
+      {
+        "concept": "redox",
+        "frac": 0.36,
+        "bg": 0.14,
+        "k": 9
+      },
+      {
+        "concept": "mitochond",
+        "frac": 0.32,
+        "bg": 0.13,
+        "k": 8
+      }
+    ]
+  },
+  {
+    "feature": 33255,
+    "go_auc": 0.797,
+    "go_term": "catalytic activity",
+    "n_proteins": 25,
+    "reasoning_concepts": [
+      {
+        "concept": "metabol",
+        "frac": 0.72,
+        "bg": 0.3,
+        "k": 18
+      },
+      {
+        "concept": "channel",
+        "frac": 0.64,
+        "bg": 0.31,
+        "k": 16
+      },
+      {
+        "concept": "phosphat",
+        "frac": 0.6,
+        "bg": 0.28,
+        "k": 15
+      },
+      {
+        "concept": "transferas",
+        "frac": 0.44,
+        "bg": 0.23,
+        "k": 11
+      },
+      {
+        "concept": "proton",
+        "frac": 0.32,
+        "bg": 0.1,
+        "k": 8
+      }
+    ]
+  },
+  {
+    "feature": 22731,
+    "go_auc": 0.796,
+    "go_term": "catalytic activity",
+    "n_proteins": 25,
+    "reasoning_concepts": [
+      {
+        "concept": "proton",
+        "frac": 0.36,
+        "bg": 0.1,
+        "k": 9
+      }
+    ]
+  },
+  {
+    "feature": 11134,
+    "go_auc": 0.793,
+    "go_term": "catalytic activity",
+    "n_proteins": 25,
+    "reasoning_concepts": [
+      {
+        "concept": "metabol",
+        "frac": 0.88,
+        "bg": 0.3,
+        "k": 22
+      },
+      {
+        "concept": "channel",
+        "frac": 0.72,
+        "bg": 0.31,
+        "k": 18
+      },
+      {
+        "concept": "phosphat",
+        "frac": 0.52,
+        "bg": 0.28,
+        "k": 13
+      },
+      {
+        "concept": "kinase",
+        "frac": 0.52,
+        "bg": 0.28,
+        "k": 13
+      },
+      {
+        "concept": "reductas",
+        "frac": 0.52,
+        "bg": 0.1,
+        "k": 13
+      },
+      {
+        "concept": "redox",
+        "frac": 0.48,
+        "bg": 0.14,
+        "k": 12
+      }
+    ]
+  },
+  {
+    "feature": 9807,
+    "go_auc": 0.793,
+    "go_term": "catalytic activity",
+    "n_proteins": 25,
+    "reasoning_concepts": [
+      {
+        "concept": "phosphat",
+        "frac": 0.72,
+        "bg": 0.28,
+        "k": 18
+      },
+      {
+        "concept": "metabol",
+        "frac": 0.64,
+        "bg": 0.3,
+        "k": 16
+      },
+      {
+        "concept": "transferas",
+        "frac": 0.52,
+        "bg": 0.23,
+        "k": 13
+      },
+      {
+        "concept": "atpase",
+        "frac": 0.32,
+        "bg": 0.1,
+        "k": 8
+      }
+    ]
+  },
+  {
+    "feature": 4161,
+    "go_auc": 0.792,
+    "go_term": "catalytic activity",
+    "n_proteins": 25,
+    "reasoning_concepts": [
+      {
+        "concept": "metabol",
+        "frac": 0.68,
+        "bg": 0.3,
+        "k": 17
+      },
+      {
+        "concept": "redox",
+        "frac": 0.32,
+        "bg": 0.14,
+        "k": 8
+      }
+    ]
+  },
+  {
+    "feature": 9843,
+    "go_auc": 0.792,
+    "go_term": "regulation of RNA metabolic process",
+    "n_proteins": 25,
+    "reasoning_concepts": [
+      {
+        "concept": "nuclear",
+        "frac": 0.76,
+        "bg": 0.37,
+        "k": 19
+      },
+      {
+        "concept": "nucleus",
+        "frac": 0.72,
+        "bg": 0.38,
+        "k": 18
+      },
+      {
+        "concept": "transcript",
+        "frac": 0.68,
+        "bg": 0.34,
+        "k": 17
+      },
+      {
+        "concept": "chromat",
+        "frac": 0.48,
+        "bg": 0.19,
+        "k": 12
+      },
+      {
+        "concept": "polymerase",
+        "frac": 0.36,
+        "bg": 0.14,
+        "k": 9
+      }
+    ]
+  },
+  {
+    "feature": 13297,
+    "go_auc": 0.791,
+    "go_term": "catalytic activity",
+    "n_proteins": 25,
+    "reasoning_concepts": [
+      {
+        "concept": "metabol",
+        "frac": 0.64,
+        "bg": 0.3,
+        "k": 16
+      },
+      {
+        "concept": "channel",
+        "frac": 0.6,
+        "bg": 0.31,
+        "k": 15
+      }
+    ]
+  },
+  {
+    "feature": 20879,
+    "go_auc": 0.791,
+    "go_term": "catalytic activity",
+    "n_proteins": 25,
+    "reasoning_concepts": [
+      {
+        "concept": "metabol",
+        "frac": 0.64,
+        "bg": 0.3,
+        "k": 16
+      }
+    ]
+  },
+  {
+    "feature": 6563,
+    "go_auc": 0.789,
+    "go_term": "catalytic activity",
+    "n_proteins": 25,
+    "reasoning_concepts": [
+      {
+        "concept": "metabol",
+        "frac": 0.56,
+        "bg": 0.3,
+        "k": 14
+      },
+      {
+        "concept": "transferas",
+        "frac": 0.44,
+        "bg": 0.23,
+        "k": 11
+      }
+    ]
+  },
+  {
+    "feature": 2264,
+    "go_auc": 0.789,
+    "go_term": "catalytic activity",
+    "n_proteins": 25,
+    "reasoning_concepts": [
+      {
+        "concept": "channel",
+        "frac": 0.64,
+        "bg": 0.31,
+        "k": 16
+      },
+      {
+        "concept": "metabol",
+        "frac": 0.6,
+        "bg": 0.3,
+        "k": 15
+      },
+      {
+        "concept": "reductas",
+        "frac": 0.44,
+        "bg": 0.1,
+        "k": 11
+      },
+      {
+        "concept": "redox",
+        "frac": 0.4,
+        "bg": 0.14,
+        "k": 10
+      },
+      {
+        "concept": "electron",
+        "frac": 0.32,
+        "bg": 0.06,
+        "k": 8
+      }
+    ]
+  },
+  {
+    "feature": 9268,
+    "go_auc": 0.788,
+    "go_term": "catalytic activity",
+    "n_proteins": 25,
+    "reasoning_concepts": [
+      {
+        "concept": "develop",
+        "frac": 0.36,
+        "bg": 0.19,
+        "k": 9
+      }
+    ]
+  },
+  {
+    "feature": 37625,
+    "go_auc": 0.781,
+    "go_term": "catalytic activity",
+    "n_proteins": 25,
+    "reasoning_concepts": [
+      {
+        "concept": "channel",
+        "frac": 0.68,
+        "bg": 0.31,
+        "k": 17
+      }
+    ]
+  },
+  {
+    "feature": 22375,
+    "go_auc": 0.78,
+    "go_term": "catalytic activity",
+    "n_proteins": 25,
+    "reasoning_concepts": [
+      {
+        "concept": "channel",
+        "frac": 0.64,
+        "bg": 0.31,
+        "k": 16
+      },
+      {
+        "concept": "metabol",
+        "frac": 0.6,
+        "bg": 0.3,
+        "k": 15
+      },
+      {
+        "concept": "redox",
+        "frac": 0.36,
+        "bg": 0.14,
+        "k": 9
+      },
+      {
+        "concept": "ribosom",
+        "frac": 0.32,
+        "bg": 0.1,
+        "k": 8
+      }
+    ]
+  },
+  {
+    "feature": 35661,
+    "go_auc": 0.779,
+    "go_term": "catalytic activity",
+    "n_proteins": 25,
+    "reasoning_concepts": [
+      {
+        "concept": "metabol",
+        "frac": 0.64,
+        "bg": 0.3,
+        "k": 16
+      },
+      {
+        "concept": "channel",
+        "frac": 0.6,
+        "bg": 0.31,
+        "k": 15
+      },
+      {
+        "concept": "redox",
+        "frac": 0.36,
+        "bg": 0.14,
+        "k": 9
+      },
+      {
+        "concept": "reductas",
+        "frac": 0.32,
+        "bg": 0.1,
+        "k": 8
+      }
+    ]
+  },
+  {
+    "feature": 4007,
+    "go_auc": 0.778,
+    "go_term": "catalytic activity",
+    "n_proteins": 25,
+    "reasoning_concepts": [
+      {
+        "concept": "metabol",
+        "frac": 0.76,
+        "bg": 0.3,
+        "k": 19
+      },
+      {
+        "concept": "transferas",
+        "frac": 0.56,
+        "bg": 0.23,
+        "k": 14
+      },
+      {
+        "concept": "redox",
+        "frac": 0.32,
+        "bg": 0.14,
+        "k": 8
+      }
+    ]
+  },
+  {
+    "feature": 8513,
+    "go_auc": 0.776,
+    "go_term": "catalytic activity",
+    "n_proteins": 25,
+    "reasoning_concepts": [
+      {
+        "concept": "metabol",
+        "frac": 0.72,
+        "bg": 0.3,
+        "k": 18
+      },
+      {
+        "concept": "redox",
+        "frac": 0.48,
+        "bg": 0.14,
+        "k": 12
+      },
+      {
+        "concept": "reductas",
+        "frac": 0.44,
+        "bg": 0.1,
+        "k": 11
+      },
+      {
+        "concept": "proton",
+        "frac": 0.32,
+        "bg": 0.1,
+        "k": 8
+      }
+    ]
+  },
+  {
+    "feature": 11852,
+    "go_auc": 0.775,
+    "go_term": "catalytic activity",
+    "n_proteins": 25,
+    "reasoning_concepts": [
+      {
+        "concept": "metabol",
+        "frac": 0.84,
+        "bg": 0.3,
+        "k": 21
+      },
+      {
+        "concept": "channel",
+        "frac": 0.64,
+        "bg": 0.31,
+        "k": 16
+      },
+      {
+        "concept": "phosphat",
+        "frac": 0.64,
+        "bg": 0.28,
+        "k": 16
+      },
+      {
+        "concept": "transferas",
+        "frac": 0.64,
+        "bg": 0.23,
+        "k": 16
+      },
+      {
+        "concept": "redox",
+        "frac": 0.44,
+        "bg": 0.14,
+        "k": 11
+      },
+      {
+        "concept": "reductas",
+        "frac": 0.44,
+        "bg": 0.1,
+        "k": 11
+      }
+    ]
+  },
+  {
+    "feature": 26570,
+    "go_auc": 0.774,
+    "go_term": "catalytic activity",
+    "n_proteins": 25,
+    "reasoning_concepts": [
+      {
+        "concept": "channel",
+        "frac": 0.64,
+        "bg": 0.31,
+        "k": 16
+      },
+      {
+        "concept": "metabol",
+        "frac": 0.6,
+        "bg": 0.3,
+        "k": 15
+      },
+      {
+        "concept": "phosphat",
+        "frac": 0.56,
+        "bg": 0.28,
+        "k": 14
+      },
+      {
+        "concept": "kinase",
+        "frac": 0.52,
+        "bg": 0.28,
+        "k": 13
+      },
+      {
+        "concept": "transferas",
+        "frac": 0.44,
+        "bg": 0.23,
+        "k": 11
+      }
+    ]
+  },
+  {
+    "feature": 3192,
+    "go_auc": 0.773,
+    "go_term": "catalytic activity",
+    "n_proteins": 25,
+    "reasoning_concepts": [
+      {
+        "concept": "gtpase",
+        "frac": 0.44,
+        "bg": 0.1,
+        "k": 11
+      },
+      {
+        "concept": "cytoskelet",
+        "frac": 0.32,
+        "bg": 0.17,
+        "k": 8
+      }
+    ]
+  },
+  {
+    "feature": 33418,
+    "go_auc": 0.773,
+    "go_term": "catalytic activity",
+    "n_proteins": 25,
+    "reasoning_concepts": [
+      {
+        "concept": "metabol",
+        "frac": 0.68,
+        "bg": 0.3,
+        "k": 17
+      },
+      {
+        "concept": "redox",
+        "frac": 0.44,
+        "bg": 0.14,
+        "k": 11
+      },
+      {
+        "concept": "reductas",
+        "frac": 0.36,
+        "bg": 0.1,
+        "k": 9
+      },
+      {
+        "concept": "proton",
+        "frac": 0.32,
+        "bg": 0.1,
+        "k": 8
+      }
+    ]
+  },
+  {
+    "feature": 28462,
+    "go_auc": 0.772,
+    "go_term": "catalytic activity",
+    "n_proteins": 25,
+    "reasoning_concepts": [
+      {
+        "concept": "develop",
+        "frac": 0.36,
+        "bg": 0.19,
+        "k": 9
+      }
+    ]
+  },
+  {
+    "feature": 26920,
+    "go_auc": 0.772,
+    "go_term": "catalytic activity",
+    "n_proteins": 25,
+    "reasoning_concepts": [
+      {
+        "concept": "phosphat",
+        "frac": 0.52,
+        "bg": 0.28,
+        "k": 13
+      },
+      {
+        "concept": "proton",
+        "frac": 0.32,
+        "bg": 0.1,
+        "k": 8
+      }
+    ]
+  },
+  {
+    "feature": 33195,
+    "go_auc": 0.768,
+    "go_term": "catalytic activity",
+    "n_proteins": 25,
+    "reasoning_concepts": [
+      {
+        "concept": "channel",
+        "frac": 0.64,
+        "bg": 0.31,
+        "k": 16
+      },
+      {
+        "concept": "transferas",
+        "frac": 0.44,
+        "bg": 0.23,
+        "k": 11
+      },
+      {
+        "concept": "redox",
+        "frac": 0.4,
+        "bg": 0.14,
+        "k": 10
+      },
+      {
+        "concept": "mitochond",
+        "frac": 0.36,
+        "bg": 0.13,
+        "k": 9
+      },
+      {
+        "concept": "proton",
+        "frac": 0.32,
+        "bg": 0.1,
+        "k": 8
+      }
+    ]
+  },
+  {
+    "feature": 13570,
+    "go_auc": 0.768,
+    "go_term": "catalytic activity",
+    "n_proteins": 25,
+    "reasoning_concepts": [
+      {
+        "concept": "channel",
+        "frac": 0.64,
+        "bg": 0.31,
+        "k": 16
+      },
+      {
+        "concept": "transferas",
+        "frac": 0.48,
+        "bg": 0.23,
+        "k": 12
+      },
+      {
+        "concept": "mitochond",
+        "frac": 0.32,
+        "bg": 0.13,
+        "k": 8
+      }
+    ]
+  },
+  {
+    "feature": 21286,
+    "go_auc": 0.767,
+    "go_term": "nucleic acid binding",
+    "n_proteins": 25,
+    "reasoning_concepts": [
+      {
+        "concept": "nucleus",
+        "frac": 0.72,
+        "bg": 0.38,
+        "k": 18
+      },
+      {
+        "concept": "nuclear",
+        "frac": 0.68,
+        "bg": 0.37,
+        "k": 17
+      },
+      {
+        "concept": "transcript",
+        "frac": 0.64,
+        "bg": 0.34,
+        "k": 16
+      },
+      {
+        "concept": "chromat",
+        "frac": 0.44,
+        "bg": 0.19,
+        "k": 11
+      },
+      {
+        "concept": "polymerase",
+        "frac": 0.44,
+        "bg": 0.14,
+        "k": 11
+      },
+      {
+        "concept": "translat",
+        "frac": 0.4,
+        "bg": 0.19,
+        "k": 10
+      }
+    ]
+  },
+  {
+    "feature": 12451,
+    "go_auc": 0.765,
+    "go_term": "catalytic activity",
+    "n_proteins": 25,
+    "reasoning_concepts": [
+      {
+        "concept": "metabol",
+        "frac": 0.8,
+        "bg": 0.3,
+        "k": 20
+      },
+      {
+        "concept": "transferas",
+        "frac": 0.6,
+        "bg": 0.23,
+        "k": 15
+      },
+      {
+        "concept": "redox",
+        "frac": 0.36,
+        "bg": 0.14,
+        "k": 9
+      },
+      {
+        "concept": "mitochond",
+        "frac": 0.32,
+        "bg": 0.13,
+        "k": 8
+      },
+      {
+        "concept": "proton",
+        "frac": 0.32,
+        "bg": 0.1,
+        "k": 8
+      },
+      {
+        "concept": "oxidas",
+        "frac": 0.32,
+        "bg": 0.06,
+        "k": 8
+      }
+    ]
+  },
+  {
+    "feature": 825,
+    "go_auc": 0.765,
+    "go_term": "regulation of RNA metabolic process",
+    "n_proteins": 25,
+    "reasoning_concepts": [
+      {
+        "concept": "nucleus",
+        "frac": 0.88,
+        "bg": 0.38,
+        "k": 22
+      },
+      {
+        "concept": "transcript",
+        "frac": 0.88,
+        "bg": 0.34,
+        "k": 22
+      },
+      {
+        "concept": "nuclear",
+        "frac": 0.84,
+        "bg": 0.37,
+        "k": 21
+      },
+      {
+        "concept": "dnabinding",
+        "frac": 0.72,
+        "bg": 0.1,
+        "k": 18
+      },
+      {
+        "concept": "chromat",
+        "frac": 0.68,
+        "bg": 0.19,
+        "k": 17
+      },
+      {
+        "concept": "polymerase",
+        "frac": 0.64,
+        "bg": 0.14,
+        "k": 16
+      }
+    ]
+  },
+  {
+    "feature": 18157,
+    "go_auc": 0.765,
+    "go_term": "catalytic activity",
+    "n_proteins": 25,
+    "reasoning_concepts": [
+      {
+        "concept": "transferas",
+        "frac": 0.44,
+        "bg": 0.23,
+        "k": 11
+      }
+    ]
+  },
+  {
+    "feature": 32232,
+    "go_auc": 0.765,
+    "go_term": "catalytic activity",
+    "n_proteins": 25,
+    "reasoning_concepts": [
+      {
+        "concept": "channel",
+        "frac": 0.72,
+        "bg": 0.31,
+        "k": 18
+      },
+      {
+        "concept": "metabol",
+        "frac": 0.68,
+        "bg": 0.3,
+        "k": 17
+      },
+      {
+        "concept": "transferas",
+        "frac": 0.52,
+        "bg": 0.23,
+        "k": 13
+      },
+      {
+        "concept": "redox",
+        "frac": 0.44,
+        "bg": 0.14,
+        "k": 11
+      },
+      {
+        "concept": "reductas",
+        "frac": 0.36,
+        "bg": 0.1,
+        "k": 9
+      }
+    ]
+  },
+  {
+    "feature": 21229,
+    "go_auc": 0.763,
+    "go_term": "catalytic activity",
+    "n_proteins": 25,
+    "reasoning_concepts": [
+      {
+        "concept": "metabol",
+        "frac": 0.68,
+        "bg": 0.3,
+        "k": 17
+      },
+      {
+        "concept": "transferas",
+        "frac": 0.56,
+        "bg": 0.23,
+        "k": 14
+      },
+      {
+        "concept": "chromat",
+        "frac": 0.4,
+        "bg": 0.19,
+        "k": 10
+      },
+      {
+        "concept": "mitochond",
+        "frac": 0.36,
+        "bg": 0.13,
+        "k": 9
+      }
+    ]
+  },
+  {
+    "feature": 24084,
+    "go_auc": 0.763,
+    "go_term": "catalytic activity",
+    "n_proteins": 25,
+    "reasoning_concepts": [
+      {
+        "concept": "metabol",
+        "frac": 0.64,
+        "bg": 0.3,
+        "k": 16
+      },
+      {
+        "concept": "redox",
+        "frac": 0.36,
+        "bg": 0.14,
+        "k": 9
+      },
+      {
+        "concept": "reductas",
+        "frac": 0.36,
+        "bg": 0.1,
+        "k": 9
+      }
+    ]
+  },
+  {
+    "feature": 6399,
+    "go_auc": 0.761,
+    "go_term": "catalytic activity",
+    "n_proteins": 25,
+    "reasoning_concepts": [
+      {
+        "concept": "channel",
+        "frac": 0.64,
+        "bg": 0.31,
+        "k": 16
+      },
+      {
+        "concept": "proton",
+        "frac": 0.32,
+        "bg": 0.1,
+        "k": 8
+      }
+    ]
+  },
+  {
+    "feature": 35516,
+    "go_auc": 0.76,
+    "go_term": "catalytic activity",
+    "n_proteins": 25,
+    "reasoning_concepts": [
+      {
+        "concept": "metabol",
+        "frac": 0.72,
+        "bg": 0.3,
+        "k": 18
+      },
+      {
+        "concept": "channel",
+        "frac": 0.6,
+        "bg": 0.31,
+        "k": 15
+      },
+      {
+        "concept": "transferas",
+        "frac": 0.48,
+        "bg": 0.23,
+        "k": 12
+      },
+      {
+        "concept": "reductas",
+        "frac": 0.48,
+        "bg": 0.1,
+        "k": 12
+      },
+      {
+        "concept": "redox",
+        "frac": 0.36,
+        "bg": 0.14,
+        "k": 9
+      },
+      {
+        "concept": "mitochond",
+        "frac": 0.32,
+        "bg": 0.13,
+        "k": 8
+      }
+    ]
+  }
+]
