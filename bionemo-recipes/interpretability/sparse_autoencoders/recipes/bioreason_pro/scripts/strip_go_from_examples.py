@@ -41,7 +41,7 @@ def main():
             continue
         r = dict(r)
         r["sequence"] = " ".join(toks)
-        r["activations"] = json.dumps(acts)
+        r["activations"] = [float(x) for x in acts]   # keep list<float> — json.dumps'd string breaks the dashboard
         r["max_activation"] = float(max(acts))
         by_feat.setdefault(r["feature_id"], []).append(r)
     # re-rank per feature by max_activation desc
@@ -51,7 +51,10 @@ def main():
             r["example_rank"] = rank
             out.append(r)
     cols = list(rows[0].keys())
-    pq.write_table(pa.Table.from_pylist([{c: r[c] for c in cols} for r in out]), fp)
+    # preserve the source schema so activations stays list<float32> (a json.dumps'd string breaks
+    # the frontend: Array.from(string) yields characters, not floats).
+    schema = pq.read_schema(bak)
+    pq.write_table(pa.Table.from_pylist([{c: r[c] for c in cols} for r in out], schema=schema), fp)
     print(f"dropped go-band rows: {dropped_go_band} | windows stripped of <go>: {stripped} | "
           f"final rows: {len(out)} (was {len(rows)})")
 

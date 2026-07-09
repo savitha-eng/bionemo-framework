@@ -83,8 +83,13 @@ export default function ProteinSequence({
   const scrollRef = useRef(null)
   const anchorRef = useRef(null)
 
-  const residues = sequence ? sequence.split('') : []
-  const acts = activations ? activations.slice(0, residues.length) : []
+  // Windows are space-joined TOKENS (protein residues are 1 char, text tokens are multi-char subwords),
+  // with one activation per token. Split on the token boundary, not per-character — a per-char split
+  // shreds multi-letter text tokens ("enzyme" -> e n z y m e) and misaligns the per-token activations.
+  // Fall back to per-char only for a spaceless (legacy esm2-style) sequence.
+  const residues = sequence ? (sequence.includes(' ') ? sequence.split(' ') : [...sequence]) : []
+  const actsArr = typeof activations === 'string' ? JSON.parse(activations || '[]') : (activations || [])
+  const acts = actsArr.slice(0, residues.length)
   const maxAct = maxActivation || Math.max(...acts, 0.001)
 
   // Compute local anchor index

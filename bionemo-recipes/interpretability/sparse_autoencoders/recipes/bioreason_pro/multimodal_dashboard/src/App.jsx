@@ -297,7 +297,7 @@ export default function App({ title = "BioReason-Pro L28 SAE — Feature Explore
       alphafold_id: row.alphafold_id,
       band: row.band,
       sequence: row.sequence,
-      activations: Array.from(row.activations),
+      activations: typeof row.activations === 'string' ? JSON.parse(row.activations) : Array.from(row.activations),
       max_activation: row.max_activation,
       best_annotation: row.best_annotation,
       go_terms: row.go_terms,
