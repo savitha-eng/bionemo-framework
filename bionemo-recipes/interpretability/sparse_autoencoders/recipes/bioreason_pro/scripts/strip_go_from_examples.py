@@ -51,9 +51,12 @@ def main():
             r["example_rank"] = rank
             out.append(r)
     cols = list(rows[0].keys())
-    # preserve the source schema so activations stays list<float32> (a json.dumps'd string breaks
-    # the frontend: Array.from(string) yields characters, not floats).
-    schema = pq.read_schema(bak)
+    # Force activations to list<float32> (never a json.dumps'd string: the frontend does
+    # Array.from(activations) and split(' ') on the sequence, so a string column yields characters,
+    # not floats, and paints garbage). Keep every other column's original type.
+    src = pq.read_schema(fp)
+    schema = pa.schema([pa.field("activations", pa.list_(pa.float32())) if f.name == "activations" else f
+                        for f in src])
     pq.write_table(pa.Table.from_pylist([{c: r[c] for c in cols} for r in out], schema=schema), fp)
     print(f"dropped go-band rows: {dropped_go_band} | windows stripped of <go>: {stripped} | "
           f"final rows: {len(out)} (was {len(rows)})")
