@@ -273,6 +273,16 @@ const FeatureCard = forwardRef(function FeatureCard({ feature, isHighlighted, fo
             >{aiLoading ? '⏳ interpreting…' : '🔍 Auto-interpret'}</button>
           </div>
           <div style={styles.description}>{description}</div>
+          {feature.go_term_protein && feature.go_auc_protein > 0.65 && (
+            <div style={{ fontSize: '11px', marginTop: '4px', padding: '3px 7px', borderRadius: '4px',
+              background: 'rgba(37,99,235,0.13)', color: '#93c5fd', lineHeight: 1.4 }}
+              title="Leakage-free held-out protein-band GO-AUROC (coarse anchor) refined by the concepts over-represented in the model's reasoning about the proteins this feature fires on.">
+              🧬🔀 protein feature — GO-AUROC {Number(feature.go_auc_protein).toFixed(2)}: {feature.go_term_protein}
+              {feature.xmodal_caption ? (
+                <div style={{ color: '#c4b5fd', marginTop: '2px' }}>↳ reasoning signals: {feature.xmodal_caption}</div>
+              ) : null}
+            </div>
+          )}
           {aiLabel && (
             <div style={{ fontSize: '11px', marginTop: '4px' }}>
               {aiLabel.error ? <span style={{ color: '#e88' }}>{aiLabel.error}</span> : (<>
