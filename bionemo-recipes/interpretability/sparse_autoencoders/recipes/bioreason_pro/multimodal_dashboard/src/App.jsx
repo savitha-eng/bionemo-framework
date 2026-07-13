@@ -698,6 +698,7 @@ export default function App({ title = "BioReason-Pro L28 SAE — Feature Explore
     const selection = brushRef.current
     let predicate = null
     if (modalityFilter === 'reasoning') predicate = sql`reasoning_frac >= 0.5`
+    else if (modalityFilter === 'validated-reasoning') predicate = sql`validated_reasoning`
     else if (modalityFilter === 'answer') predicate = sql`answer_frac >= 0.5`
     else if (modalityFilter === 'cross-modal') predicate = sql`fusion_class LIKE 'cross-modal%'`
     else if (modalityFilter === 'protein') predicate = sql`(band_class LIKE '%protein%' OR band_class = 'mixed')`
@@ -757,6 +758,8 @@ export default function App({ title = "BioReason-Pro L28 SAE — Feature Explore
         result = result.filter(f => String(f.fusion_class || '').startsWith('cross-modal'))
       } else if (modalityFilter === 'reasoning') {
         result = result.filter(f => (f.reasoning_frac || 0) >= 0.5)
+      } else if (modalityFilter === 'validated-reasoning') {
+        result = result.filter(f => f.validated_reasoning)
       } else if (modalityFilter === 'answer') {
         result = result.filter(f => (f.answer_frac || 0) >= 0.5)
       } else {
@@ -1076,6 +1079,7 @@ export default function App({ title = "BioReason-Pro L28 SAE — Feature Explore
               <option value="reasoning">🟣 Text · reasoning</option>
               <option value="answer">🟠 Text · answer</option>
               <option value="cross-modal">🔗 Cross-modal</option>
+              <option value="validated-reasoning">✅ Validated reasoning</option>
             </select>
             <select
               value={sortBy}
