@@ -1,311 +1,301 @@
-feature_id,go_term_protein,go_auc_protein,xmodal_caption,log_frequency,max_activation
-33415,catalytic activity,0.824,metabolism · zinc-finger,-1.7913455,0.90087044
-36071,catalytic activity,0.816,metabolism · phosphatase · transferase · redox · mitochondrion,-1.9603741,1.2790006
-4719,catalytic activity,0.799,channel · metabolism · transferase · redox · mitochondrion,-1.4139435,1.4303906
-33255,catalytic activity,0.797,metabolism · channel · phosphatase · transferase · proton,-1.315821,1.0095447
-22731,catalytic activity,0.796,proton,-2.5631466,1.7978843
-11134,catalytic activity,0.793,metabolism · channel · kinase · phosphatase · reductase · redox,-2.0497124,1.4318744
-9807,catalytic activity,0.793,phosphatase · metabolism · transferase · atpase,-2.3139403,1.2379715
-4161,catalytic activity,0.792,metabolism · redox,-1.9743285,1.244828
-9843,regulation of RNA metabolic process,0.792,nuclear · nucleus · transcription · chromat · polymerase,-2.3801908,1.2786616
-13297,catalytic activity,0.791,metabolism · channel,-0.9832784,21.612213
-20879,catalytic activity,0.791,metabolism,-1.8461052,0.96142524
-2264,catalytic activity,0.789,channel · metabolism · reductase · redox · electron,-2.3019145,2.3194273
-6563,catalytic activity,0.789,metabolism · transferase,-2.591041,2.0504174
-9268,catalytic activity,0.788,develop,-1.3275117,0.9311424
-37625,catalytic activity,0.781,channel,-1.5734434,0.80320746
-22375,catalytic activity,0.78,channel · metabolism · redox · ribosom,-1.6707032,1.4113144
-35661,catalytic activity,0.779,metabolism · channel · redox · reductase,-3.0510306,3.093631
-4007,catalytic activity,0.778,metabolism · transferase · redox,-1.4807652,1.4497756
-8513,catalytic activity,0.776,metabolism · redox · reductase · proton,-3.638987,1.3490405
-11852,catalytic activity,0.775,metabolism · channel · phosphatase · transferase · redox · reductase,-2.6078975,1.2538483
-26570,catalytic activity,0.774,channel · metabolism · phosphatase · kinase · transferase,-2.1916656,1.3221296
-3192,catalytic activity,0.773,gtpase · cytoskeleton,-1.9825509,1.2469941
-33418,catalytic activity,0.773,metabolism · redox · reductase · proton,-3.5901818,1.6974139
-28462,catalytic activity,0.772,develop,-2.1257124,1.0505573
-26920,catalytic activity,0.772,phosphatase · proton,-1.7018843,1.1679204
-33195,catalytic activity,0.768,channel · transferase · redox · mitochondrion · proton,-2.0830255,1.0037003
-13570,catalytic activity,0.768,channel · transferase · mitochondrion,-1.6195261,0.9462369
-21286,nucleic acid binding,0.767,nucleus · nuclear · transcription · chromat · polymerase · translation,-1.994469,4.7091737
-825,regulation of RNA metabolic process,0.765,nucleus · transcription · nuclear · DNA-binding · chromat · polymerase,-0.83840245,14.354496
-18157,catalytic activity,0.765,transferase,-0.99052215,2.179959
-12451,catalytic activity,0.765,metabolism · transferase · redox · mitochondrion · proton · oxidase,-1.8600883,1.0851315
-32232,catalytic activity,0.765,channel · metabolism · transferase · redox · reductase,-1.3558713,0.9359307
-21229,catalytic activity,0.763,metabolism · transferase · chromat · mitochondrion,-1.8073845,1.1175934
-24084,catalytic activity,0.763,metabolism · redox · reductase,-3.6496165,1.0581601
-6399,catalytic activity,0.761,channel · proton,-1.4092125,1.0668817
-35516,catalytic activity,0.76,metabolism · channel · transferase · reductase · redox · mitochondrion,-1.4366401,0.94340867
-7595,regulation of RNA metabolic process,0.76,transcription · nucleus · nuclear · DNA-binding · polymerase · chromat,-2.8145652,4.4643025
-26180,catalytic activity,0.759,kinase · phosphatase · cytoskeleton,-2.8131602,1.7073501
-39784,catalytic activity,0.759,channel · metabolism · phosphatase · transferase · atpase · redox,-2.287966,1.6618505
-36808,catalytic activity,0.758,kinase · phosphatase · cytoskeleton,-2.3095381,1.4865392
-6344,catalytic activity,0.757,chromat,-1.1362804,10.237907
-4852,catalytic activity,0.756,channel · metabolism · reductase,-1.2953967,1.032504
-1018,regulation of gene expression,0.755,nucleus · nuclear · transcription · chromat · polymerase,-1.8733089,1.6290469
-19518,catalytic activity,0.755,channel · metabolism · transferase · atpase,-1.6009341,1.1888099
-38434,catalytic activity,0.754,chromat · polymerase · DNA-binding,-1.6297301,1.2248558
-14619,catalytic activity,0.754,kinase · phosphatase,-1.5210586,1.727476
-9715,catalytic activity,0.752,channel · electron · redox · reductase · endoplasmic reticulum,-2.3901482,1.1548692
-40107,catalytic activity,0.751,matrix,-2.8750348,0.8073757
-16302,nucleic acid binding,0.751,chromat · polymerase,-1.5158515,5.833267
-20024,catalytic activity,0.75,lipid · transport,-2.6280026,1.8482144
-34459,cell periphery,0.75,extracellular · receptor · adhesion · synap · immune · neuron,-2.4692485,2.2362297
-15306,catalytic activity,0.75,transferase,-2.2603323,0.7953861
-11520,catalytic activity,0.75,phosphatase · gtpase,-2.562255,1.796249
-7532,catalytic activity,0.75,transferase · mitochondrion,-1.6697206,1.1254412
-16757,catalytic activity,0.749,phosphatase,-2.138546,1.5322934
-23995,catalytic activity,0.748,develop · translation,-1.4312882,0.87155557
-9090,catalytic activity,0.747,develop · polymerase,-1.8984118,12.954216
-23578,catalytic activity,0.747,channel · metabolism · mitochondrion,-1.8910631,1.3436213
-29493,catalytic activity,0.745,metabolism · transferase · phosphatase · redox · mitochondrion,-2.3363771,1.1879277
-3265,catalytic activity,0.744,channel · proton · redox,-1.9915102,1.4338825
-34760,catalytic activity,0.744,redox,-1.5933542,1.1833451
-32237,catalytic activity,0.744,metabolism · matrix · redox,-1.9067498,1.0763595
-11783,catalytic activity,0.744,channel · ribosom · translation,-1.8636206,1.3231186
-15901,catalytic activity,0.742,metabolism · transferase · mitochondrion · redox,-2.006906,1.4657931
-29950,regulation of RNA metabolic process,0.741,extracellular · secret · immune,-2.5696244,0.69831187
-29407,catalytic activity,0.741,phosphatase · kinase · translation · gtpase,-2.202649,1.3205134
-14036,nucleic acid binding,0.74,nucleus · transcription · nuclear · DNA-binding · chromat · polymerase,-2.210191,2.9408007
-9743,regulation of nucleobase-containing compound metabolic process,0.74,nucleus · transcription · nuclear · chromat · develop · polymerase,-1.7838877,2.757961
-4745,catalytic activity,0.739,translation · neuron,-2.109797,1.4507432
-1746,regulation of RNA metabolic process,0.739,nucleus · transcription · nuclear · DNA-binding · polymerase · develop,-1.9289716,1.1639578
-9710,catalytic activity,0.739,metabolism · phosphatase · redox,-1.4650471,1.1123841
-5204,catalytic activity,0.738,metabolism · channel · phosphatase · transferase · mitochondrion,-2.7860975,1.8226994
-16888,catalytic activity,0.738,transferase,-1.6608989,0.9225158
-37226,catalytic activity,0.738,metabolism · transferase · channel · phosphatase,-1.7923619,1.288968
-18450,catalytic activity,0.738,redox · proton,-1.259128,0.9721798
-38737,catalytic activity,0.737,channel · transferase,-1.5747689,0.95429945
-19970,catalytic activity,0.736,kinase · phosphatase,-1.3743886,1.3937043
-2323,catalytic activity,0.736,kinase · phosphatase,-1.8372626,0.92429596
-3774,catalytic activity,0.736,DNA-binding · develop · polymerase,-2.083401,1.5921059
-16083,signal transduction,0.735,receptor · extracellular · neuron · synap,-2.7828336,2.0811718
-25106,regulation of gene expression,0.735,transcription · nucleus · nuclear · DNA-binding · chromat · polymerase,-3.6325138,0.255349
-17569,catalytic activity,0.735,kinase · phosphatase · cytoskeleton,-2.1182103,1.2709457
-29897,catalytic activity,0.735,metabolism · transferase,-2.0366342,2.249405
-33216,catalytic activity,0.734,transferase · phosphatase · develop,-1.7890766,1.1973096
-34078,catalytic activity,0.734,phosphatase · atpase · helicase,-2.3527048,1.3469554
-24729,catalytic activity,0.733,channel · secret · transferase,-2.2008784,1.2848152
-34173,plasma membrane,0.733,extracellular · lipid · phosphatase · translation · gtpase,-2.1422808,1.2473474
-10957,catalytic activity,0.733,redox,-2.6591184,1.6401304
-28340,organic substance biosynthetic process,0.732,neuron · atpase,-2.635145,0.8838669
-19504,catalytic activity,0.731,metabolism · secret,-1.1524681,22.739697
-30283,catalytic activity,0.731,metabolism · electron,-1.7383615,1.4528185
-3857,catalytic activity,0.731,transferase · translation · ribosom · atpase,-1.2962952,1.3892184
-18523,plasma membrane,0.73,extracellular · receptor · adhesion · neuron · develop · synap,-2.8596978,2.0431514
-10098,catalytic activity,0.73,extracellular,-1.8674268,1.1981732
-33127,regulation of RNA metabolic process,0.729,nucleus · nuclear · transcription · chromat · polymerase · DNA-binding,-1.7404283,0.9420307
-31891,plasma membrane,0.729,extracellular · transport · lipid · proton · neuron,-2.3733094,1.8490107
-32216,catalytic activity,0.729,zinc-finger · gtpase,-1.5364037,0.9079842
-10465,catalytic activity,0.728,phosphatase · mitochondrion,-1.617673,1.987073
-40545,catalytic activity,0.728,transferase · redox,-1.7573609,1.2129933
-23351,catalytic activity,0.728,channel · metabolism · lipid · endoplasmic reticulum,-1.587845,0.9862867
-8381,catalytic activity,0.727,kinase · phosphatase,-2.539719,1.6399342
-17397,catalytic activity,0.727,transferase · mitochondrion,-1.5578194,1.0001094
-34285,catalytic activity,0.727,kinase,-2.764872,2.1996026
-8581,nucleic acid binding,0.727,nucleus · transcription · nuclear · DNA-binding · chromat · polymerase,-2.7313895,4.67321
-28865,catalytic activity,0.725,channel · redox,-1.419015,0.77935624
-39274,catalytic activity,0.725,transport · develop · electron,-2.8333144,2.2816334
-19353,catalytic activity,0.724,phosphatase · extracellular · neuron · synap,-3.1035304,2.603146
-1679,catalytic activity,0.724,transferase · redox,-2.0925128,0.9701389
-4102,catalytic activity,0.724,metabolism,-2.1141362,0.9595458
-32312,catalytic activity,0.724,nucleus · nuclear · transcription · actin · polymerase · chromat,-0.2450733,90.38672
-7617,catalytic activity,0.723,phosphatase · translation,-1.5975205,1.156689
-28314,catalytic activity,0.722,transferase · develop · translation · ribosom,-1.5953916,1.0388751
-6156,catalytic activity,0.721,metabolism · channel · transferase · reductase · redox,-2.2136111,1.2214478
-8844,regulation of nucleobase-containing compound metabolic process,0.721,nucleus · nuclear · transcription · chromat · develop,-2.740991,2.5046403
-36535,regulation of RNA metabolic process,0.72,nucleus · nuclear · transcription · chromat · polymerase · DNA-binding,-2.2438443,1.3549525
-12291,catalytic activity,0.719,transport · lipid · channel · metabolism · electron · endoplasmic reticulum,-2.3491635,1.4232216
-30739,catalytic activity,0.719,transport · lipid · develop · proton,-1.7627345,0.98846936
-23547,catalytic activity,0.717,channel · phosphatase · transferase,-1.7122276,1.3498124
-17419,cellular biosynthetic process,0.717,channel · metabolism,-1.061457,9.39549
-39450,negative regulation of cellular process,0.716,nucleus · nuclear · transcription · kinase · phosphatase · chromat,-2.1878016,2.030283
-10921,catalytic activity,0.716,metabolism · channel · phosphatase · transferase · redox · mitochondrion,-2.3609397,1.8233571
-6118,catalytic activity,0.716,redox,-2.109061,1.4301982
-15258,regulation of RNA metabolic process,0.716,zinc-finger · nucleus · nuclear · transcription · chromat · ubiquitin,-2.3323765,4.6502733
-5972,catalytic activity,0.715,channel · transport,-2.5592482,0.6372712
-7440,regulation of RNA metabolic process,0.715,polymerase · translation · develop · chromat · DNA-binding · chaperone,-0.049633857,64.05838
-32695,catalytic activity,0.714,polymerase,-1.8197801,1.4516109
-22127,nucleic acid binding,0.714,nucleus · nuclear · transcription · chromat · polymerase · DNA-binding,-1.7870001,1.0725597
-19224,organonitrogen compound metabolic process,0.713,kinase · phosphatase,-2.383934,1.4167149
-6984,catalytic activity,0.713,channel · atpase,-1.9594755,1.0974112
-16758,signal transduction,0.712,kinase · phosphatase,-3.2576535,0.8419324
-24222,catalytic activity,0.712,develop · neuron · DNA-binding,-2.3303754,1.7679145
-18387,nucleic acid binding,0.711,nucleus · nuclear · transcription · polymerase · DNA-binding · develop,-3.062551,1.9590901
-3230,catalytic activity,0.711,ubiquitin,-1.2593703,0.86207014
-18801,catalytic activity,0.711,kinase · phosphatase,-2.046099,1.3989766
-5661,catalytic activity,0.711,zinc-finger · ubiquitin,-2.8438687,1.7905529
-35981,catalytic activity,0.71,metabolism · phosphatase · transferase · redox · ribosom,-2.211371,1.3011986
-22361,catalytic activity,0.71,develop,-2.08958,1.3638278
-24168,catalytic activity,0.709,channel · metabolism · lipid · endoplasmic reticulum · electron · redox,-1.6285735,1.5661917
-22648,catalytic activity,0.708,chromat · DNA-binding,-2.2270844,1.6881509
-26913,catalytic activity,0.708,kinase,-1.3744634,0.94131935
-21208,signal transduction,0.707,receptor · extracellular · neuron · cytoskeleton · synap · junction,-2.1334643,1.2766007
-36021,catalytic activity,0.707,metabolism · phosphatase · transferase · mitochondrion,-2.4456403,1.9502771
-20591,catalytic activity,0.706,ubiquitin,-3.3475194,2.5178394
-32409,catalytic activity,0.706,neuron · atpase,-2.2607605,1.2476043
-33662,protein metabolic process,0.706,cytoskeleton · ubiquitin · gtpase,-2.1359148,1.4123337
-18189,catalytic activity,0.705,kinase,-2.847701,10.606026
-22910,regulation of gene expression,0.704,nucleus · nuclear · transcription · chromat · develop · DNA-binding,-3.2172058,1.2415632
-36044,catalytic activity,0.704,atpase,-3.1857748,3.6609945
-1483,regulation of nucleobase-containing compound metabolic process,0.703,nucleus · actin · kinase · cytoskeleton · develop · chromat,-2.2097466,1.6080786
-4041,cell periphery,0.703,extracellular · receptor · neuron · synap · junction · adhesion,-1.251286,2.3858342
-31452,catalytic activity,0.702,metabolism · transferase · translation · proton,-1.966083,1.3033848
-36189,catalytic activity,0.702,channel · metabolism,-1.5790802,1.4202133
-18897,cellular biosynthetic process,0.702,phosphatase · channel · metabolism · transferase · atpase,-2.826512,2.208767
-12842,regulation of nucleobase-containing compound metabolic process,0.701,chromat,-2.8123527,1.4361014
-11285,nucleic acid binding,0.7,nucleus · nuclear · transcription · chromat · polymerase · zinc-finger,-1.6696393,1.096297
-30124,catalytic activity,0.7,kinase,-2.3159382,4.434044
-2438,catalytic activity,0.699,secret,-2.1011484,0.7481255
-13821,catalytic activity,0.699,secret · extracellular · neuron,-1.4590186,1.2996491
-20684,catalytic activity,0.698,chromat,-2.285003,1.666845
-31031,catalytic activity,0.698,phosphatase,-0.8313658,16.246813
-31675,catalytic activity,0.697,extracellular,-1.9402866,1.1027603
-32227,catalytic activity,0.697,channel · transferase,-2.4809916,4.0285645
-15042,regulation of nucleobase-containing compound metabolic process,0.697,nucleus · transcription · nuclear · chromat · polymerase · develop,-3.4093955,0.34505123
-19421,catalytic activity,0.697,metabolism · channel · transferase · redox,-2.7816906,2.0260098
-20456,nucleic acid binding,0.697,chromat · neuron · polymerase · junction,-1.8498017,1.2950441
-11483,catalytic activity,0.696,chromat · ubiquitin · zinc-finger,-1.9423196,1.0598425
-3536,cellular biosynthetic process,0.695,lipid · zinc-finger,-1.129576,9.671061
-6345,regulation of nucleobase-containing compound metabolic process,0.695,nuclear · transcription · polymerase · develop · chromat,-1.9828056,1.1884186
-36943,nucleic acid binding,0.695,nuclear · chromat · develop,-1.5727351,4.282237
-3400,catalytic activity,0.695,transport · gtpase,-1.889653,1.3134536
-11928,catalytic activity,0.695,atpase,-1.8779118,1.1072413
-23845,cell periphery,0.694,extracellular · receptor · secret · matrix · adhesion · neuron,-2.8067408,1.9616334
-9685,catalytic activity,0.694,kinase · phosphatase,-1.7800281,1.4408802
-9379,catalytic activity,0.694,phosphatase · transferase,-1.614556,0.8899234
-40361,catalytic activity,0.693,metabolism · develop · chromat,-2.2977388,2.4079342
-8591,catalytic activity,0.692,transferase · chromat,-2.4016888,0.85893744
-34004,catalytic activity,0.691,cytoskeleton,-1.4580294,1.2060319
-4439,system development,0.691,phosphatase,-3.6881711,0.73718345
-29061,catalytic activity,0.691,channel · mitochondrion · redox,-1.7322676,1.1651092
-24639,nucleic acid binding,0.691,chromat · polymerase,-1.7805871,1.6358405
-1114,catalytic activity,0.69,channel · transferase,-2.7475486,1.4535676
-2599,catalytic activity,0.689,kinase · phosphatase,-2.7677224,1.8307537
-11784,catalytic activity,0.689,kinase · phosphatase,-2.0448983,1.2995938
-19704,catalytic activity,0.688,phosphatase · develop,-2.1857204,1.4742368
-34914,protein metabolic process,0.688,cytoskeleton,-1.9952564,1.1221837
-30180,catalytic activity,0.688,transport · channel · extracellular · proton,-1.7560165,2.4544744
-40708,catalytic activity,0.688,zinc-finger · neuron · ubiquitin,-1.6621368,0.9354291
-8975,catalytic activity,0.687,cytoskeleton · neuron,-1.9878949,1.1241164
-28981,catalytic activity,0.687,metabolism · reductase · electron,-2.0364027,1.1112614
-24297,nucleic acid binding,0.686,transcription · nucleus · nuclear · chromat · develop · polymerase,-2.7826974,1.5420852
-39945,protein metabolic process,0.686,receptor · extracellular · secret · matrix · protease,-1.6265851,2.6290216
-5385,catalytic activity,0.686,transport · extracellular · lipid · metabolism · proton,-2.6266248,1.8372506
-35294,cell periphery,0.685,receptor · extracellular · secret · adhesion · matrix · neuron,-0.058017153,89.85782
-97,catalytic activity,0.685,metabolism · cytoskeleton,-2.229501,0.69840753
-25644,nucleic acid binding,0.684,cytoskeleton · matrix,-2.0879412,1.0739448
-34009,nucleic acid binding,0.684,nucleus · transcription · nuclear · chromat · develop · polymerase,-2.4498012,1.5314074
-22224,catalytic activity,0.684,transport · phosphatase · redox · reductase · proton,-1.9693627,1.263689
-9673,system development,0.683,extracellular · transport,-3.3974152,1.0782624
-7362,catalytic activity,0.683,translation · cytoskeleton · gtpase,-1.8268962,1.3118494
-26135,nucleic acid binding,0.683,nucleus · nuclear · transcription · chromat · polymerase · zinc-finger,-3.0129347,3.2399595
-28536,catalytic activity,0.682,kinase · phosphatase,-2.8459013,1.8725802
-28917,catalytic activity,0.682,metabolism · channel · transferase · redox · mitochondrion · reductase,-1.5853044,1.0793127
-3974,catalytic activity,0.681,gtpase,-1.8626372,1.4993557
-10521,catalytic activity,0.681,develop · polymerase · DNA-binding,-3.6588025,3.6135538
-6950,regulation of nucleobase-containing compound metabolic process,0.681,cytoskeleton · neuron,-1.7599088,1.2134062
-21535,positive regulation of metabolic process,0.68,kinase · phosphatase,-3.136574,1.6730971
-28357,intracellular non-membrane-bounded organelle,0.68,ubiquitin,-1.5201057,17.72836
-7724,intracellular non-membrane-bounded organelle,0.679,ubiquitin,-2.7163398,1.2388996
-8712,nucleic acid binding,0.679,chromat · cytoskeleton · develop · polymerase,-2.2461185,1.5636773
-37269,catalytic activity,0.679,phosphatase,-1.7766052,1.6153028
-10945,protein metabolic process,0.678,zinc-finger · ubiquitin,-2.9651916,2.0394473
-17003,nucleic acid binding,0.677,transcription · chromat,-2.42144,1.3655907
-31208,intracellular non-membrane-bounded organelle,0.677,ubiquitin,-2.5154793,2.7140129
-39483,cellular biosynthetic process,0.677,chaperone · chromat,-2.2286737,1.934261
-12680,catalytic activity,0.677,nucleus · nuclear · chromat · polymerase · zinc-finger · DNA-binding,-1.3884313,1.1569514
-36169,catalytic activity,0.677,kinase · phosphatase,-2.2733488,1.4114509
-18125,organic substance biosynthetic process,0.676,kinase · phosphatase,-2.9898314,2.724804
-17319,catalytic activity,0.676,metabolism · transport · lipid,-2.0945485,1.6339417
-4,nucleic acid binding,0.676,transcription · chromat,-1.7230614,0.9344181
-2533,regulation of nucleobase-containing compound metabolic process,0.676,nucleus · nuclear · transcription · kinase · chromat · develop,-1.7970281,0.8262285
-4843,catalytic activity,0.675,ubiquitin,-0.16853173,56.2826
-22440,catalytic activity,0.675,channel · metabolism,-1.940207,0.7345345
-31303,catalytic activity,0.675,phosphatase,-1.4994324,1.0945798
-1397,catalytic activity,0.674,kinase · phosphatase,-1.8128442,1.1275568
-31873,regulation of RNA metabolic process,0.674,nucleus · nuclear · transcription · RNA-binding · polymerase · chromat,-2.812032,4.3488245
-10467,negative regulation of cellular process,0.674,nuclear · nucleus · transcription · chromat,-1.6734622,0.81157434
-15210,regulation of RNA metabolic process,0.673,nucleus · nuclear · transcription · chromat · develop · DNA-binding,-1.5780548,1.029373
-18771,catalytic activity,0.673,kinase,-1.638927,1.2954024
-785,catalytic activity,0.672,adhesion,-1.1647984,0.8750134
-5943,regulation of RNA metabolic process,0.672,cytoskeleton · translation,-1.5748752,0.83548564
-33572,regulation of nucleobase-containing compound metabolic process,0.672,nucleus · nuclear · chromat,-1.4412973,2.1726825
-7474,negative regulation of biological process,0.672,nucleus · nuclear · chromat,-1.547335,0.91881895
-40149,nucleic acid binding,0.671,nucleus · nuclear · transcription · chromat · DNA-binding · polymerase,-1.4194955,1.4500595
-17121,membrane,0.67,extracellular · transport · lipid · neuron · proton,-2.3190522,1.4816463
-21450,catalytic activity,0.67,chromat · DNA-binding · polymerase,-2.7838976,1.250177
-3489,biosynthetic process,0.669,phosphatase · channel · translation · ribosom,-2.762508,1.6379658
-40087,nucleic acid binding,0.669,nucleus · nuclear · translation · chromat,-1.8716643,1.0460588
-5002,regulation of nucleobase-containing compound metabolic process,0.669,chromat · polymerase · DNA-binding,-3.765428,0.522046
-27142,cell periphery,0.669,extracellular · receptor · adhesion · synap · immune · neuron,-2.093691,2.8483121
-7153,catalytic activity,0.668,chromat · DNA-binding · neuron · polymerase,-1.5782356,1.398882
-39986,organic substance biosynthetic process,0.668,lipid · matrix · mitochondrion,-4.972399,0.2027731
-2119,organic substance biosynthetic process,0.668,metabolism · lipid · channel · endoplasmic reticulum · electron · redox,-4.9545035,0.62096024
-32797,catalytic activity,0.668,phosphatase · atpase,-1.9341244,1.095911
-21380,nucleic acid binding,0.668,kinase · chromat · cytoskeleton,-2.5862088,0.9370767
-18357,signal transduction,0.668,extracellular · receptor · secret · kinase · adhesion · immune,-1.871623,1.376833
-17577,catalytic activity,0.668,RNA-binding,-1.5048774,9.726651
-16811,nucleic acid binding,0.667,channel · metabolism · lipid · proton,-3.551079,0.56983274
-32555,catalytic activity,0.667,channel · metabolism · transferase,-1.480273,1.0395377
-4182,catalytic activity,0.667,ubiquitin,-1.6055315,1.2799892
-38490,positive regulation of metabolic process,0.666,nucleus · nuclear · develop · cytoskeleton · chromat,-1.7598753,3.2353213
-6129,organic substance biosynthetic process,0.666,cytoskeleton,-4.606256,0.53046876
-21855,catalytic activity,0.666,atpase · chaperone,-1.5244246,1.1776685
-29199,nucleic acid binding,0.665,transcription · nucleus · nuclear · develop · chromat · polymerase,-1.7430087,6.8839664
-29094,nucleic acid binding,0.665,nucleus · nuclear · transcription · actin · chromat · polymerase,-2.2208219,1.592452
-487,catalytic activity,0.665,ubiquitin,-1.7654827,0.8260101
-6008,catalytic activity,0.665,metabolism · proton,-2.6078124,1.6955575
-25752,regulation of nucleobase-containing compound metabolic process,0.665,transcription · nucleus · nuclear · chromat · develop · DNA-binding,-2.9948933,0.5481344
-26294,catalytic activity,0.664,redox,-1.4930763,1.0679907
-199,negative regulation of cellular process,0.664,zinc-finger · chromat · ubiquitin,-2.0711048,2.1653519
-21396,negative regulation of metabolic process,0.664,nucleus · nuclear · develop · chromat · cytoskeleton · adhesion,-2.1728024,0.9574266
-19592,regulation of response to stimulus,0.664,junction · chromat · cytoskeleton · neuron · develop · adhesion,-2.3120685,1.3636174
-31112,organic substance biosynthetic process,0.664,mitochondrion,-2.0281792,8.33821
-17278,plasma membrane,0.664,extracellular · receptor · adhesion · neuron · synap · junction,-2.5189877,4.3206477
-18481,catalytic activity,0.663,kinase · phosphatase,-2.5389674,1.8337653
-26623,catalytic activity,0.663,redox,-3.1192057,0.75730103
-40635,catalytic activity,0.663,kinase · phosphatase,-2.3064733,6.2163367
-23740,catalytic activity,0.663,nucleus · DNA-binding · chromat · polymerase,-2.0825255,1.565713
-16346,catalytic activity,0.663,lipid,-1.3503916,1.0684344
-27771,protein metabolic process,0.662,receptor · extracellular · neuron · secret · adhesion · synap,-2.2219636,0.969865
-36735,protein metabolic process,0.662,endoplasmic reticulum,-1.7832909,1.4901975
-11849,catalytic activity,0.662,neuron,-1.0277059,11.616205
-25513,nucleic acid binding,0.662,nuclear · nucleus · transcription · develop · chromat · polymerase,-2.0282125,0.97443384
-25264,nucleic acid binding,0.661,nucleus · transcription · nuclear · chromat · polymerase · translation,-1.682583,1.0875211
-28257,biosynthetic process,0.661,channel · metabolism · transferase · redox · reductase,-1.3514799,10.968102
-35824,negative regulation of cellular process,0.661,actin · cytoskeleton · develop · neuron · vesicl · cortex,-1.9351009,1.170343
-6180,organic substance biosynthetic process,0.661,cytoskeleton · redox · tubulin,-1.8390132,19.028599
-39574,positive regulation of metabolic process,0.66,nucleus · kinase · chromat · cytoskeleton,-2.640256,1.8064119
-16060,nucleic acid binding,0.66,nucleus · nuclear · transcription · chromat · DNA-binding · polymerase,-1.9472916,1.5220933
-39992,negative regulation of biological process,0.659,actin · ubiquitin · develop · cytoskeleton · gtpase,-2.1603553,1.4655776
-5812,nucleic acid binding,0.659,nucleus · nuclear · transcription · chromat · polymerase · DNA-binding,-1.5821809,0.66078866
-38602,biosynthetic process,0.659,channel · metabolism · phosphatase · transferase,-3.2233984,1.3307064
-17239,biosynthetic process,0.659,metabolism · redox · proton · reductase,-2.4665349,1.2324028
-8835,catalytic activity,0.659,channel · vesicl,-1.5200304,1.0945439
-30084,catalytic activity,0.659,channel,-1.0231965,10.325882
-37255,cellular biosynthetic process,0.658,transferase,-1.4464744,1.9894763
-27708,regulation of RNA metabolic process,0.658,transcription · nucleus · nuclear · DNA-binding · chromat · polymerase,-2.5179794,1.4080894
-14017,catalytic activity,0.657,transcription · chromat · DNA-binding · chaperone · polymerase,-1.9367315,1.1741419
-35363,nucleic acid binding,0.657,nucleus · nuclear · chromat · zinc-finger,-1.6375474,0.7487465
-38532,positive regulation of metabolic process,0.657,nucleus · nuclear · transcription · chromat · polymerase · DNA-binding,-1.3474247,6.986848
-6508,response to abiotic stimulus,0.657,chromat,-2.8094363,2.455958
-24814,catalytic activity,0.656,proton,-1.9478265,1.5190578
-1677,catalytic activity,0.656,kinase · phosphatase,-2.2184997,1.2559775
-16852,catalytic activity,0.655,chromat · DNA-binding · polymerase,-2.2629693,8.98132
-14344,cellular biosynthetic process,0.655,transport,-1.5338681,0.931924
-13718,regulation of nucleobase-containing compound metabolic process,0.654,extracellular,-2.999416,0.4325534
-24571,organic substance biosynthetic process,0.654,cytoskeleton,-4.858141,4.4477715
-11076,regulation of nucleobase-containing compound metabolic process,0.654,nucleus · nuclear · transcription · kinase · chromat · polymerase,-2.1420877,0.7577912
-32819,plasma membrane,0.654,extracellular · phosphatase · neuron · adhesion · differentiation,-2.1136515,1.8385874
-12831,protein metabolic process,0.654,nucleus · nuclear,-4.08182,1.6251477
-26368,organic substance biosynthetic process,0.654,channel · metabolism · transferase · lipid · redox · endoplasmic reticulum,-3.0281322,2.843719
-10177,nucleic acid binding,0.653,nucleus · transcription · nuclear · chromat · polymerase · translation,-2.0558817,1.1767002
-11172,catalytic activity,0.653,nucleus · nuclear · chromat · DNA-binding · polymerase,-3.023966,3.1874485
-1768,cell periphery,0.652,extracellular · receptor · secret · develop · matrix · adhesion,-1.2884787,1.8872674
-15110,organic substance biosynthetic process,0.652,nucleus · transcription · nuclear · chromat · actin · DNA-binding,-4.98235,0.48059726
-33092,cellular biosynthetic process,0.652,ubiquitin,-1.0342714,9.297689
-14202,cellular component organization,0.652,kinase · phosphatase,-3.6618853,0.52112764
-13119,negative regulation of cellular process,0.651,nucleus · nuclear · chromat · polymerase · DNA-binding,-1.7163113,1.7493762
-24276,protein metabolic process,0.651,nucleus · nuclear · DNA-binding · chromat · polymerase,-3.6509552,4.556708
-15455,organic substance biosynthetic process,0.651,redox · polymerase,-2.2074249,25.767456
-8157,catalytic activity,0.651,phosphatase,-2.6529121,0.80375344
+feature_id,go_term_protein,go_auc_protein,xmodal_caption,band_class,log_frequency,max_activation
+33415,catalytic activity,0.824,metabolism · zinc-finger,protein-heavy,-1.7913455,0.90087044
+36071,catalytic activity,0.816,metabolism · phosphatase · transferase · redox · mitochondrion,protein-heavy,-1.9603741,1.2790006
+4719,catalytic activity,0.799,channel · metabolism · transferase · redox · mitochondrion,protein-heavy,-1.4139435,1.4303906
+33255,catalytic activity,0.797,metabolism · channel · phosphatase · transferase · proton,protein-heavy,-1.315821,1.0095447
+22731,catalytic activity,0.796,proton,protein-heavy,-2.5631466,1.7978843
+11134,catalytic activity,0.793,metabolism · channel · kinase · phosphatase · reductase · redox,protein-heavy,-2.0497124,1.4318744
+9807,catalytic activity,0.793,phosphatase · metabolism · transferase · atpase,protein-heavy,-2.3139403,1.2379715
+9843,regulation of RNA metabolic process,0.792,nuclear · nucleus · transcription · chromat · polymerase,protein-heavy,-2.3801908,1.2786616
+4161,catalytic activity,0.792,metabolism · redox,protein-heavy,-1.9743285,1.244828
+13297,catalytic activity,0.791,metabolism · channel,protein-heavy,-0.9832784,21.612213
+20879,catalytic activity,0.791,metabolism,protein-heavy,-1.8461052,0.96142524
+2264,catalytic activity,0.789,channel · metabolism · reductase · redox · electron,protein-heavy,-2.3019145,2.3194273
+6563,catalytic activity,0.789,metabolism · transferase,protein-heavy,-2.591041,2.0504174
+9268,catalytic activity,0.788,develop,protein-heavy,-1.3275117,0.9311424
+37625,catalytic activity,0.781,channel,protein-heavy,-1.5734434,0.80320746
+22375,catalytic activity,0.78,channel · metabolism · redox · ribosom,protein-heavy,-1.6707032,1.4113144
+35661,catalytic activity,0.779,metabolism · channel · redox · reductase,protein-heavy,-3.0510306,3.093631
+4007,catalytic activity,0.778,metabolism · transferase · redox,protein-heavy,-1.4807652,1.4497756
+8513,catalytic activity,0.776,metabolism · redox · reductase · proton,protein-heavy,-3.638987,1.3490405
+11852,catalytic activity,0.775,metabolism · channel · phosphatase · transferase · redox · reductase,protein-heavy,-2.6078975,1.2538483
+26570,catalytic activity,0.774,channel · metabolism · phosphatase · kinase · transferase,protein-heavy,-2.1916656,1.3221296
+3192,catalytic activity,0.773,gtpase · cytoskeleton,protein-heavy,-1.9825509,1.2469941
+33418,catalytic activity,0.773,metabolism · redox · reductase · proton,protein-heavy,-3.5901818,1.6974139
+28462,catalytic activity,0.772,develop,protein-heavy,-2.1257124,1.0505573
+26920,catalytic activity,0.772,phosphatase · proton,protein-heavy,-1.7018843,1.1679204
+13570,catalytic activity,0.768,channel · transferase · mitochondrion,protein-heavy,-1.6195261,0.9462369
+33195,catalytic activity,0.768,channel · transferase · redox · mitochondrion · proton,protein-heavy,-2.0830255,1.0037003
+21286,nucleic acid binding,0.767,nucleus · nuclear · transcription · chromat · polymerase · translation,protein-heavy,-1.994469,4.7091737
+32232,catalytic activity,0.765,channel · metabolism · transferase · redox · reductase,protein-heavy,-1.3558713,0.9359307
+825,regulation of RNA metabolic process,0.765,nucleus · transcription · nuclear · DNA-binding · chromat · polymerase,protein-heavy,-0.83840245,14.354496
+12451,catalytic activity,0.765,metabolism · transferase · redox · mitochondrion · proton · oxidase,protein-heavy,-1.8600883,1.0851315
+18157,catalytic activity,0.765,transferase,protein-heavy,-0.99052215,2.179959
+21229,catalytic activity,0.763,metabolism · transferase · chromat · mitochondrion,protein-heavy,-1.8073845,1.1175934
+24084,catalytic activity,0.763,metabolism · redox · reductase,protein-heavy,-3.6496165,1.0581601
+6399,catalytic activity,0.761,channel · proton,protein-heavy,-1.4092125,1.0668817
+35516,catalytic activity,0.76,metabolism · channel · transferase · reductase · redox · mitochondrion,protein-heavy,-1.4366401,0.94340867
+7595,regulation of RNA metabolic process,0.76,transcription · nucleus · nuclear · DNA-binding · polymerase · chromat,protein-heavy,-2.8145652,4.4643025
+39784,catalytic activity,0.759,channel · metabolism · phosphatase · transferase · atpase · redox,protein-heavy,-2.287966,1.6618505
+26180,catalytic activity,0.759,kinase · phosphatase · cytoskeleton,protein-heavy,-2.8131602,1.7073501
+36808,catalytic activity,0.758,kinase · phosphatase · cytoskeleton,protein-heavy,-2.3095381,1.4865392
+6344,catalytic activity,0.757,chromat,protein-heavy,-1.1362804,10.237907
+4852,catalytic activity,0.756,channel · metabolism · reductase,protein-heavy,-1.2953967,1.032504
+19518,catalytic activity,0.755,channel · metabolism · transferase · atpase,protein-heavy,-1.6009341,1.1888099
+1018,regulation of gene expression,0.755,nucleus · nuclear · transcription · chromat · polymerase,protein-heavy,-1.8733089,1.6290469
+38434,catalytic activity,0.754,chromat · polymerase · DNA-binding,protein-heavy,-1.6297301,1.2248558
+14619,catalytic activity,0.754,kinase · phosphatase,protein-heavy,-1.5210586,1.727476
+9715,catalytic activity,0.752,channel · electron · redox · reductase · endoplasmic reticulum,protein-heavy,-2.3901482,1.1548692
+40107,catalytic activity,0.751,matrix,protein-heavy,-2.8750348,0.8073757
+16302,nucleic acid binding,0.751,chromat · polymerase,protein-heavy,-1.5158515,5.833267
+11520,catalytic activity,0.75,phosphatase · gtpase,protein-heavy,-2.562255,1.796249
+34459,cell periphery,0.75,extracellular · receptor · adhesion · synap · immune · neuron,protein-heavy,-2.4692485,2.2362297
+15306,catalytic activity,0.75,transferase,protein-heavy,-2.2603323,0.7953861
+20024,catalytic activity,0.75,lipid · transport,protein-heavy,-2.6280026,1.8482144
+7532,catalytic activity,0.75,transferase · mitochondrion,protein-heavy,-1.6697206,1.1254412
+16757,catalytic activity,0.749,phosphatase,protein-heavy,-2.138546,1.5322934
+23995,catalytic activity,0.748,develop · translation,protein-heavy,-1.4312882,0.87155557
+23578,catalytic activity,0.747,channel · metabolism · mitochondrion,protein-heavy,-1.8910631,1.3436213
+9090,catalytic activity,0.747,develop · polymerase,protein-heavy,-1.8984118,12.954216
+29493,catalytic activity,0.745,metabolism · transferase · phosphatase · redox · mitochondrion,protein-heavy,-2.3363771,1.1879277
+34760,catalytic activity,0.744,redox,protein-heavy,-1.5933542,1.1833451
+11783,catalytic activity,0.744,channel · ribosom · translation,protein-heavy,-1.8636206,1.3231186
+32237,catalytic activity,0.744,metabolism · matrix · redox,protein-heavy,-1.9067498,1.0763595
+3265,catalytic activity,0.744,channel · proton · redox,protein-heavy,-1.9915102,1.4338825
+15901,catalytic activity,0.742,metabolism · transferase · mitochondrion · redox,protein-heavy,-2.006906,1.4657931
+29950,regulation of RNA metabolic process,0.741,extracellular · secret · immune,protein-heavy,-2.5696244,0.69831187
+29407,catalytic activity,0.741,phosphatase · kinase · translation · gtpase,protein-heavy,-2.202649,1.3205134
+14036,nucleic acid binding,0.74,nucleus · transcription · nuclear · DNA-binding · chromat · polymerase,protein-heavy,-2.210191,2.9408007
+9743,regulation of nucleobase-containing compound metabolic process,0.74,nucleus · transcription · nuclear · chromat · develop · polymerase,protein-heavy,-1.7838877,2.757961
+4745,catalytic activity,0.739,translation · neuron,protein-heavy,-2.109797,1.4507432
+9710,catalytic activity,0.739,metabolism · phosphatase · redox,protein-heavy,-1.4650471,1.1123841
+1746,regulation of RNA metabolic process,0.739,nucleus · transcription · nuclear · DNA-binding · polymerase · develop,protein-heavy,-1.9289716,1.1639578
+18450,catalytic activity,0.738,redox · proton,protein-heavy,-1.259128,0.9721798
+16888,catalytic activity,0.738,transferase,protein-heavy,-1.6608989,0.9225158
+37226,catalytic activity,0.738,metabolism · transferase · channel · phosphatase,protein-heavy,-1.7923619,1.288968
+5204,catalytic activity,0.738,metabolism · channel · phosphatase · transferase · mitochondrion,protein-heavy,-2.7860975,1.8226994
+38737,catalytic activity,0.737,channel · transferase,protein-heavy,-1.5747689,0.95429945
+19970,catalytic activity,0.736,kinase · phosphatase,protein-heavy,-1.3743886,1.3937043
+3774,catalytic activity,0.736,DNA-binding · develop · polymerase,protein-heavy,-2.083401,1.5921059
+2323,catalytic activity,0.736,kinase · phosphatase,protein-heavy,-1.8372626,0.92429596
+17569,catalytic activity,0.735,kinase · phosphatase · cytoskeleton,protein-heavy,-2.1182103,1.2709457
+25106,regulation of gene expression,0.735,transcription · nucleus · nuclear · DNA-binding · chromat · polymerase,protein-heavy,-3.6325138,0.255349
+29897,catalytic activity,0.735,metabolism · transferase,protein-heavy,-2.0366342,2.249405
+16083,signal transduction,0.735,receptor · extracellular · neuron · synap,protein-heavy,-2.7828336,2.0811718
+34078,catalytic activity,0.734,phosphatase · atpase · helicase,protein-heavy,-2.3527048,1.3469554
+33216,catalytic activity,0.734,transferase · phosphatase · develop,protein-heavy,-1.7890766,1.1973096
+24729,catalytic activity,0.733,channel · secret · transferase,protein-heavy,-2.2008784,1.2848152
+10957,catalytic activity,0.733,redox,protein-heavy,-2.6591184,1.6401304
+34173,plasma membrane,0.733,extracellular · lipid · phosphatase · translation · gtpase,protein-heavy,-2.1422808,1.2473474
+28340,organic substance biosynthetic process,0.732,neuron · atpase,protein-heavy,-2.635145,0.8838669
+30283,catalytic activity,0.731,metabolism · electron,protein-heavy,-1.7383615,1.4528185
+3857,catalytic activity,0.731,transferase · translation · ribosom · atpase,protein-heavy,-1.2962952,1.3892184
+18523,plasma membrane,0.73,extracellular · receptor · adhesion · neuron · develop · synap,protein-heavy,-2.8596978,2.0431514
+10098,catalytic activity,0.73,extracellular,protein-heavy,-1.8674268,1.1981732
+31891,plasma membrane,0.729,extracellular · transport · lipid · proton · neuron,protein-heavy,-2.3733094,1.8490107
+33127,regulation of RNA metabolic process,0.729,nucleus · nuclear · transcription · chromat · polymerase · DNA-binding,protein-heavy,-1.7404283,0.9420307
+32216,catalytic activity,0.729,zinc-finger · gtpase,protein-heavy,-1.5364037,0.9079842
+40545,catalytic activity,0.728,transferase · redox,protein-heavy,-1.7573609,1.2129933
+10465,catalytic activity,0.728,phosphatase · mitochondrion,protein-heavy,-1.617673,1.987073
+23351,catalytic activity,0.728,channel · metabolism · lipid · endoplasmic reticulum,protein-heavy,-1.587845,0.9862867
+8381,catalytic activity,0.727,kinase · phosphatase,protein-heavy,-2.539719,1.6399342
+17397,catalytic activity,0.727,transferase · mitochondrion,protein-heavy,-1.5578194,1.0001094
+34285,catalytic activity,0.727,kinase,protein-heavy,-2.764872,2.1996026
+8581,nucleic acid binding,0.727,nucleus · transcription · nuclear · DNA-binding · chromat · polymerase,protein-heavy,-2.7313895,4.67321
+39274,catalytic activity,0.725,transport · develop · electron,protein-heavy,-2.8333144,2.2816334
+28865,catalytic activity,0.725,channel · redox,protein-heavy,-1.419015,0.77935624
+19353,catalytic activity,0.724,phosphatase · extracellular · neuron · synap,protein-heavy,-3.1035304,2.603146
+1679,catalytic activity,0.724,transferase · redox,protein-heavy,-2.0925128,0.9701389
+4102,catalytic activity,0.724,metabolism,protein-heavy,-2.1141362,0.9595458
+7617,catalytic activity,0.723,phosphatase · translation,protein-heavy,-1.5975205,1.156689
+28314,catalytic activity,0.722,transferase · develop · translation · ribosom,protein-heavy,-1.5953916,1.0388751
+8844,regulation of nucleobase-containing compound metabolic process,0.721,nucleus · nuclear · transcription · chromat · develop,protein-heavy,-2.740991,2.5046403
+6156,catalytic activity,0.721,metabolism · channel · transferase · reductase · redox,protein-heavy,-2.2136111,1.2214478
+36535,regulation of RNA metabolic process,0.72,nucleus · nuclear · transcription · chromat · polymerase · DNA-binding,protein-heavy,-2.2438443,1.3549525
+30739,catalytic activity,0.719,transport · lipid · develop · proton,protein-heavy,-1.7627345,0.98846936
+12291,catalytic activity,0.719,transport · lipid · channel · metabolism · electron · endoplasmic reticulum,protein-heavy,-2.3491635,1.4232216
+23547,catalytic activity,0.717,channel · phosphatase · transferase,protein-heavy,-1.7122276,1.3498124
+17419,cellular biosynthetic process,0.717,channel · metabolism,protein-heavy,-1.061457,9.39549
+39450,negative regulation of cellular process,0.716,nucleus · nuclear · transcription · kinase · phosphatase · chromat,protein-heavy,-2.1878016,2.030283
+6118,catalytic activity,0.716,redox,protein-heavy,-2.109061,1.4301982
+15258,regulation of RNA metabolic process,0.716,zinc-finger · nucleus · nuclear · transcription · chromat · ubiquitin,protein-heavy,-2.3323765,4.6502733
+10921,catalytic activity,0.716,metabolism · channel · phosphatase · transferase · redox · mitochondrion,protein-heavy,-2.3609397,1.8233571
+5972,catalytic activity,0.715,channel · transport,protein-heavy,-2.5592482,0.6372712
+22127,nucleic acid binding,0.714,nucleus · nuclear · transcription · chromat · polymerase · DNA-binding,protein-heavy,-1.7870001,1.0725597
+32695,catalytic activity,0.714,polymerase,protein-heavy,-1.8197801,1.4516109
+6984,catalytic activity,0.713,channel · atpase,protein-heavy,-1.9594755,1.0974112
+19224,organonitrogen compound metabolic process,0.713,kinase · phosphatase,protein-heavy,-2.383934,1.4167149
+16758,signal transduction,0.712,kinase · phosphatase,protein-heavy,-3.2576535,0.8419324
+24222,catalytic activity,0.712,develop · neuron · DNA-binding,protein-heavy,-2.3303754,1.7679145
+5661,catalytic activity,0.711,zinc-finger · ubiquitin,protein-heavy,-2.8438687,1.7905529
+18801,catalytic activity,0.711,kinase · phosphatase,protein-heavy,-2.046099,1.3989766
+18387,nucleic acid binding,0.711,nucleus · nuclear · transcription · polymerase · DNA-binding · develop,protein-heavy,-3.062551,1.9590901
+3230,catalytic activity,0.711,ubiquitin,protein-heavy,-1.2593703,0.86207014
+35981,catalytic activity,0.71,metabolism · phosphatase · transferase · redox · ribosom,protein-heavy,-2.211371,1.3011986
+22361,catalytic activity,0.71,develop,protein-heavy,-2.08958,1.3638278
+24168,catalytic activity,0.709,channel · metabolism · lipid · endoplasmic reticulum · electron · redox,protein-heavy,-1.6285735,1.5661917
+26913,catalytic activity,0.708,kinase,protein-heavy,-1.3744634,0.94131935
+22648,catalytic activity,0.708,chromat · DNA-binding,protein-heavy,-2.2270844,1.6881509
+36021,catalytic activity,0.707,metabolism · phosphatase · transferase · mitochondrion,protein-heavy,-2.4456403,1.9502771
+21208,signal transduction,0.707,receptor · extracellular · neuron · cytoskeleton · synap · junction,protein-heavy,-2.1334643,1.2766007
+20591,catalytic activity,0.706,ubiquitin,protein-heavy,-3.3475194,2.5178394
+33662,protein metabolic process,0.706,cytoskeleton · ubiquitin · gtpase,protein-heavy,-2.1359148,1.4123337
+32409,catalytic activity,0.706,neuron · atpase,protein-heavy,-2.2607605,1.2476043
+18189,catalytic activity,0.705,kinase,protein-heavy,-2.847701,10.606026
+36044,catalytic activity,0.704,atpase,protein-heavy,-3.1857748,3.6609945
+22910,regulation of gene expression,0.704,nucleus · nuclear · transcription · chromat · develop · DNA-binding,protein-heavy,-3.2172058,1.2415632
+1483,regulation of nucleobase-containing compound metabolic process,0.703,nucleus · actin · kinase · cytoskeleton · develop · chromat,protein-heavy,-2.2097466,1.6080786
+4041,cell periphery,0.703,extracellular · receptor · neuron · synap · junction · adhesion,protein-heavy,-1.251286,2.3858342
+18897,cellular biosynthetic process,0.702,phosphatase · channel · metabolism · transferase · atpase,protein-heavy,-2.826512,2.208767
+31452,catalytic activity,0.702,metabolism · transferase · translation · proton,protein-heavy,-1.966083,1.3033848
+36189,catalytic activity,0.702,channel · metabolism,protein-heavy,-1.5790802,1.4202133
+12842,regulation of nucleobase-containing compound metabolic process,0.701,chromat,protein-heavy,-2.8123527,1.4361014
+30124,catalytic activity,0.7,kinase,protein-heavy,-2.3159382,4.434044
+11285,nucleic acid binding,0.7,nucleus · nuclear · transcription · chromat · polymerase · zinc-finger,protein-heavy,-1.6696393,1.096297
+13821,catalytic activity,0.699,secret · extracellular · neuron,protein-heavy,-1.4590186,1.2996491
+2438,catalytic activity,0.699,secret,protein-heavy,-2.1011484,0.7481255
+31031,catalytic activity,0.698,phosphatase,protein-heavy,-0.8313658,16.246813
+20684,catalytic activity,0.698,chromat,protein-heavy,-2.285003,1.666845
+19421,catalytic activity,0.697,metabolism · channel · transferase · redox,protein-heavy,-2.7816906,2.0260098
+32227,catalytic activity,0.697,channel · transferase,protein-heavy,-2.4809916,4.0285645
+15042,regulation of nucleobase-containing compound metabolic process,0.697,nucleus · transcription · nuclear · chromat · polymerase · develop,protein-heavy,-3.4093955,0.34505123
+20456,nucleic acid binding,0.697,chromat · neuron · polymerase · junction,protein-heavy,-1.8498017,1.2950441
+31675,catalytic activity,0.697,extracellular,protein-heavy,-1.9402866,1.1027603
+11483,catalytic activity,0.696,chromat · ubiquitin · zinc-finger,protein-heavy,-1.9423196,1.0598425
+6345,regulation of nucleobase-containing compound metabolic process,0.695,nuclear · transcription · polymerase · develop · chromat,protein-heavy,-1.9828056,1.1884186
+3400,catalytic activity,0.695,transport · gtpase,protein-heavy,-1.889653,1.3134536
+36943,nucleic acid binding,0.695,nuclear · chromat · develop,protein-heavy,-1.5727351,4.282237
+11928,catalytic activity,0.695,atpase,protein-heavy,-1.8779118,1.1072413
+23845,cell periphery,0.694,extracellular · receptor · secret · matrix · adhesion · neuron,protein-heavy,-2.8067408,1.9616334
+9685,catalytic activity,0.694,kinase · phosphatase,protein-heavy,-1.7800281,1.4408802
+9379,catalytic activity,0.694,phosphatase · transferase,protein-heavy,-1.614556,0.8899234
+40361,catalytic activity,0.693,metabolism · develop · chromat,protein-heavy,-2.2977388,2.4079342
+8591,catalytic activity,0.692,transferase · chromat,protein-heavy,-2.4016888,0.85893744
+29061,catalytic activity,0.691,channel · mitochondrion · redox,protein-heavy,-1.7322676,1.1651092
+34004,catalytic activity,0.691,cytoskeleton,protein-heavy,-1.4580294,1.2060319
+4439,system development,0.691,phosphatase,protein-heavy,-3.6881711,0.73718345
+24639,nucleic acid binding,0.691,chromat · polymerase,protein-heavy,-1.7805871,1.6358405
+1114,catalytic activity,0.69,channel · transferase,protein-heavy,-2.7475486,1.4535676
+2599,catalytic activity,0.689,kinase · phosphatase,protein-heavy,-2.7677224,1.8307537
+11784,catalytic activity,0.689,kinase · phosphatase,protein-heavy,-2.0448983,1.2995938
+19704,catalytic activity,0.688,phosphatase · develop,protein-heavy,-2.1857204,1.4742368
+40708,catalytic activity,0.688,zinc-finger · neuron · ubiquitin,protein-heavy,-1.6621368,0.9354291
+30180,catalytic activity,0.688,transport · channel · extracellular · proton,protein-heavy,-1.7560165,2.4544744
+34914,protein metabolic process,0.688,cytoskeleton,protein-heavy,-1.9952564,1.1221837
+8975,catalytic activity,0.687,cytoskeleton · neuron,protein-heavy,-1.9878949,1.1241164
+28981,catalytic activity,0.687,metabolism · reductase · electron,protein-heavy,-2.0364027,1.1112614
+39945,protein metabolic process,0.686,receptor · extracellular · secret · matrix · protease,protein-heavy,-1.6265851,2.6290216
+24297,nucleic acid binding,0.686,transcription · nucleus · nuclear · chromat · develop · polymerase,protein-heavy,-2.7826974,1.5420852
+5385,catalytic activity,0.686,transport · extracellular · lipid · metabolism · proton,protein-heavy,-2.6266248,1.8372506
+97,catalytic activity,0.685,metabolism · cytoskeleton,protein-heavy,-2.229501,0.69840753
+22224,catalytic activity,0.684,transport · phosphatase · redox · reductase · proton,protein-heavy,-1.9693627,1.263689
+34009,nucleic acid binding,0.684,nucleus · transcription · nuclear · chromat · develop · polymerase,protein-heavy,-2.4498012,1.5314074
+25644,nucleic acid binding,0.684,cytoskeleton · matrix,protein-heavy,-2.0879412,1.0739448
+26135,nucleic acid binding,0.683,nucleus · nuclear · transcription · chromat · polymerase · zinc-finger,protein-heavy,-3.0129347,3.2399595
+7362,catalytic activity,0.683,translation · cytoskeleton · gtpase,protein-heavy,-1.8268962,1.3118494
+9673,system development,0.683,extracellular · transport,protein-heavy,-3.3974152,1.0782624
+28536,catalytic activity,0.682,kinase · phosphatase,protein-heavy,-2.8459013,1.8725802
+28917,catalytic activity,0.682,metabolism · channel · transferase · redox · mitochondrion · reductase,protein-heavy,-1.5853044,1.0793127
+10521,catalytic activity,0.681,develop · polymerase · DNA-binding,protein-heavy,-3.6588025,3.6135538
+3974,catalytic activity,0.681,gtpase,protein-heavy,-1.8626372,1.4993557
+6950,regulation of nucleobase-containing compound metabolic process,0.681,cytoskeleton · neuron,protein-heavy,-1.7599088,1.2134062
+28357,intracellular non-membrane-bounded organelle,0.68,ubiquitin,protein-heavy,-1.5201057,17.72836
+21535,positive regulation of metabolic process,0.68,kinase · phosphatase,protein-heavy,-3.136574,1.6730971
+7724,intracellular non-membrane-bounded organelle,0.679,ubiquitin,protein-heavy,-2.7163398,1.2388996
+37269,catalytic activity,0.679,phosphatase,protein-heavy,-1.7766052,1.6153028
+8712,nucleic acid binding,0.679,chromat · cytoskeleton · develop · polymerase,protein-heavy,-2.2461185,1.5636773
+10945,protein metabolic process,0.678,zinc-finger · ubiquitin,protein-heavy,-2.9651916,2.0394473
+36169,catalytic activity,0.677,kinase · phosphatase,protein-heavy,-2.2733488,1.4114509
+12680,catalytic activity,0.677,nucleus · nuclear · chromat · polymerase · zinc-finger · DNA-binding,protein-heavy,-1.3884313,1.1569514
+31208,intracellular non-membrane-bounded organelle,0.677,ubiquitin,protein-heavy,-2.5154793,2.7140129
+39483,cellular biosynthetic process,0.677,chaperone · chromat,protein-heavy,-2.2286737,1.934261
+17003,nucleic acid binding,0.677,transcription · chromat,protein-heavy,-2.42144,1.3655907
+17319,catalytic activity,0.676,metabolism · transport · lipid,protein-heavy,-2.0945485,1.6339417
+2533,regulation of nucleobase-containing compound metabolic process,0.676,nucleus · nuclear · transcription · kinase · chromat · develop,protein-heavy,-1.7970281,0.8262285
+18125,organic substance biosynthetic process,0.676,kinase · phosphatase,protein-heavy,-2.9898314,2.724804
+4,nucleic acid binding,0.676,transcription · chromat,protein-heavy,-1.7230614,0.9344181
+22440,catalytic activity,0.675,channel · metabolism,protein-heavy,-1.940207,0.7345345
+31303,catalytic activity,0.675,phosphatase,protein-heavy,-1.4994324,1.0945798
+31873,regulation of RNA metabolic process,0.674,nucleus · nuclear · transcription · RNA-binding · polymerase · chromat,protein-heavy,-2.812032,4.3488245
+10467,negative regulation of cellular process,0.674,nuclear · nucleus · transcription · chromat,protein-heavy,-1.6734622,0.81157434
+1397,catalytic activity,0.674,kinase · phosphatase,protein-heavy,-1.8128442,1.1275568
+15210,regulation of RNA metabolic process,0.673,nucleus · nuclear · transcription · chromat · develop · DNA-binding,protein-heavy,-1.5780548,1.029373
+18771,catalytic activity,0.673,kinase,protein-heavy,-1.638927,1.2954024
+785,catalytic activity,0.672,adhesion,protein-heavy,-1.1647984,0.8750134
+5943,regulation of RNA metabolic process,0.672,cytoskeleton · translation,protein-heavy,-1.5748752,0.83548564
+7474,negative regulation of biological process,0.672,nucleus · nuclear · chromat,protein-heavy,-1.547335,0.91881895
+33572,regulation of nucleobase-containing compound metabolic process,0.672,nucleus · nuclear · chromat,protein-heavy,-1.4412973,2.1726825
+40149,nucleic acid binding,0.671,nucleus · nuclear · transcription · chromat · DNA-binding · polymerase,protein-heavy,-1.4194955,1.4500595
+17121,membrane,0.67,extracellular · transport · lipid · neuron · proton,protein-heavy,-2.3190522,1.4816463
+21450,catalytic activity,0.67,chromat · DNA-binding · polymerase,protein-heavy,-2.7838976,1.250177
+3489,biosynthetic process,0.669,phosphatase · channel · translation · ribosom,protein-heavy,-2.762508,1.6379658
+40087,nucleic acid binding,0.669,nucleus · nuclear · translation · chromat,protein-heavy,-1.8716643,1.0460588
+5002,regulation of nucleobase-containing compound metabolic process,0.669,chromat · polymerase · DNA-binding,protein-heavy,-3.765428,0.522046
+27142,cell periphery,0.669,extracellular · receptor · adhesion · synap · immune · neuron,protein-heavy,-2.093691,2.8483121
+39986,organic substance biosynthetic process,0.668,lipid · matrix · mitochondrion,protein-heavy,-4.972399,0.2027731
+7153,catalytic activity,0.668,chromat · DNA-binding · neuron · polymerase,protein-heavy,-1.5782356,1.398882
+2119,organic substance biosynthetic process,0.668,metabolism · lipid · channel · endoplasmic reticulum · electron · redox,protein-heavy,-4.9545035,0.62096024
+17577,catalytic activity,0.668,RNA-binding,protein-heavy,-1.5048774,9.726651
+21380,nucleic acid binding,0.668,kinase · chromat · cytoskeleton,protein-heavy,-2.5862088,0.9370767
+18357,signal transduction,0.668,extracellular · receptor · secret · kinase · adhesion · immune,protein-heavy,-1.871623,1.376833
+32797,catalytic activity,0.668,phosphatase · atpase,protein-heavy,-1.9341244,1.095911
+32555,catalytic activity,0.667,channel · metabolism · transferase,protein-heavy,-1.480273,1.0395377
+16811,nucleic acid binding,0.667,channel · metabolism · lipid · proton,protein-heavy,-3.551079,0.56983274
+4182,catalytic activity,0.667,ubiquitin,protein-heavy,-1.6055315,1.2799892
+21855,catalytic activity,0.666,atpase · chaperone,protein-heavy,-1.5244246,1.1776685
+6129,organic substance biosynthetic process,0.666,cytoskeleton,protein-heavy,-4.606256,0.53046876
+38490,positive regulation of metabolic process,0.666,nucleus · nuclear · develop · cytoskeleton · chromat,protein-heavy,-1.7598753,3.2353213
+25752,regulation of nucleobase-containing compound metabolic process,0.665,transcription · nucleus · nuclear · chromat · develop · DNA-binding,protein-heavy,-2.9948933,0.5481344
+29199,nucleic acid binding,0.665,transcription · nucleus · nuclear · develop · chromat · polymerase,protein-heavy,-1.7430087,6.8839664
+487,catalytic activity,0.665,ubiquitin,protein-heavy,-1.7654827,0.8260101
+6008,catalytic activity,0.665,metabolism · proton,protein-heavy,-2.6078124,1.6955575
+29094,nucleic acid binding,0.665,nucleus · nuclear · transcription · actin · chromat · polymerase,protein-heavy,-2.2208219,1.592452
+199,negative regulation of cellular process,0.664,zinc-finger · chromat · ubiquitin,protein-heavy,-2.0711048,2.1653519
+21396,negative regulation of metabolic process,0.664,nucleus · nuclear · develop · chromat · cytoskeleton · adhesion,protein-heavy,-2.1728024,0.9574266
+19592,regulation of response to stimulus,0.664,junction · chromat · cytoskeleton · neuron · develop · adhesion,protein-heavy,-2.3120685,1.3636174
+17278,plasma membrane,0.664,extracellular · receptor · adhesion · neuron · synap · junction,protein-heavy,-2.5189877,4.3206477
+26294,catalytic activity,0.664,redox,protein-heavy,-1.4930763,1.0679907
+16346,catalytic activity,0.663,lipid,protein-heavy,-1.3503916,1.0684344
+26623,catalytic activity,0.663,redox,protein-heavy,-3.1192057,0.75730103
+18481,catalytic activity,0.663,kinase · phosphatase,protein-heavy,-2.5389674,1.8337653
+23740,catalytic activity,0.663,nucleus · DNA-binding · chromat · polymerase,protein-heavy,-2.0825255,1.565713
+40635,catalytic activity,0.663,kinase · phosphatase,protein-heavy,-2.3064733,6.2163367
+36735,protein metabolic process,0.662,endoplasmic reticulum,protein-heavy,-1.7832909,1.4901975
+11849,catalytic activity,0.662,neuron,protein-heavy,-1.0277059,11.616205
+27771,protein metabolic process,0.662,receptor · extracellular · neuron · secret · adhesion · synap,protein-heavy,-2.2219636,0.969865
+25513,nucleic acid binding,0.662,nuclear · nucleus · transcription · develop · chromat · polymerase,protein-heavy,-2.0282125,0.97443384
+35824,negative regulation of cellular process,0.661,actin · cytoskeleton · develop · neuron · vesicl · cortex,protein-heavy,-1.9351009,1.170343
+25264,nucleic acid binding,0.661,nucleus · transcription · nuclear · chromat · polymerase · translation,protein-heavy,-1.682583,1.0875211
+39574,positive regulation of metabolic process,0.66,nucleus · kinase · chromat · cytoskeleton,protein-heavy,-2.640256,1.8064119
+16060,nucleic acid binding,0.66,nucleus · nuclear · transcription · chromat · DNA-binding · polymerase,protein-heavy,-1.9472916,1.5220933
+39992,negative regulation of biological process,0.659,actin · ubiquitin · develop · cytoskeleton · gtpase,protein-heavy,-2.1603553,1.4655776
+5812,nucleic acid binding,0.659,nucleus · nuclear · transcription · chromat · polymerase · DNA-binding,protein-heavy,-1.5821809,0.66078866
+8835,catalytic activity,0.659,channel · vesicl,protein-heavy,-1.5200304,1.0945439
+38602,biosynthetic process,0.659,channel · metabolism · phosphatase · transferase,protein-heavy,-3.2233984,1.3307064
+17239,biosynthetic process,0.659,metabolism · redox · proton · reductase,protein-heavy,-2.4665349,1.2324028
+30084,catalytic activity,0.659,channel,protein-heavy,-1.0231965,10.325882
+37255,cellular biosynthetic process,0.658,transferase,protein-heavy,-1.4464744,1.9894763
+27708,regulation of RNA metabolic process,0.658,transcription · nucleus · nuclear · DNA-binding · chromat · polymerase,protein-heavy,-2.5179794,1.4080894
+6508,response to abiotic stimulus,0.657,chromat,protein-heavy,-2.8094363,2.455958
+38532,positive regulation of metabolic process,0.657,nucleus · nuclear · transcription · chromat · polymerase · DNA-binding,protein-heavy,-1.3474247,6.986848
+35363,nucleic acid binding,0.657,nucleus · nuclear · chromat · zinc-finger,protein-heavy,-1.6375474,0.7487465
+14017,catalytic activity,0.657,transcription · chromat · DNA-binding · chaperone · polymerase,protein-heavy,-1.9367315,1.1741419
+1677,catalytic activity,0.656,kinase · phosphatase,protein-heavy,-2.2184997,1.2559775
+24814,catalytic activity,0.656,proton,protein-heavy,-1.9478265,1.5190578
+14344,cellular biosynthetic process,0.655,transport,protein-heavy,-1.5338681,0.931924
+16852,catalytic activity,0.655,chromat · DNA-binding · polymerase,protein-heavy,-2.2629693,8.98132
+13718,regulation of nucleobase-containing compound metabolic process,0.654,extracellular,protein-heavy,-2.999416,0.4325534
+11076,regulation of nucleobase-containing compound metabolic process,0.654,nucleus · nuclear · transcription · kinase · chromat · polymerase,protein-heavy,-2.1420877,0.7577912
+32819,plasma membrane,0.654,extracellular · phosphatase · neuron · adhesion · differentiation,protein-heavy,-2.1136515,1.8385874
+24571,organic substance biosynthetic process,0.654,cytoskeleton,protein-heavy,-4.858141,4.4477715
+26368,organic substance biosynthetic process,0.654,channel · metabolism · transferase · lipid · redox · endoplasmic reticulum,protein-heavy,-3.0281322,2.843719
+12831,protein metabolic process,0.654,nucleus · nuclear,protein-heavy,-4.08182,1.6251477
+11172,catalytic activity,0.653,nucleus · nuclear · chromat · DNA-binding · polymerase,protein-heavy,-3.023966,3.1874485
+10177,nucleic acid binding,0.653,nucleus · transcription · nuclear · chromat · polymerase · translation,protein-heavy,-2.0558817,1.1767002
+1768,cell periphery,0.652,extracellular · receptor · secret · develop · matrix · adhesion,protein-heavy,-1.2884787,1.8872674
+15110,organic substance biosynthetic process,0.652,nucleus · transcription · nuclear · chromat · actin · DNA-binding,protein-heavy,-4.98235,0.48059726
+14202,cellular component organization,0.652,kinase · phosphatase,protein-heavy,-3.6618853,0.52112764
+33092,cellular biosynthetic process,0.652,ubiquitin,protein-heavy,-1.0342714,9.297689
+13119,negative regulation of cellular process,0.651,nucleus · nuclear · chromat · polymerase · DNA-binding,protein-heavy,-1.7163113,1.7493762
+24276,protein metabolic process,0.651,nucleus · nuclear · DNA-binding · chromat · polymerase,protein-heavy,-3.6509552,4.556708
+8157,catalytic activity,0.651,phosphatase,protein-heavy,-2.6529121,0.80375344

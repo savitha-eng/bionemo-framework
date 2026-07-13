@@ -69,9 +69,14 @@ def main():
     meta = pq.read_table(mp)
     fids = meta.column("feature_id").to_pylist()
     auc = dict(zip(fids, meta.column("go_auc_protein").to_pylist())) if "go_auc_protein" in meta.column_names else {}
+    # only caption PROTEIN-ONLY features (protein-heavy band_class) — a text-heavy feature can score a
+    # weak protein-band GO-AUROC by firing on a few protein tokens, but it isn't a protein feature.
+    bc = dict(zip(fids, meta.column("band_class").to_pylist())) if "band_class" in meta.column_names else {}
 
     def caption(fid, topn=25):
         if not auc.get(fid) or auc[fid] <= 0.65:
+            return ""
+        if "protein-heavy" not in str(bc.get(fid, "")):
             return ""
         prs = list(dict.fromkeys(p for _, p in sorted(byf.get(fid, []), reverse=True)))
         prs = [p for p in prs[:topn] if p in prot_concepts]
