@@ -65,12 +65,17 @@ def main():
                                    max_length_protein=args.max_length_protein).eval()
     tok = model.text_tokenizer
     THINK_O = tok.convert_tokens_to_ids("<think>")
-    concept_ids = set()
-    for w in args.concept.split(","):
-        concept_ids.update(tok.encode(w, add_special_tokens=False))
-        concept_ids.update(tok.encode(" " + w, add_special_tokens=False))
-    concept_ids = torch.tensor(sorted(concept_ids), device=dev)
-    print(f"[steer] concept token ids ({len(concept_ids)}): {concept_ids.tolist()}")
+    # --concept = concept groups separated by ';'; each group is comma-sep synonyms. First group = the
+    # feature's TARGET concept; the rest are DISTRACTORS. Selectivity = does the clamp raise the target
+    # more than the distractors (a generic perturbation would raise all of them).
+    groups = {}
+    for grp in args.concept.split(";"):
+        words = grp.split(","); ids = set()
+        for w in words:
+            ids.update(tok.encode(w, add_special_tokens=False))
+            ids.update(tok.encode(" " + w, add_special_tokens=False))
+        groups[words[0]] = torch.tensor(sorted(ids), device=dev)
+    print(f"[steer] concept groups: {{ {', '.join(f'{k}:{len(v)}' for k,v in groups.items())} }}")
 
     _, val_ds, test_ds = brp_data.load_reasoning_splits(max_length_protein=args.max_length_protein)
     ds = {"validation": val_ds, "test": test_ds}[args.split].select(range(args.num_proteins))
@@ -91,44 +96,51 @@ def main():
         return ((h,) + tuple(out[1:])) if isinstance(out, tuple) else h
     layer.register_forward_hook(hook)
 
-    def concept_logprob(batch):
+    def concept_logprob(batch):                                  # -> {group: mean logP(any token in group)}
         with torch.no_grad():
             out = model(**{k: (v.to(dev) if torch.is_tensor(v) else v) for k, v in batch.items()})
-        logits = out.logits[0]                                    # (L, V)
+        logits = out.logits[0]
         ids = batch["input_ids"][0].to(dev)
         idl = ids.tolist(); oi = idl.index(THINK_O) if THINK_O in idl else 0
-        pos = torch.arange(logits.shape[0], device=dev)
-        rmask = (pos >= oi)                                       # response positions
-        lp = F.log_softmax(logits[rmask], dim=-1)                 # (Lr, V)
-        return float(lp[:, concept_ids].logsumexp(-1).mean())     # mean log P(any concept token)
+        rmask = (torch.arange(logits.shape[0], device=dev) >= oi)
+        lp = F.log_softmax(logits[rmask], dim=-1)
+        return {name: float(lp[:, gids].logsumexp(-1).mean()) for name, gids in groups.items()}
 
-    results = {"feature": args.feature, "layer": args.layer, "concept": args.concept,
-               "alphas": alphas, "steered": {a: [] for a in alphas}, "control": {a: [] for a in alphas}}
+    gnames = list(groups)
+    results = {"feature": args.feature, "layer": args.layer, "concept": args.concept, "groups": gnames,
+               "alphas": alphas,
+               "steered": {n: {a: [] for a in alphas} for n in gnames},
+               "control": {n: {a: [] for a in alphas} for n in gnames}}
     for bi, batch in enumerate(loader):
         try:
             ids = batch["input_ids"][0]
             idl = ids.tolist(); oi = idl.index(THINK_O) if THINK_O in idl else 0
             resp_mask["m"] = (torch.arange(len(ids), device=dev) >= oi).float()
             for a in alphas:
-                state["vec"] = (a * d_f).to(dev);   results["steered"][a].append(concept_logprob(batch))
-                state["vec"] = (a * d_rand).to(dev); results["control"][a].append(concept_logprob(batch))
+                state["vec"] = (a * d_f).to(dev);   sp = concept_logprob(batch)
+                state["vec"] = (a * d_rand).to(dev); cp = concept_logprob(batch)
+                for n in gnames:
+                    results["steered"][n][a].append(sp[n]); results["control"][n][a].append(cp[n])
             state["vec"] = None
         except Exception as e:
             print(f"  protein {bi} skipped: {e}")
         if bi % 10 == 0:
             print(f"  {bi}/{len(ds)}", flush=True)
 
-    print("\n=== dose-response: mean log P(concept token) on response positions ===")
-    print(f"{'alpha':>6} {'STEERED':>10} {'control':>10} {'steer-ctrl':>11}")
     summ = {}
-    for a in alphas:
-        s = float(np.mean(results["steered"][a])); c = float(np.mean(results["control"][a]))
-        summ[a] = {"steered": s, "control": c, "diff": s - c}
-        print(f"{a:>6.0f} {s:>10.3f} {c:>10.3f} {s-c:>+11.3f}")
-    d0 = summ[alphas[0]]["steered"]; dmax = summ[alphas[-1]]["steered"]
-    print(f"\nsteered dlogP({alphas[0]}->{alphas[-1]}) = {dmax-d0:+.3f} | control = "
-          f"{summ[alphas[-1]]['control']-summ[alphas[0]]['control']:+.3f}")
-    print("monotone rise steered but flat control => the feature CAUSALLY promotes the concept.")
+    for n in gnames:
+        print(f"\n=== [{n}] dose-response: mean logP({n}) on response positions ===")
+        print(f"{'alpha':>6} {'STEERED':>10} {'control':>10} {'steer-ctrl':>11}")
+        summ[n] = {}
+        for a in alphas:
+            s = float(np.mean(results["steered"][n][a])); c = float(np.mean(results["control"][n][a]))
+            summ[n][a] = {"steered": s, "control": c, "diff": s - c}
+            print(f"{a:>6.0f} {s:>10.3f} {c:>10.3f} {s-c:>+11.3f}")
+    tgt = gnames[0]
+    print(f"\n=== SELECTIVITY at alpha={alphas[-1]} (steer-ctrl; target='{tgt}' should be >> distractors) ===")
+    for n in gnames:
+        print(f"  {n:16} steer-ctrl = {summ[n][alphas[-1]]['diff']:+.3f}")
+    print("target >> distractors => the clamp promotes THIS concept specifically, not a generic lift.")
     results["summary"] = summ
     Path(args.out).write_text(json.dumps(results, indent=2))
     print(f"[wrote] {args.out}")
