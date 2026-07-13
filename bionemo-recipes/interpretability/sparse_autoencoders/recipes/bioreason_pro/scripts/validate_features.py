@@ -34,8 +34,11 @@ rpi = torch.from_numpy(np.array([pidx.get(p, -1) for p in rpid])).to(dev)
 if BAND == "protein":
     tokmask = band == "protein"
 else:  # reasoning = text tokens, prompt excluded via role sidecar (avoids go_pred leakage)
-    role = np.array(pq.read_table(f"{store}/token_labels_with_role.parquet").column("role").to_pylist(), dtype=object)
+    rs = pq.read_table(f"{store}/token_labels_with_role.parquet")
+    role = np.array(rs.column("role").to_pylist(), dtype=object)
     tokmask = (band == "text") & (role == "response")
+    if "is_accession" in rs.column_names:  # drop GO:xxxx / IPRxxxx accession tokens (leakage control)
+        tokmask = tokmask & (~np.array(rs.column("is_accession").to_pylist(), dtype=bool))
 print(f"[validate] band={BAND}: {int(tokmask.sum()):,} tokens")
 tm = torch.from_numpy(tokmask).to(dev)
 
