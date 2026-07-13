@@ -21,6 +21,7 @@ from sae.architectures import TopKSAE
 from sae.activation_store import shard_table_to_array
 
 sae_p, store, layer, pub = sys.argv[1], sys.argv[2], int(sys.argv[3]), sys.argv[4]
+BAND = sys.argv[5] if len(sys.argv) > 5 else "protein"   # protein | reasoning
 dev = "cuda"
 
 tl = pq.read_table(f"{store}/token_labels.parquet")
@@ -30,7 +31,13 @@ pr = pq.read_table(f"{store}/proteins.parquet"); pids = [str(x) for x in pr.colu
 goids = [json.loads(g) if g else [] for g in pr.column("go_ids").to_pylist()]
 pidx = {p: i for i, p in enumerate(pids)}; nP = len(pids)
 rpi = torch.from_numpy(np.array([pidx.get(p, -1) for p in rpid])).to(dev)
-tm = torch.from_numpy(band == "protein").to(dev)
+if BAND == "protein":
+    tokmask = band == "protein"
+else:  # reasoning = text tokens, prompt excluded via role sidecar (avoids go_pred leakage)
+    role = np.array(pq.read_table(f"{store}/token_labels_with_role.parquet").column("role").to_pylist(), dtype=object)
+    tokmask = (band == "text") & (role == "response")
+print(f"[validate] band={BAND}: {int(tokmask.sum()):,} tokens")
+tm = torch.from_numpy(tokmask).to(dev)
 
 ck = torch.load(sae_p, map_location="cpu"); cfg = ck["model_config"]
 sae = TopKSAE(**cfg).to(dev).eval()
@@ -106,8 +113,7 @@ for j, f in enumerate(act):
                  round(coh, 2), cap if isinstance(cap, str) else ""))
 import csv
 rows.sort(key=lambda r: -r[2])
-out = Path(pub).parent.parent / "analysis" / f"validated_features_l{layer}.csv"
-out = Path(f"{Path(__file__).resolve().parents[1]}/analysis/validated_features_l{layer}.csv")
+out = Path(f"{Path(__file__).resolve().parents[1]}/analysis/validated_features_l{layer}_{BAND}.csv")
 with open(out, "w", newline="") as fh:
     w = csv.writer(fh); w.writerow(["feature", "go_term", "held_auc", "raw_best", "rand_best", "margin", "coherence", "reasoning_caption"])
     w.writerows(rows)
