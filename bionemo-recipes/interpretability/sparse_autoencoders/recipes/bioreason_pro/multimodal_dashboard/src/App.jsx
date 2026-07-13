@@ -699,6 +699,7 @@ export default function App({ title = "BioReason-Pro L28 SAE — Feature Explore
     let predicate = null
     if (modalityFilter === 'reasoning') predicate = sql`reasoning_frac >= 0.5`
     else if (modalityFilter === 'validated-reasoning') predicate = sql`validated_reasoning`
+    else if (modalityFilter === 'captioned-protein') predicate = sql`xmodal_caption IS NOT NULL AND xmodal_caption <> ''`
     else if (modalityFilter === 'answer') predicate = sql`answer_frac >= 0.5`
     else if (modalityFilter === 'cross-modal') predicate = sql`fusion_class LIKE 'cross-modal%'`
     else if (modalityFilter === 'protein') predicate = sql`(band_class LIKE '%protein%' OR band_class = 'mixed')`
@@ -760,6 +761,8 @@ export default function App({ title = "BioReason-Pro L28 SAE — Feature Explore
         result = result.filter(f => (f.reasoning_frac || 0) >= 0.5)
       } else if (modalityFilter === 'validated-reasoning') {
         result = result.filter(f => f.validated_reasoning)
+      } else if (modalityFilter === 'captioned-protein') {
+        result = result.filter(f => f.xmodal_caption && String(f.xmodal_caption).length > 0)
       } else if (modalityFilter === 'answer') {
         result = result.filter(f => (f.answer_frac || 0) >= 0.5)
       } else {
@@ -1080,6 +1083,7 @@ export default function App({ title = "BioReason-Pro L28 SAE — Feature Explore
               <option value="answer">🟠 Text · answer</option>
               <option value="cross-modal">🔗 Cross-modal</option>
               <option value="validated-reasoning">✅ Validated reasoning</option>
+              <option value="captioned-protein">🧬🔀 Text-illuminated protein</option>
             </select>
             <select
               value={sortBy}
