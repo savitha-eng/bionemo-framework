@@ -1,0 +1,16 @@
+feature,go_term,held_auc,raw_best,rand_best,margin,coherence,reasoning_caption
+16512,ribonucleoprotein complex,0.956,0.755,0.845,0.111,0.5,
+19224,kinase activity,0.857,0.558,0.586,0.271,0.4,kinase · phosphatase
+9399,kinase activity,0.849,0.558,0.586,0.264,0.4,
+34397,kinase activity,0.846,0.558,0.586,0.26,0.4,
+8381,kinase activity,0.843,0.558,0.586,0.257,0.4,kinase · phosphatase
+26180,kinase activity,0.804,0.558,0.586,0.219,0.4,kinase · phosphatase · cytoskeleton
+18481,kinase activity,0.794,0.558,0.586,0.208,0.4,kinase · phosphatase
+8842,kinase activity,0.793,0.558,0.586,0.208,0.4,
+28526,kinase activity,0.784,0.558,0.586,0.198,0.4,
+2599,kinase activity,0.774,0.558,0.586,0.188,0.4,kinase · phosphatase
+9685,kinase activity,0.774,0.558,0.586,0.188,0.4,kinase · phosphatase
+39837,kinase activity,0.773,0.558,0.586,0.187,0.4,
+40635,kinase activity,0.773,0.558,0.586,0.187,0.4,kinase · phosphatase
+18125,kinase activity,0.77,0.558,0.586,0.184,0.4,kinase · phosphatase
+2690,kinase activity,0.754,0.558,0.586,0.168,0.4,
