@@ -273,6 +273,13 @@ const FeatureCard = forwardRef(function FeatureCard({ feature, isHighlighted, fo
             >{aiLoading ? '⏳ interpreting…' : '🔍 Auto-interpret'}</button>
           </div>
           <div style={styles.description}>{description}</div>
+          {feature.validated_reasoning && (
+            <div style={{ fontSize: '11px', marginTop: '4px', padding: '3px 7px', borderRadius: '4px',
+              background: 'rgba(118,185,0,0.16)', color: '#a3e635', lineHeight: 1.4, fontWeight: 600 }}
+              title="Validated reasoning feature: held-out reasoning-band GO-AUROC, beats raw-hidden + random-SAE controls, coherent. reasoning_span = mean # reasoning tokens it fires on per example (multi-token = cleaner).">
+              ✅ validated reasoning feature — {feature.reasoning_go_term} (AUROC {Number(feature.go_auc_reasoning).toFixed(2)}, span {Number(feature.reasoning_span).toFixed(0)})
+            </div>
+          )}
           {feature.go_term_protein && feature.go_auc_protein > 0.65 && (
             <div style={{ fontSize: '11px', marginTop: '4px', padding: '3px 7px', borderRadius: '4px',
               background: 'rgba(37,99,235,0.13)', color: '#93c5fd', lineHeight: 1.4 }}
