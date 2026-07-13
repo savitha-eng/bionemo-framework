@@ -1,0 +1,50 @@
+fid,auc,go,caption,prot,text,class
+4719,0.7990000247955322,catalytic activity,channel · metabolism · transferase · redox · mitochondrion,True,True,co-firing
+4007,0.777999997138977,catalytic activity,metabolism · transferase · redox,True,True,co-firing
+21286,0.7670000195503235,nucleic acid binding,nucleus · nuclear · transcription · chromat · polymerase · translation,True,True,co-firing
+18157,0.7649999856948853,catalytic activity,transferase,True,True,co-firing
+32232,0.7649999856948853,catalytic activity,channel · metabolism · transferase · redox · reductase,True,True,co-firing
+21229,0.7630000114440918,catalytic activity,metabolism · transferase · chromat · mitochondrion,True,True,co-firing
+14619,0.7540000081062317,catalytic activity,kinase · phosphatase,True,True,co-firing
+16302,0.7509999871253967,nucleic acid binding,chromat · polymerase,True,True,co-firing
+3265,0.7440000176429749,catalytic activity,channel · proton · redox,True,True,co-firing
+18450,0.7379999756813049,catalytic activity,redox · proton,True,True,co-firing
+19970,0.7360000014305115,catalytic activity,kinase · phosphatase,True,True,co-firing
+29897,0.7350000143051147,catalytic activity,metabolism · transferase,True,True,co-firing
+19504,0.7310000061988831,catalytic activity,metabolism · secret,True,True,co-firing
+10465,0.7279999852180481,catalytic activity,phosphatase · mitochondrion,True,True,co-firing
+32312,0.7239999771118164,catalytic activity,nucleus · nuclear · transcription · actin · polymerase · chromat,True,True,co-firing
+15258,0.7160000205039978,regulation of RNA metabolic process,zinc-finger · nucleus · nuclear · transcription · chromat · ubiquitin,True,True,co-firing
+10921,0.7160000205039978,catalytic activity,metabolism · channel · phosphatase · transferase · redox · mitochondrion,True,True,co-firing
+39450,0.7160000205039978,negative regulation of cellular process,nucleus · nuclear · transcription · kinase · phosphatase · chromat,True,True,co-firing
+7440,0.7149999737739563,regulation of RNA metabolic process,polymerase · translation · develop · chromat · DNA-binding · chaperone,True,True,co-firing
+16758,0.7120000123977661,signal transduction,kinase · phosphatase,True,True,co-firing
+30124,0.699999988079071,catalytic activity,kinase,True,True,co-firing
+3536,0.6949999928474426,cellular biosynthetic process,lipid · zinc-finger,True,True,co-firing
+4439,0.6909999847412109,system development,phosphatase,True,True,co-firing
+30180,0.6880000233650208,catalytic activity,transport · channel · extracellular · proton,True,True,co-firing
+39945,0.6859999895095825,protein metabolic process,receptor · extracellular · secret · matrix · protease,True,True,co-firing
+35294,0.6850000023841858,cell periphery,receptor · extracellular · secret · adhesion · matrix · neuron,True,True,co-firing
+9673,0.6830000281333923,system development,extracellular · transport,True,True,co-firing
+10521,0.6809999942779541,catalytic activity,develop · polymerase · DNA-binding,True,True,co-firing
+28357,0.6800000071525574,intracellular non-membrane-bounded organelle,ubiquitin,True,True,co-firing
+17319,0.6759999990463257,catalytic activity,metabolism · transport · lipid,True,True,co-firing
+31303,0.675000011920929,catalytic activity,phosphatase,True,True,co-firing
+4843,0.675000011920929,catalytic activity,ubiquitin,True,True,co-firing
+785,0.671999990940094,catalytic activity,adhesion,True,True,co-firing
+40149,0.6710000038146973,nucleic acid binding,nucleus · nuclear · transcription · chromat · DNA-binding · polymerase,True,True,co-firing
+21855,0.6660000085830688,catalytic activity,atpase · chaperone,True,True,co-firing
+29199,0.6650000214576721,nucleic acid binding,transcription · nucleus · nuclear · develop · chromat · polymerase,True,True,co-firing
+31112,0.6639999747276306,organic substance biosynthetic process,mitochondrion,True,True,co-firing
+199,0.6639999747276306,negative regulation of cellular process,zinc-finger · chromat · ubiquitin,True,True,co-firing
+17278,0.6639999747276306,plasma membrane,extracellular · receptor · adhesion · neuron · synap · junction,True,True,co-firing
+26623,0.6629999876022339,catalytic activity,redox,True,True,co-firing
+36735,0.6620000004768372,protein metabolic process,endoplasmic reticulum,True,True,co-firing
+28257,0.6610000133514404,biosynthetic process,channel · metabolism · transferase · redox · reductase,True,True,co-firing
+6180,0.6610000133514404,organic substance biosynthetic process,cytoskeleton · redox · tubulin,True,True,co-firing
+5812,0.6589999794960022,nucleic acid binding,nucleus · nuclear · transcription · chromat · polymerase · DNA-binding,True,True,co-firing
+37255,0.6579999923706055,cellular biosynthetic process,transferase,True,True,co-firing
+38532,0.6570000052452087,positive regulation of metabolic process,nucleus · nuclear · transcription · chromat · polymerase · DNA-binding,True,True,co-firing
+1768,0.6520000100135803,cell periphery,extracellular · receptor · secret · develop · matrix · adhesion,True,True,co-firing
+13119,0.6510000228881836,negative regulation of cellular process,nucleus · nuclear · chromat · polymerase · DNA-binding,True,True,co-firing
+15455,0.6510000228881836,organic substance biosynthetic process,redox · polymerase,True,True,co-firing
