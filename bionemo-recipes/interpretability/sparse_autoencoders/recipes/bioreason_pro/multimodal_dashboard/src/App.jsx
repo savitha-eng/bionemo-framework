@@ -259,6 +259,7 @@ export default function App({ title = "BioReason-Pro L28 SAE — Feature Explore
   const [clickedFeatureId, setClickedFeatureId] = useState(null)
   const [clusterLabels, setClusterLabels] = useState(null)
   const [vocabLogits, setVocabLogits] = useState(null)
+  const [reasoningEvidence, setReasoningEvidence] = useState({})
   const [darkMode, setDarkMode] = useState(true)
   const [embeddingMode, setEmbeddingMode] = useState('umap')  // 'umap' (decoder atlas) | 'multimodal'
   const [histMetric1, setHistMetric1] = useState('log_frequency')
@@ -556,6 +557,18 @@ export default function App({ title = "BioReason-Pro L28 SAE — Feature Explore
           }
         } catch (e) {
           console.log('No vocab logits found (optional)')
+        }
+
+        // Load reasoning evidence: model's reasoning about each protein feature's proteins (non-fatal)
+        try {
+          const evRes = await fetch(`.${modelBase}/reasoning_evidence.json`)
+          if (evRes.ok) {
+            const evData = await evRes.json()
+            setReasoningEvidence(evData)
+            console.log(`Loaded reasoning evidence for ${Object.keys(evData).length} features`)
+          }
+        } catch (e) {
+          console.log('No reasoning evidence found (optional)')
         }
 
         // Pre-cache feature coordinates for instant zoom
@@ -1132,6 +1145,7 @@ export default function App({ title = "BioReason-Pro L28 SAE — Feature Explore
                       onClick={handleCardClick}
                       loadExamples={loadExamplesForFeature}
                       vocabLogits={vocabLogits}
+                      reasoningEvidence={reasoningEvidence}
                       darkMode={darkMode}
                     />
                   )}
@@ -1145,6 +1159,7 @@ export default function App({ title = "BioReason-Pro L28 SAE — Feature Explore
                       onClick={handleCardClick}
                       loadExamples={loadExamplesForFeature}
                       vocabLogits={vocabLogits}
+                      reasoningEvidence={reasoningEvidence}
                       darkMode={darkMode}
                     />
                   ))}

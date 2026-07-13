@@ -179,7 +179,17 @@ const styles = {
   },
 }
 
-const FeatureCard = forwardRef(function FeatureCard({ feature, isHighlighted, forceExpanded, onClick, loadExamples, vocabLogits, darkMode }, ref) {
+// render a reasoning snippet with «concept» words highlighted
+function ReasoningSnippet({ text }) {
+  const parts = String(text).split(/(«[^»]+»)/g)
+  return (
+    <span>{parts.map((p, i) => p.startsWith('«') && p.endsWith('»')
+      ? <mark key={i} style={{ background: 'rgba(163,230,53,0.28)', color: '#d9f99d', padding: '0 2px', borderRadius: 2 }}>{p.slice(1, -1)}</mark>
+      : <span key={i}>{p}</span>)}</span>
+  )
+}
+
+const FeatureCard = forwardRef(function FeatureCard({ feature, isHighlighted, forceExpanded, onClick, loadExamples, vocabLogits, reasoningEvidence, darkMode }, ref) {
   const [expanded, setExpanded] = useState(false)
   const [detailProtein, setDetailProtein] = useState(null)
   const [examples, setExamples] = useState([])
@@ -288,6 +298,17 @@ const FeatureCard = forwardRef(function FeatureCard({ feature, isHighlighted, fo
               {feature.xmodal_caption ? (
                 <div style={{ color: '#c4b5fd', marginTop: '2px' }}>↳ reasoning signals: {feature.xmodal_caption}</div>
               ) : null}
+            </div>
+          )}
+          {reasoningEvidence && reasoningEvidence[String(feature.feature_id)] && (
+            <div style={{ fontSize: '10.5px', marginTop: '4px', padding: '4px 7px', borderRadius: '4px',
+              background: 'rgba(118,185,0,0.07)', border: '1px solid rgba(118,185,0,0.2)', lineHeight: 1.45 }}>
+              <div style={{ color: '#9aa', fontWeight: 600, marginBottom: '2px' }}>🧠 what the model reasons about these proteins</div>
+              {reasoningEvidence[String(feature.feature_id)].slice(0, 4).map((s, i) => (
+                <div key={i} style={{ color: '#b8c0cc', marginTop: '2px' }}>
+                  <span style={{ color: '#678' }}>{s.protein_id}:</span> <ReasoningSnippet text={s.snippet} />
+                </div>
+              ))}
             </div>
           )}
           {aiLabel && (
