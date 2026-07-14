@@ -1,0 +1,84 @@
+{
+  "band": "reasoning",
+  "layer": 16,
+  "results": {
+    "mitochondrion": {
+      "go": "GO:0005739",
+      "sae_dense": 0.96,
+      "sae_sparse": 0.985,
+      "sae_sparse_nfeat": 199,
+      "raw": 0.96,
+      "random": 0.972
+    },
+    "nucleus": {
+      "go": "GO:0005634",
+      "sae_dense": 0.969,
+      "sae_sparse": 0.987,
+      "sae_sparse_nfeat": 566,
+      "raw": 0.954,
+      "random": 0.946
+    },
+    "plasma membrane": {
+      "go": "GO:0005886",
+      "sae_dense": 0.941,
+      "sae_sparse": 0.976,
+      "sae_sparse_nfeat": 627,
+      "raw": 0.926,
+      "random": 0.924
+    },
+    "cytoplasm": {
+      "go": "GO:0005737",
+      "sae_dense": 0.944,
+      "sae_sparse": 0.98,
+      "sae_sparse_nfeat": 982,
+      "raw": 0.915,
+      "random": 0.911
+    },
+    "kinase activity": {
+      "go": "GO:0016301",
+      "sae_dense": 0.944,
+      "sae_sparse": 0.983,
+      "sae_sparse_nfeat": 145,
+      "raw": 0.987,
+      "random": 0.981
+    },
+    "transporter activity": {
+      "go": "GO:0005215",
+      "sae_dense": 0.953,
+      "sae_sparse": 0.989,
+      "sae_sparse_nfeat": 156,
+      "raw": 0.985,
+      "random": 0.985
+    },
+    "oxidoreductase activity": {
+      "go": "GO:0016491",
+      "sae_dense": 0.92,
+      "sae_sparse": 0.988,
+      "sae_sparse_nfeat": 166,
+      "raw": 0.984,
+      "random": 0.975
+    },
+    "DNA binding": {
+      "go": "GO:0003677",
+      "sae_dense": 0.965,
+      "sae_sparse": 0.991,
+      "sae_sparse_nfeat": 184,
+      "raw": 0.98,
+      "random": 0.975
+    },
+    "transcription regulator": {
+      "go": "GO:0140110",
+      "sae_dense": 0.906,
+      "sae_sparse": 0.984,
+      "sae_sparse_nfeat": 162,
+      "raw": 0.976,
+      "random": 0.971
+    }
+  },
+  "mean": {
+    "sae_dense": 0.945,
+    "sae_sparse": 0.985,
+    "raw": 0.963,
+    "random": 0.96
+  }
+}
