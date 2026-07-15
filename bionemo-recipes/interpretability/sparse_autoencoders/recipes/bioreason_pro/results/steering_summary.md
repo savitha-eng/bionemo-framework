@@ -37,3 +37,11 @@ genuine reasoning**: the char-metric counts any coherent generation containing s
 requires the model to *genuinely reason about* synapse. So steering is **~73% coherent lexical injection
 but only ~31% genuine reasoning-redirection** — mostly grafting concept vocabulary onto intact reasoning
 (e.g. "binds post-synaptic density marks on histone H3"), genuinely redirecting ~1/3 of the time.
+
+## Normalization fix (calibration) — result preserved
+
+The SAE has `normalize_input=True`, so decoder directions live in normalized (per-token) space. Steering was
+adding the delta to the raw residual *without* denormalizing by each token's std (direction right, magnitude
+uncalibrated). Fixed (`h += delta * std`). Effect: the injection onset moved from α≈180 to **α≈28**, but the
+char-level coherent-injection rate is **0.75 at α=28 (n=20)** — essentially identical to the old-scale 0.73.
+So the bug only mis-scaled α; the finding reproduces.
