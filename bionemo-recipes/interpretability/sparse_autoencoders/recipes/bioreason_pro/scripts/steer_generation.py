@@ -87,12 +87,17 @@ def main():
             return out
         h = out[0] if isinstance(out, tuple) else out
         if h.shape[1] == 1:                                  # generation step (not the prompt prefill)
+            hf = h.float()
+            # SAE has normalize_input=True: activations z and decoder dirs d_f live in NORMALIZED (per-token
+            # zero-mean/unit-var) space. So the injected delta must be DENORMALIZED (x std) before adding to the
+            # raw residual, else the magnitude is wrong by each token's std (direction is right, scale was not).
+            _, info = sae._normalize(hf); std = info["std"]              # [.., 1] per-token std
             if args.clamp_mode == "set":                     # clamp EACH feature's activation to alpha (Jared-style)
-                z = sae.encode(h.float())[..., feats_t]                  # [.., n_feat] current activations
-                delta = ((state["alpha"] - z).unsqueeze(-1) * D_mat).sum(-2)  # set whole cluster on
-                h = h + delta.to(h.dtype)
+                z = sae.encode(hf)[..., feats_t]                         # [.., n_feat] normalized-space activations
+                delta = ((state["alpha"] - z).unsqueeze(-1) * D_mat).sum(-2)  # normalized-space delta
+                h = h + (delta * std).to(h.dtype)                        # denormalize -> raw residual space
             else:                                            # crude activation addition along the subspace
-                h = h + (state["alpha"] * D_sum).to(h.dtype)
+                h = h + (state["alpha"] * D_sum * std).to(h.dtype)
         return ((h,) + tuple(out[1:])) if isinstance(out, tuple) else h
     layer.register_forward_hook(hook)
 
