@@ -20,3 +20,20 @@ whole cluster during generation, held-out proteins, α sweep. "Coherent-injectio
 **Injection onset:** α≈180 (α=90/135 inject essentially nothing); α≥210 raises injection but degeneration risk.
 
 Trace files (full original-vs-clamped text): `results/traces_<cluster>.md`.
+
+## LLM-judge (gold standard) — lexical injection vs genuine redirection
+
+An independent LLM (llama-3.1-70b, NIM) rated each synapse generation on **concept genuinely present**
+(not just sprinkled) AND **coherent**. On synapse (n≈13/α, NIM rate-limited):
+
+| α | %genuine-concept | %coherent | %BOTH | char-metric rate |
+|---|---|---|---|---|
+| 0 | 0 | 100 | 0 | 0 |
+| 180 | 31 | 92 | **31%** | 0.73 |
+| 210 | 21 | 93 | 21% | 0.68 |
+
+The LLM-judge %BOTH (**31%**) is ~half the char-metric rate (0.73). The gap is **sprinkled words vs
+genuine reasoning**: the char-metric counts any coherent generation containing synapse words; the judge
+requires the model to *genuinely reason about* synapse. So steering is **~73% coherent lexical injection
+but only ~31% genuine reasoning-redirection** — mostly grafting concept vocabulary onto intact reasoning
+(e.g. "binds post-synaptic density marks on histone H3"), genuinely redirecting ~1/3 of the time.
