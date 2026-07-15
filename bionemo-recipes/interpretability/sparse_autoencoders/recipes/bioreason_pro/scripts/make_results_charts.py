@@ -85,8 +85,9 @@ if clusters:
 
 # ---- Chart 4: synthesis novelty distribution ----
 synth = None
-jp = "/data/savithas/phase3_full/synthesis_l30_allvalidated.json"
-if os.path.exists(jp):
+jp = next((q for q in ["/data/savithas/phase3_full/synthesis_l30_focused.json",
+                       "/data/savithas/phase3_full/synthesis_l30_allvalidated.json"] if os.path.exists(q)), "")
+if jp and os.path.exists(jp):
     feats = json.load(open(jp))["features"]
     rows = [r for r in feats.values() if r.get("n_fire", 0) > 0 and r.get("n_content", 0) >= 10]
     nv = np.array([r["novelty"] for r in rows]); cn = np.array([r["connective"] for r in rows])
@@ -164,7 +165,27 @@ else:
     md.append("## 3. Echo vs synthesis reasoning features\n_(synthesis probe still running — re-run this "
               "script when `synthesis_l30_allvalidated.json` lands)_\n")
 
-md.append("## Honest limitations\n")
+md.append("## 4. Sequence-level (non-circular) protein probes\n")
+ip = "/data/savithas/phase3_full/interpro_probe_l30.json"
+rp = "/data/savithas/phase3_full/residue_domain_probe_l30.json"
+if os.path.exists(ip):
+    m = json.load(open(ip))["mean"]
+    md.append(f"- **InterPro domain (per-protein, {json.load(open(ip))['n_domains']} domains):** "
+              f"SAE-svd **{m['sae_svd']}** ≈ raw {m['raw']} ≈ random {m['random']}. Structural domains are "
+              f"near-perfectly, non-circularly decodable from ESM3 residues; SAE re-expresses, doesn't beat raw "
+              f"= the **residue-band ceiling**. Contrast GO function (~0.83 from residues) → **structure lives "
+              f"in residues, function emerges in reasoning.**\n")
+if os.path.exists(rp):
+    m = json.load(open(rp))["mean"]
+    md.append(f"- **InterPro domain (residue-resolution, is-this-residue-in-domain):** SAE-svd **{m['sae_svd']}** "
+              f"| raw {m['raw']} | random {m['random']}. Harder than per-protein presence — tests whether the rep "
+              f"knows domain *boundaries* along the chain.\n")
+if synth is not None:
+    md.append(f"- **Synthesis vs echo (reasoning band, {synth['n']} feats):** echo hypothesis for steerability "
+              f"NOT supported — most reasoning features are synthesis-leaning "
+              f"({100*(synth['nv']>0.6).mean():.0f}% novelty>0.6, only {100*(synth['nv']<0.3).mean():.0f}% echo). "
+              f"F39407 (hormone) novelty 0.63 = genuine synthesis, non-circular.\n")
+md.append("\n## Honest limitations\n")
 md.append("- **Steering n=10–20** (generation is expensive) — winning conditions need firming to n≥50.\n")
 md.append("- Coherent-steering window is **narrow** (breaks by α≈300) and **concept-dependent**.\n")
 md.append("- Coherence metric is lexical (distinct3/nonascii/gibber), not an LLM-judge — a stronger rating "

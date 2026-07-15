@@ -41,7 +41,17 @@ Raw concept-word counts **overstate** steering because at high α the model fall
 Same high-quality synapse cluster steered at each layer. **L16 = null** (concepts not yet steerable directions); **L28** injects but over-breaks; **L30** strongest/most coherent; **L32** moderate. De-confounds the earlier 'L28=salad' (that was a weak repro cluster).
 
 ## 3. Echo vs synthesis reasoning features
-_(synthesis probe still running — re-run this script when `synthesis_l30_allvalidated.json` lands)_
+
+![synthesis](charts/synthesis_novelty.png)
+
+Over 202 L30 reasoning features: novelty mean=0.56, echo (novelty<0.3)=20%, synthesis (>0.6)=48%. Low-novelty features restate prompt GO terms (circular); high-novelty fire on synthesized text.
+
+## 4. Sequence-level (non-circular) protein probes
+
+- **InterPro domain (per-protein, 60 domains):** SAE-svd **0.99** ≈ raw 0.989 ≈ random 0.981. Structural domains are near-perfectly, non-circularly decodable from ESM3 residues; SAE re-expresses, doesn't beat raw = the **residue-band ceiling**. Contrast GO function (~0.83 from residues) → **structure lives in residues, function emerges in reasoning.**
+
+- **Synthesis vs echo (reasoning band, 202 feats):** echo hypothesis for steerability NOT supported — most reasoning features are synthesis-leaning (48% novelty>0.6, only 20% echo). F39407 (hormone) novelty 0.63 = genuine synthesis, non-circular.
+
 
 ## Honest limitations
 
