@@ -234,6 +234,19 @@ md.append("**Why 'non-circular'?** Our reasoning-band results risk circularity: 
           "whether the *sequence* representation encodes *structure*.\n")
 md.append("**The headline to watch is SAE vs raw:** if SAE ≈ raw, the SAE just re-expresses what's already there "
           "(the residue representation is the 'ceiling'); if SAE > raw, the SAE surfaces something raw hides.\n")
+md.append("**Methodology vs Jared/CodonFM:** same core — GO-label *overlap* (per-feature AUROC), *trained* "
+          "linear probes, and **SVD-256 dimensionality-matching** (his §7.2). For the discriminating contact "
+          "probe we go further with a **matched-dim sweep** (SAE-SVD-K *vs raw-PCA-K* at K=256/512/1024/2048), "
+          "stricter than his (which leaves raw at full dim). We also add **causal steering**, which his probing "
+          "does not.\n")
+md.append("![InterPro domain probe](charts/interpro_probe.png)\n")
+md.append("![contact dimension sweep](charts/contact_dimsweep.png)\n")
+md.append("*Left: structural domains are near-perfectly decodable from residues, SAE≈raw (ceiling). "
+          "Right: on the harder 3D-contact probe, raw beats SAE at **every** matched dimension → not a "
+          "compression artifact.*\n")
+md.append("![per-residue burial example](charts/contact_example.png)\n")
+md.append("*Concrete example of the contact probe's label: one protein's per-residue 3D contact number "
+          "(red = buried core, blue = surface) — what 'buried vs surface' means physically.*\n")
 ip = "/data/savithas/phase3_full/interpro_probe_l30.json"
 rp = "/data/savithas/phase3_full/residue_domain_probe_l30.json"
 if os.path.exists(ip):
