@@ -37,6 +37,8 @@ def main():
     p.add_argument("--clamp-mode", default="add", choices=["add", "set"],
                    help="add: h += alpha*decoder_dir (crude). set: clamp feature activation to alpha via "
                         "encode->override->contribution (Jared-style, accounts for current activation).")
+    p.add_argument("--save-gens", default="", help="JSONL path: dump full generated text + coherence per "
+                   "(protein,alpha) for the LLM-judge (concept-present + real-reasoning rating)")
     p.add_argument("--num-proteins", type=int, default=8)
     p.add_argument("--split", default="validation")
     p.add_argument("--max-new", type=int, default=180)
@@ -128,7 +130,7 @@ def main():
     totals = {a: 0 for a in alphas}; totals2 = {a: 0 for a in alphas}
     coh_c1 = {a: 0 for a in alphas}                          # concept words ONLY from coherent generations
     d3s = {a: [] for a in alphas}; nas = {a: [] for a in alphas}; gibs = {a: [] for a in alphas}
-    ncoh = {a: 0 for a in alphas}; ntot = 0; nshown = 0
+    ncoh = {a: 0 for a in alphas}; ntot = 0; nshown = 0; gen_records = []
     for bi, batch in enumerate(loader):
         ids = batch["input_ids"][0]
         idl = ids.tolist()
@@ -150,6 +152,10 @@ def main():
             d3, na, gib = coherence(txt); d3s[a].append(d3); nas[a].append(na); gibs[a].append(gib)
             if is_coherent(d3, na, gib):                      # count concept words ONLY when text is coherent
                 ncoh[a] += 1; coh_c1[a] += count_words(txt)
+            if args.save_gens:
+                gen_records.append({"protein": bi, "alpha": a, "text": txt, "c1": count_words(txt),
+                                    "distinct3": round(d3, 3), "nonascii": round(na, 3), "gibber": round(gib, 3),
+                                    "lex_coherent": bool(is_coherent(d3, na, gib))})
         state["alpha"] = 0.0
         if nshown < 3:
             print(f"\n===== protein {bi} =====")
@@ -172,6 +178,12 @@ def main():
     print("\ncoh_c1 = target concept words counted ONLY in generations that pass the coherence bar")
     print("(distinct3>=0.55, nonascii<=0.02, gibber<=0.20). If coh_c1 stays ~0 while raw_c1 is high,")
     print("the 'steering' is repetition-loop / salad injection, NOT coherent reasoning.")
+    if args.save_gens:
+        import json as _json
+        with open(args.save_gens, "w") as _f:
+            for r in gen_records:
+                _f.write(_json.dumps(r) + "\n")
+        print(f"[saved] {len(gen_records)} full generations -> {args.save_gens}")
 
 
 if __name__ == "__main__":
