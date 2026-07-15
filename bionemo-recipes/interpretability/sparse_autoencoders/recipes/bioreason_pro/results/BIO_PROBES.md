@@ -58,14 +58,34 @@ and the **SAE never beats raw** — it re-expresses the residue representation (
 losing slightly on the harder 3D-contact probe. Expected: an SAE is a lossy re-expression; its value is
 interpretability, not decodability.
 
-## Result 2 — Which features? (per-feature AUROC) — _running; fills in when `per_feature_structural.json` lands_
+## Result 2 — Which features? YES, the SAE isolates clean structural-residue features
 
-Per-feature AUROC of each of the 40,960 SAE features against buried/domain labels. Reports the best single
-feature per structural label. **>0.80 ⇒ the SAE isolates a clean structural-residue feature; ~0.5–0.65 ⇒ it
-does not** (structure is in the raw residues but not decomposed into interpretable features — consistent with
-the residue band yielding only ~8 clean features vs 170+ on the reasoning band).
+Per-feature AUROC of each of the 40,960 SAE features against InterPro-domain-membership labels (residue band):
+the best single feature per domain. **This corrects an earlier expectation** — the residue band is NOT feature-
+barren for structure; it just isn't for GO *function*.
 
-_[results table inserted here on next refresh]_
+![per-feature structural](charts/per_feature_structural.png)
+
+| InterPro domain | best feature | AUROC |
+|---|---|---|
+| Protein kinase domain (IPR000719) | **F16026** | **0.98** |
+| Protein kinase-like (IPR011009) | F16026 | 0.97 |
+| Armadillo (ARM) fold (IPR016024) | F679 | 0.95 |
+| WD40 repeat (IPR015943) | F11009 | 0.92 |
+| Homeodomain-like (IPR009057) | F5540 | 0.90 |
+| Ig-like (IPR036179 / IPR007110 / IPR013783) | F17703 / F25050 / F1386 | 0.87 |
+| Zinc-finger (IPR013083) | F8306 | 0.80 |
+| P-loop NTPase (IPR027417) | F7079 | 0.75 |
+
+**So the SAE HAS individual, nameable structural-residue features** — e.g. F16026 fires on protein-kinase-domain
+residues at 0.98 AUROC; different features cleanly pick out different folds (kinase, ARM, WD40, Ig-like, Zn-
+finger). 8 of 10 abundant domains have a clean (>0.80) single feature.
+
+**Reconciliation with "SAE ≈ raw":** the SAE doesn't *decode* domains better than raw (both ~0.99), but it
+*isolates* each fold into a **single nameable feature** — an interpretable handle raw's entangled dimensions
+don't give. So on the residue band the SAE adds **interpretability** (nameable structural features) even though
+it adds no **decodability**. (Buried-vs-surface per-feature number pending — the first pass had an AUROC bug,
+re-running.)
 
 ## Bottom line
 - **Structure lives in the ESM3 residues at ceiling** (domains ~0.99, 3D burial ~0.89); the **SAE re-expresses
