@@ -14,10 +14,41 @@ and what we found. (Paper details are from our reading of BioReason-Pro §2.7, �
 So the model literally writes a reasoning trace ("This protein contains a chromo domain … which binds
 methyl-lysine on histone tails …") before answering. That reasoning trace is our main object of study.
 
-**The paper's own interpretability (§4.5) is correlational, no SAEs, no causal intervention:** it shows the
-model's *attention* concentrates on structurally-critical cryo-EM **contact residues** (§4.5.5–6, e.g. eEFSec/
-7ZJW, CFAP61/8J07), and that the LLM *reorganizes* the protein embeddings by function across layers (§4.5.4).
-Our work adds the **mechanistic / causal** layer using SAEs.
+### The paper's own interpretability (§4.5) — what it actually does (correlational; attention + embedding geometry; NO SAEs, NO causal intervention)
+
+**On GO-GPT** (the base DNA/GO model, *not* BioReason-Pro):
+- **§4.5.1** — does GO-GPT's **cross-attention** (from the DNA-binding output token GO:0003677 → input residues)
+  concentrate on experimentally-determined **DNA-binding residues** (BioLiP)? Metrics: AUROC / AUPRC-gain /
+  fold-enrichment; 63 proteins.
+- **§4.5.2 ESM2-norm control** — is that signal already in the frozen ESM2 embeddings (L2 norm)? A
+  *representation baseline* for the attention.
+- **§4.5.3** — embedding **geometry** (organism + GO-term embeddings; Resnik similarity, cross-aspect NPMI,
+  GO-DAG neighbor overlap).
+
+**On BioReason-Pro** (our target model):
+- **§4.5.4 embedding reorganization** — ESM3 pre-projection (1536-d) vs LLM Layer-35 (2560-d), PCA→UMAP→HDBSCAN,
+  clusters annotated by enriched GO-MF term. The LLM reshapes proteins *by function*.
+- **§4.5.5 attention analysis** — pick a "probe phrase" in the *generated reasoning trace* (e.g. "scaffold"),
+  extract attention from those tokens back to protein residues, pick best layer/head, compare attention at
+  relevant vs background residues.
+- **§4.5.6 structural contact analysis** — "relevant residues" from **cryo-EM** (heavy-atom <5Å). Case studies:
+  **eEFSec** (P57772 / SECIS-RNA / PDB 7ZJW) and **CFAP61** (Q8NHU2 / degenerate Rossmann catalytic residues
+  C734·V737·V739 repurposed as a dynein interface / PDB 8J07).
+
+### How OUR work relates to each (honest mapping)
+
+| Paper | Ours | Relationship |
+|---|---|---|
+| §4.5.1-2 attention→binding residues + **ESM2-norm control** | trained probes (SAE vs **raw** vs random) | Same *question* (is functional-site info in the representation?), different *mechanism*. Their ESM2-norm control ≈ **our raw baseline.** |
+| §4.5.4 embedding reorganization | our structure/function dissociation | Related finding, **not the same analysis yet** — could reproduce ESM3-preprojection vs LLM-layer directly. |
+| §4.5.5-6 **attention→cryo-EM contacts** (2 case studies) | our **AlphaFold contact probe** (8k proteins) | **Same structural angle, DIFFERENT method** — they ask *what the model attends to* (attention); we ask *what the residue representation encodes* (buried/surface). Complementary — **NOT a reproduction.** |
+| — | **SAE features + causal steering** | **New** — the paper has no SAE / mechanistic / causal work. Our main addition. |
+
+**Honest positioning:** the paper's interpretability is **attention-based and correlational, on case studies**;
+ours is **SAE-based and causal, at population scale**. Our contact probe is *inspired by* §4.5.5-6 but is a
+**representation probe, not an attention analysis** — we do NOT claim it reproduces their attention result.
+(Their attention→contact analysis *is* reproducible — we have the AlphaFold structures; it would need attention
+extraction + the specific cryo-EM structures 7ZJW/8J07.)
 
 ## The tool: Sparse Autoencoders (SAEs)
 We train an SAE on the LLM's residual stream at **layer 30**. It decomposes each 2560-dim activation into
