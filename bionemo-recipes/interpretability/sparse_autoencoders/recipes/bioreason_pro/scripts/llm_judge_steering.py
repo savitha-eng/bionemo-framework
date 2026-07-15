@@ -43,16 +43,21 @@ PROMPT = ("Target concept: {concept}\n\nReasoning text:\n\"\"\"\n{text}\n\"\"\"\
 
 
 def judge(text):
-    try:
-        r = client.chat.completions.create(model=MODEL, temperature=0, max_tokens=40,
-            messages=[{"role": "system", "content": SYS},
-                      {"role": "user", "content": PROMPT.format(concept=a.concept, text=text[:3000])}])
-        txt = r.choices[0].message.content
-        s = txt[txt.find("{"): txt.rfind("}") + 1]
-        d = json.loads(s)
-        return int(d["concept_present"]), int(d["coherent"])
-    except Exception:
-        return None
+    for attempt in range(7):
+        try:
+            r = client.chat.completions.create(model=MODEL, temperature=0, max_tokens=40,
+                messages=[{"role": "system", "content": SYS},
+                          {"role": "user", "content": PROMPT.format(concept=a.concept, text=text[:3000])}])
+            txt = r.choices[0].message.content
+            s = txt[txt.find("{"): txt.rfind("}") + 1]
+            d = json.loads(s)
+            return int(d["concept_present"]), int(d["coherent"])
+        except Exception as e:
+            if ("429" in str(e) or "RateLimit" in type(e).__name__) and attempt < 6:
+                time.sleep(min(45, 3 * (2 ** attempt)))       # backoff on rate limit
+                continue
+            return None
+    return None
 
 
 recs = [json.loads(l) for l in open(a.gens)]
@@ -60,7 +65,7 @@ if a.max: recs = recs[:a.max]
 print(f"[judge] {len(recs)} generations via {MODEL} @ {BASE}", flush=True)
 per = defaultdict(lambda: {"n": 0, "present2": 0, "coh2": 0, "both": 0, "cp": [], "ch": []})
 for i, r in enumerate(recs):
-    v = judge(r["text"])
+    v = judge(r["text"]); time.sleep(1.2)                     # base spacing to respect rate limit
     if v is None: continue
     cp, ch = v; d = per[r["alpha"]]
     d["n"] += 1; d["cp"].append(cp); d["ch"].append(ch)
