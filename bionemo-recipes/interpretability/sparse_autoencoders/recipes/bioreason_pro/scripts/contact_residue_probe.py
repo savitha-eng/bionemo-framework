@@ -112,18 +112,22 @@ keep = got; idx = np.where(keep)[0]; y = y_all
 print(f"[contact] gathered {int(keep.sum())}/{nR} residues", flush=True)
 
 rng.shuffle(idx); h = len(idx) // 2; tr_i, te_i = idx[:h], idx[h:]
-svd = TruncatedSVD(n_components=256, random_state=0).fit(SAE[tr_i]); SAE_SVD = svd.transform(SAE)
-rawsvd = TruncatedSVD(n_components=256, random_state=0).fit(RAW[tr_i]); RAW_256 = rawsvd.transform(RAW)  # FAIR ctrl
 def probe(Xf):
     sc = StandardScaler().fit(Xf[tr_i]); Xs = sc.transform(Xf)
     clf = LogisticRegression(C=1.0, max_iter=300, tol=1e-3).fit(Xs[tr_i], y[tr_i])
     return round(float(roc_auc_score(y[te_i], clf.decision_function(Xs[te_i]))), 3)
-res = {"sae_svd256": probe(SAE_SVD), "raw_pca256": probe(RAW_256), "raw_full": probe(RAW), "random": probe(RND),
+res = {"raw_full2560": probe(RAW), "random": probe(RND),
        "n_buried": int((y[idx] == 1).sum()), "n_surface": int((y[idx] == 0).sum())}
-print(f"\n=== CONTACT (buried vs surface) residue probe ===")
-print(f"  SAE-svd256 {res['sae_svd256']} | raw-pca256 {res['raw_pca256']} (FAIR, same dim) | "
-      f"raw-full2560 {res['raw_full']} | random {res['random']}")
-print("  FAIR test = SAE-svd256 vs raw-pca256 (both 256-dim). If tied, the 'SAE loses to raw-2560' was a")
-print("  dimensionality artifact. raw-full>>random => 3D signal is real; SAE~=raw@matched-dim => ceiling.")
+print(f"\n=== CONTACT (buried vs surface) — DIMENSION SWEEP (is 256 too small for the SAE?) ===")
+print(f"  {'K':>6} {'SAE-svd':>9} {'raw-pca':>9}")
+for K in (256, 512, 1024, 2048):
+    if K < SAE.shape[1]:
+        res[f"sae_svd{K}"] = probe(TruncatedSVD(K, random_state=0).fit(SAE[tr_i]).transform(SAE))
+    if K < RAW.shape[1]:
+        res[f"raw_pca{K}"] = probe(TruncatedSVD(K, random_state=0).fit(RAW[tr_i]).transform(RAW))
+    print(f"  {K:>6} {res.get(f'sae_svd{K}','-'):>9} {res.get(f'raw_pca{K}','-'):>9}", flush=True)
+print(f"  raw-full(2560) {res['raw_full2560']} | random {res['random']}")
+print("  Read: if SAE-svd catches raw-pca at higher K, then 256 was too aggressive FOR THE SAE (40960-dim).")
+print("  If SAE stays below raw at every matched K, the SAE genuinely loses on 3D burial (not a dim artifact).")
 Path(out).write_text(json.dumps({"layer": a.layer, "level": "residue-contact", **res}, indent=2))
 print(f"[wrote] {out}")
