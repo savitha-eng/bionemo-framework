@@ -297,9 +297,10 @@ cp = "/data/savithas/phase3_full/contact_residue_probe_l30.json"
 if os.path.exists(cp):
     c = json.load(open(cp))
     md.append(f"- **3D contact (buried vs surface residue, AlphaFold structures, 95% coverage):** "
-              f"SAE-svd {c['sae_svd']} | raw **{c['raw']}** | random {c['random']}. A harder, less-saturated "
-              f"probe: raw≫random ({c['raw']} vs {c['random']}) = the residue rep genuinely encodes 3D burial; "
-              f"and here **raw BEATS SAE** ({c['raw']} vs {c['sae_svd']}) — the SVD-compressed SAE sheds info.\n")
+              f"SAE-svd256 {c['sae_svd256']} | raw-pca256 {c['raw_pca256']} | raw-full {c['raw_full']} | random "
+              f"{c['random']}. A harder, less-saturated probe: raw≫random ({c['raw_full']} vs {c['random']}) = the "
+              f"residue rep genuinely encodes 3D burial; and **raw BEATS SAE even at matched dim** "
+              f"({c['raw_pca256']} vs {c['sae_svd256']}) — the SAE sheds info (see dimension-sweep chart above).\n")
 md.append("\n> **Honest bottom line across ALL probes: the SAE never beats raw on decodability.** It ties raw on "
           "the (near-saturated) domain probes and *loses* to raw on the harder 3D-contact and protein-band-GO "
           "probes. This is expected — the ESM3 residue representation is the ceiling, and an SAE re-expresses it "
