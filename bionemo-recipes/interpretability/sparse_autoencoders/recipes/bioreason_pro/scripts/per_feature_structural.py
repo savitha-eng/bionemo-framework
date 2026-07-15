@@ -109,13 +109,15 @@ with torch.no_grad():
 print(f"[perfeat] gathered {int(got.sum())} residues x {H} features; ranking...", flush=True)
 
 # per-feature AUROC (vectorized rank-sum) for each structural label
-ranks = rankdata(SAE[got].astype(np.float32), axis=0)     # [nR, H]
+SAEg = SAE[got].astype(np.float32)
 def auroc_all(y):
     yk = y[keep_idx][got]
-    pos = yk == 1; neg = yk == 0; npos, nneg = int(pos.sum()), int(neg.sum())
+    lab = (yk == 1) | (yk == 0)                            # only labeled residues (exclude -1 drops)
+    pos = yk[lab] == 1; npos, nneg = int(pos.sum()), int((~pos).sum())
     if npos < 20 or nneg < 20: return None
-    Rpos = ranks[pos].sum(0)                               # [H]
-    return (Rpos - npos * (npos + 1) / 2) / (npos * nneg)  # AUROC per feature
+    r = rankdata(SAEg[lab], axis=0)                        # rank WITHIN the labeled pos+neg subset (fixes >1 bug)
+    Rpos = r[pos].sum(0)                                   # [H]
+    return (Rpos - npos * (npos + 1) / 2) / (npos * nneg)  # correct AUROC per feature
 
 results = {}
 print(f"\n{'structural label':22} {'npos':>6} {'best feat':>10} {'AUROC':>7}   (top-3 features)")
