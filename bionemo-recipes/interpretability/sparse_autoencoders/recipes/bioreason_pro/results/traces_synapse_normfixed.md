@@ -1,6 +1,6 @@
-# Synapse steering traces — CORRECTED scale (post normalization-fix)
+# Steering traces — **synapse** (CORRECTED scale, post normalization-fix)
 
-**Layer 30, `sae-l30-exp16-balanced`. Clamped features: `16494,4456,22453,21531,39580,30677`. 20 held-out proteins, α [0, 20, 28, 36, 44, 55]. Injection onset α≈20, sweet spot α≈28 (0.75 coherent injection), degenerates >40.** α=0 = ORIGINAL. Read the text (lexical flags are unreliable).
+**Layer 30, `sae-l30-exp16-balanced`. Features: `16494,4456,22453,21531,39580,30677`. 20 held-out proteins, α [0, 20, 28, 36, 44, 55]. Corrected per-token-std denormalization; injection onset α≈20-28.** α=0=ORIGINAL. Read the text (lexical flags unreliable).
 
 
 ## Protein 0
