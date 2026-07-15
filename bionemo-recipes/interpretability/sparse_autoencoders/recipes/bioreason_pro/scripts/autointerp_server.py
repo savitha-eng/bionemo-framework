@@ -172,7 +172,7 @@ STOPWORDS = {"and", "or", "of", "the", "a", "an", "in", "on", "to", "for", "with
              "(", ")", "-", "'", "via", "<|im_start|>", "<|im_end|>", "assistant", "user"}
 
 
-def _label(windows, peak_tokens, sys=SYS_PROTEIN, kind_line=KIND_PROTEIN):
+def _label(windows, peak_tokens, sys=SYS_PROTEIN, kind_line=KIND_PROTEIN, annos=None):
     body = "\n".join("  - " + w for w in windows[:50])
     toks = [t for t in peak_tokens if t and t.strip()]
     pk = Counter(toks).most_common(8)
@@ -185,13 +185,21 @@ def _label(windows, peak_tokens, sys=SYS_PROTEIN, kind_line=KIND_PROTEIN):
                 f"grammatical position) or POLYSEMANTIC (no single concept). Do NOT invent a concept for a "
                 f"stopword. Look across ALL windows for a genuinely consistent CONTENT context; if there "
                 f"isn't one, say KIND: POLYSEMANTIC and say plainly it is not a clean, interpretable feature.")
+    anno = ""
+    if annos:
+        anno = (f"\nGIVEN ANNOTATIONS for these proteins (GO terms the model was HANDED in its prompt): "
+                f"{', '.join(annos[:8])}.\nCRITICAL: distinguish (a) the feature merely RESTATING these given "
+                f"annotations in the reasoning (label-reading = KIND GO-TERM-TEXT) from (b) the model reasoning "
+                f"BEYOND them — using related but DIFFERENT vocabulary, mechanism, or inference not in the given "
+                f"list (genuine reasoning = KIND REASONING). In MEANING, say explicitly whether the firing "
+                f"content goes beyond the given annotations or just echoes them.")
     usr = (f"This feature's PEAK token (what it fires hardest on) across the windows: {pk_str} — NOTE these may "
-           f"be SUBWORD FRAGMENTS; reconstruct the full word from the window.{hint}\n"
+           f"be SUBWORD FRAGMENTS; reconstruct the full word from the window.{hint}{anno}\n"
            f"Windows (« » = peak):\n{body}\n\n"
            f"Reply in EXACTLY this format:\n"
            f"TRIGGER: <the FULL WORD or short pattern it fires on — reconstruct the whole word if the peak is a subword fragment; never a bare fragment>\n"
            f"{kind_line}\n"
-           f"MEANING: <ONE precise, non-generic sentence; if polysemantic/syntactic, SAY SO plainly>")
+           f"MEANING: <ONE precise, non-generic sentence; if polysemantic/syntactic, SAY SO plainly; state whether it goes BEYOND or just ECHOES the given annotations>")
     r = _client.chat.completions.create(model=MODEL, temperature=0.1, max_tokens=130,
         messages=[{"role": "system", "content": sys}, {"role": "user", "content": usr}])
     return r.choices[0].message.content.strip(), pk_str
@@ -208,8 +216,16 @@ def _interp(model, fid, bands):
     sub = ex[ex.feature_id == int(fid)].sort_values("max_activation", ascending=False)
     if not len(sub):
         return {"error": f"feature {fid} not found in {model}"}
+    # annotations the model was HANDED for these proteins (GO terms enriched among the feature's proteins) —
+    # feed to the LLM so it can flag label-reading (restating given annotations) vs reasoning BEYOND them.
+    anno_names = []
+    try:
+        _sp = list(dict.fromkeys(sub.sort_values("max_activation", ascending=False).protein_id.tolist()))
+        anno_names = [e["name"] or e["go"] for e in _protein_enrichment(_sp, min_k=3) if e.get("name") or e.get("go")]
+    except Exception:  # noqa: BLE001
+        pass
     ws = [_win(r.sequence, r.activations) for _, r in sub.head(50).iterrows()]
-    label, pk_str = _label([w for w, _ in ws], [t for _, t in ws], sys, kind_line)
+    label, pk_str = _label([w for w, _ in ws], [t for _, t in ws], sys, kind_line, annos=anno_names)
     out = {"feature_id": int(fid), "label": label, "peak_tokens": pk_str,
            "windows": [w for w, _ in ws[:8]]}  # show the actual highlighted phrases
     if bands:  # label each band the feature fires on SEPARATELY (reasoning vs answer, etc.)
@@ -220,7 +236,7 @@ def _interp(model, fid, bands):
             bws = [_win(r.sequence, r.activations) for _, r in bb.iterrows()]
             # per-band peak activation, so the UI can flag a band the feature barely touches
             peak = float(bb["max_activation"].max()) if "max_activation" in bb else 0.0
-            lab, bpk = _label([w for w, _ in bws], [t for _, t in bws], sys, kind_line)
+            lab, bpk = _label([w for w, _ in bws], [t for _, t in bws], sys, kind_line, annos=anno_names)
             band_labels[b] = {"label": lab, "peak_activation": round(peak, 2),
                               "n_examples": int(len(bb)), "peak_tokens": bpk}
         out["band_labels"] = band_labels
@@ -285,9 +301,12 @@ class H(BaseHTTPRequestHandler):
         except Exception as e:  # noqa: BLE001
             res = {"error": f"{type(e).__name__}: {e}"}; code = 500
         body = json.dumps(res).encode()
-        self.send_response(code); self._cors()
-        self.send_header("Content-Type", "application/json"); self.end_headers()
-        self.wfile.write(body)
+        try:
+            self.send_response(code); self._cors()
+            self.send_header("Content-Type", "application/json"); self.end_headers()
+            self.wfile.write(body)
+        except (BrokenPipeError, ConnectionResetError):
+            pass                                    # client (slow-request timeout) disconnected — don't crash
 
     def log_message(self, *a):
         pass
