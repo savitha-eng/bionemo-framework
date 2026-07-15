@@ -113,7 +113,8 @@ md.append("| **Function emerges in the reasoning** | GO function weak in residue
 md.append("| **The SAE never beats raw on decodability** | ties raw on saturated domain probes, *loses* on the "
           "harder 3D-contact (0.873 vs 0.890) and protein-GO (0.75 vs 0.83) probes |")
 md.append("| **The SAE's value is interpretability + steering** | monosemantic nameable features; the synapse "
-          "cluster steers **97% coherently at n=60**, selectively (0 cross-leakage), vs a random null |")
+          "cluster steers selectively (0 cross-leakage) vs a random null; **~0.75 coherent lexical injection "
+          "(char-level, n=60), but only ~31% GENUINE reasoning-redirection by an LLM-judge** |")
 md.append("| **Steering is layer- & cluster-specific** | L16 null -> L30 sweet spot -> L32 weaker; coherent only "
           "for synapse-like clusters; molecular-function clusters baseline-confounded |")
 md.append("| **Reasoning features are genuine, not prompt-echo** | 48% synthesis vs 20% echo; F39407 novelty 0.63 |\n")
@@ -169,8 +170,24 @@ md.append("![raw vs coherent](charts/raw_vs_coherent.png)\n")
 md.append("*Above:* dashed = raw count, solid = coherent-only. The gap is the repetition-loop inflation. The "
           "**random control injects 0** everywhere → the effect is direction-specific and real.\n")
 
+md.append("### The honest steering rate (three levels of scrutiny)\n")
+md.append("| measure | synapse rate | what it counts |")
+md.append("|---|---|---|")
+md.append("| lexical `coh_c1` (n=10) | ~0.97 | ANY coherent gen with concept words — **overstates** (marks "
+          "pseudo-word junk 'synaptotereguliaritys' as coherent) |")
+md.append("| **char-level** (n=60, `analyze_traces.py`) | **~0.73** | coherent (char-level) injection into "
+          "zero-baseline proteins — catches the pseudo-word loops the lexical metric missed |")
+md.append("| **LLM-judge** (llama-3.1-70b, `llm_judge_steering.py`) | **~0.31** | model GENUINELY reasons about "
+          "the concept (not just words sprinkled in) AND coherent — the gold standard |")
+md.append("So steering is **~73% coherent lexical injection but only ~31% genuine reasoning-redirection** — "
+          "mostly grafting concept vocabulary onto intact reasoning (e.g. 'binds post-synaptic density marks on "
+          "histone H3'), genuinely redirecting ~1/3 of the time. **Calibration note:** the SAE has "
+          "`normalize_input=True`; steering now correctly denormalizes the injected delta by the per-token std — "
+          "this shifted the operating point (α≈180→28) but the rate is unchanged (0.75), confirming the fix "
+          "preserves the result.\n")
+
 if clusters:
-    md.append("### Per-cluster coherence (n=10, L30)\n")
+    md.append("### Per-cluster coherence (n=10, L30) — NOTE: coh_c1 is the OVERSTATED lexical metric (see above)\n")
     md.append("![coherence by cluster](charts/coherence_by_cluster.png)\n")
     md.append("| cluster | best α | %coherent@best | coh_c1@best | verdict |")
     md.append("|---|---|---|---|---|")
@@ -234,6 +251,21 @@ md.append("**Why 'non-circular'?** Our reasoning-band results risk circularity: 
           "whether the *sequence* representation encodes *structure*.\n")
 md.append("**The headline to watch is SAE vs raw:** if SAE ≈ raw, the SAE just re-expresses what's already there "
           "(the residue representation is the 'ceiling'); if SAE > raw, the SAE surfaces something raw hides.\n")
+md.append("**What we probe, and with what labels:**\n")
+md.append("| probe | input (what we probe) | label (target) | label source | circular? |")
+md.append("|---|---|---|---|---|")
+md.append("| GO function | rep (SAE/raw/random), per-protein | has GO term X? | protein GO annotations | "
+          "**reasoning band circular** (text describes fn); residue band non-circular but weak |")
+md.append("| InterPro domain (per-protein) | residue-band rep, mean-pooled | has domain X? | dataset "
+          "`interpro_ids` | non-circular |")
+md.append("| InterPro domain (per-residue) | single residue activation | is this residue in domain X? | "
+          "`interpro_location` spans | non-circular |")
+md.append("| Contact / burial | single residue activation | buried (3D core) vs surface? | AlphaFold contact "
+          "number (Cβ neighbors <8Å) | non-circular |")
+md.append("Every probe compares **SAE features vs raw hidden vs random-SAE** — separating 'is it in the "
+          "representation at all' (raw vs random) from 'does the SAE add anything' (SAE vs raw). Structural "
+          "labels (domain, burial) are probed from the residue band → non-circular → at ceiling (~0.98); "
+          "functional labels (GO) are ~0.95 from reasoning (circular) but ~0.83 from residues.\n")
 md.append("**Methodology vs Jared/CodonFM:** same core — GO-label *overlap* (per-feature AUROC), *trained* "
           "linear probes, and **SVD-256 dimensionality-matching** (his §7.2). For the discriminating contact "
           "probe we go further with a **matched-dim sweep** (SAE-SVD-K *vs raw-PCA-K* at K=256/512/1024/2048), "
