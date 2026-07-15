@@ -50,6 +50,8 @@ Over 202 L30 reasoning features: novelty mean=0.56, echo (novelty<0.3)=20%, synt
 
 - **InterPro domain (per-protein, 60 domains):** SAE-svd **0.99** ≈ raw 0.989 ≈ random 0.981. Structural domains are near-perfectly, non-circularly decodable from ESM3 residues; SAE re-expresses, doesn't beat raw = the **residue-band ceiling**. Contrast GO function (~0.83 from residues) → **structure lives in residues, function emerges in reasoning.**
 
+- **InterPro domain (residue-resolution, is-this-residue-in-domain):** SAE-svd **0.982** | raw 0.982 | random 0.947. Harder than per-protein presence — tests whether the rep knows domain *boundaries* along the chain.
+
 - **Synthesis vs echo (reasoning band, 202 feats):** echo hypothesis for steerability NOT supported — most reasoning features are synthesis-leaning (48% novelty>0.6, only 20% echo). F39407 (hormone) novelty 0.63 = genuine synthesis, non-circular.
 
 
