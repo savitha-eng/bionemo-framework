@@ -113,13 +113,17 @@ print(f"[contact] gathered {int(keep.sum())}/{nR} residues", flush=True)
 
 rng.shuffle(idx); h = len(idx) // 2; tr_i, te_i = idx[:h], idx[h:]
 svd = TruncatedSVD(n_components=256, random_state=0).fit(SAE[tr_i]); SAE_SVD = svd.transform(SAE)
+rawsvd = TruncatedSVD(n_components=256, random_state=0).fit(RAW[tr_i]); RAW_256 = rawsvd.transform(RAW)  # FAIR ctrl
 def probe(Xf):
     sc = StandardScaler().fit(Xf[tr_i]); Xs = sc.transform(Xf)
     clf = LogisticRegression(C=1.0, max_iter=300, tol=1e-3).fit(Xs[tr_i], y[tr_i])
     return round(float(roc_auc_score(y[te_i], clf.decision_function(Xs[te_i]))), 3)
-res = {"sae_svd": probe(SAE_SVD), "raw": probe(RAW), "random": probe(RND),
+res = {"sae_svd256": probe(SAE_SVD), "raw_pca256": probe(RAW_256), "raw_full": probe(RAW), "random": probe(RND),
        "n_buried": int((y[idx] == 1).sum()), "n_surface": int((y[idx] == 0).sum())}
-print(f"\n=== CONTACT (buried vs surface) residue probe ===\n  SAE-svd {res['sae_svd']} | raw {res['raw']} | random {res['random']}")
-print("  SAE~raw => 3D-context is in the residue rep, SAE re-expresses (ceiling). raw>>random => real signal.")
+print(f"\n=== CONTACT (buried vs surface) residue probe ===")
+print(f"  SAE-svd256 {res['sae_svd256']} | raw-pca256 {res['raw_pca256']} (FAIR, same dim) | "
+      f"raw-full2560 {res['raw_full']} | random {res['random']}")
+print("  FAIR test = SAE-svd256 vs raw-pca256 (both 256-dim). If tied, the 'SAE loses to raw-2560' was a")
+print("  dimensionality artifact. raw-full>>random => 3D signal is real; SAE~=raw@matched-dim => ceiling.")
 Path(out).write_text(json.dumps({"layer": a.layer, "level": "residue-contact", **res}, indent=2))
 print(f"[wrote] {out}")
