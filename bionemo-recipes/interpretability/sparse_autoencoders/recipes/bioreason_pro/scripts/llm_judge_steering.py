@@ -14,7 +14,7 @@ Usage: llm_judge_steering.py --gens <jsonl> --concept "synapse / nervous-system"
 """
 import argparse, json, os, sys, time
 from collections import defaultdict
-import urllib.request
+from openai import OpenAI
 
 p = argparse.ArgumentParser()
 p.add_argument("--gens", required=True)
@@ -23,10 +23,11 @@ p.add_argument("--out", default="")
 p.add_argument("--max", type=int, default=0, help="cap #generations judged (0=all)")
 a = p.parse_args()
 
-BASE = os.environ.get("NIM_BASE_URL", "http://localhost:8000/v1").rstrip("/")
+BASE = os.environ.get("NIM_BASE_URL", "https://integrate.api.nvidia.com/v1").rstrip("/")
 MODEL = os.environ.get("NIM_MODEL", "meta/llama-3.1-70b-instruct")
 KEY = os.environ.get("NIM_API_KEY", "")
 out = a.out or a.gens.replace(".jsonl", "") + "_judge.json"
+client = OpenAI(base_url=BASE, api_key=KEY, timeout=30, max_retries=2)
 
 SYS = ("You are a strict evaluator of protein-function reasoning text produced by a language model whose "
        "internal features were artificially clamped to try to inject a target concept. Judge ONLY what is "
@@ -42,23 +43,16 @@ PROMPT = ("Target concept: {concept}\n\nReasoning text:\n\"\"\"\n{text}\n\"\"\"\
 
 
 def judge(text):
-    body = json.dumps({"model": MODEL, "temperature": 0,
-                       "messages": [{"role": "system", "content": SYS},
-                                    {"role": "user", "content": PROMPT.format(concept=a.concept, text=text[:3000])}],
-                       "max_tokens": 40}).encode()
-    req = urllib.request.Request(BASE + "/chat/completions", data=body,
-                                 headers={"Content-Type": "application/json",
-                                          **({"Authorization": f"Bearer {KEY}"} if KEY else {})})
-    for attempt in range(3):
-        try:
-            with urllib.request.urlopen(req, timeout=60) as r:
-                txt = json.loads(r.read())["choices"][0]["message"]["content"]
-            s = txt[txt.find("{"): txt.rfind("}") + 1]
-            d = json.loads(s)
-            return int(d["concept_present"]), int(d["coherent"])
-        except Exception as e:
-            if attempt == 2: return None
-            time.sleep(2)
+    try:
+        r = client.chat.completions.create(model=MODEL, temperature=0, max_tokens=40,
+            messages=[{"role": "system", "content": SYS},
+                      {"role": "user", "content": PROMPT.format(concept=a.concept, text=text[:3000])}])
+        txt = r.choices[0].message.content
+        s = txt[txt.find("{"): txt.rfind("}") + 1]
+        d = json.loads(s)
+        return int(d["concept_present"]), int(d["coherent"])
+    except Exception:
+        return None
 
 
 recs = [json.loads(l) for l in open(a.gens)]
