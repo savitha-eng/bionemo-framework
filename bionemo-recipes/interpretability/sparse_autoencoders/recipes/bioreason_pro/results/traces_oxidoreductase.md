@@ -1,6 +1,8 @@
-# Steering traces — **oxidoreductase** cluster (L30, held-out proteins)
+# Steering traces — **oxidoreductase** cluster
 
-α=0 = ORIGINAL (unsteered). c1 = target-concept word count. **NOTE: the COHERENT/DEGENERATE flag is the lexical metric, which is UNRELIABLE (it marks pseudo-word junk as coherent) — read the text yourself.**
+**Layer 30, SAE `sae-l30-exp16-balanced` (reasoning-band features). Clamped feature IDs: `18980,18389,39935,3310,9189,30488`. 8 held-out proteins, α grid [0.0, 90.0, 135.0, 180.0, 210.0].**
+
+α=0 = ORIGINAL (unsteered). c1 = target-concept word count. **The COHERENT/DEG flag is the OLD lexical metric and is UNRELIABLE (marks pseudo-word junk as coherent) — read the text; see steering_validation.json for the corrected char-level assessment.**
 
 
 ## Protein 0
