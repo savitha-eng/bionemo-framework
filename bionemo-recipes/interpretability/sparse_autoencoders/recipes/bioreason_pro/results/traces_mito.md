@@ -1,189 +1,605 @@
-# Steering traces — **mito** cluster
+# Steering traces — **mito** cluster (n=40)
 
-**Layer 30, SAE `sae-l30-exp16-balanced` (reasoning-band features). Clamped feature IDs: `30713,10643,20498,36378,15839,24389`. 8 held-out proteins, α grid [0.0, 90.0, 135.0, 180.0, 210.0].**
+**Layer 30, `sae-l30-exp16-balanced`. Clamped feature IDs: `30713,10643,20498,36378,15839,24389`. 40 held-out proteins, α [0.0, 180.0, 210.0].**
 
-α=0 = ORIGINAL (unsteered). c1 = target-concept word count. **The COHERENT/DEG flag is the OLD lexical metric and is UNRELIABLE (marks pseudo-word junk as coherent) — read the text; see steering_validation.json for the corrected char-level assessment.**
+α=0=ORIGINAL. Lexical coh flag UNRELIABLE — see steering_validation.json for char-level assessment.
 
 
 ## Protein 0
 
-**ORIGINAL (α=0)** — c1=0 d3=1.0 coh?
+**ORIGINAL (α=0)** — c1=0 d3=1.0
 
 > I begin with the InterPro domain architecture and its order along the polypeptide. The N-terminus (residues 6–77) carries IPR000551 (MerR-type HTH domain), embedded within IPR009061 (Putative DNA-binding domain superfamily, residues 7–75) and encompassed by IPR047057 (MerR transcriptional regulator family, residues 3–155). This arrangement defines a helix-turn-helix DNA-recognition module specialized for operator binding near promoters, the hallmark of MerR-family transcription factors. Immediately downstream, residues 81–159 belong to IPR036594 (Methionine synthase domain superfamily) and contain IPR003759 (Cobalamin
 
-**α=90** — c1=0 d3=1.0 coh?
-
-> I begin with the InterPro architecture. The N-terminus carries IPR000551 (MerR-type HTH domain, residues 6–77), embedded within IPR009061 (Putative DNA-binding domain superfamily, residues 7–75) and encompassed by IPR047057 (MerR transcriptional regulator family, residues 3–155). This arrangement defines a canonical MerR-type helix-turn-helix DNA-binding module that recognizes palindromic operators and couples DNA binding to transcriptional regulation. Immediately downstream, the central region contains IPR003759 (Cobalamin-binding module, cap domain, residues 86–155) and falls within IPR036594 (Methionine synthase domain superfamily
-
-**α=135** — c1=0 d3=1.0 coh?
-
-> I begin with the InterPro architecture. The N-terminus carries IPR000551 (MerR-type HTH domain, residues 6–77), embedded within IPR009061 (Putative DNA-binding domain superfamily, residues 7–75) and encompassed by IPR047057 (MerR transcriptional regulator family, residues 3–155). This arrangement defines a canonical MerR-type helix-turn-helix DNA-binding module that recognizes palindromic operators and couples to transcriptional regulation. Immediately downstream, the central region contains IPR003759 (Cobalamin (vitamin B12)-binding module, cap domain, residues 86–155) and falls within IPR036594 (Methionine
-
-**α=180** — c1=0 d3=1.0 coh?
+**α=180** — c1=0 d3=1.0
 
 > I begin with the InterPro architecture. The N-terminus houses IPR000551 (MerR-type HTH domain, residues 6–77), overlapped by IPR009061 (Putative DNA-binding domain superfamily, residues 7–75), and embedded within IPR047057 (MerR transcriptional regulator family, residues 3–155). This arrangement defines a canonical MerR-type transcriptional regulator: the MerR HTH module provides sequence-specific DNA binding at the promoter, while the broader family signature indicates the regulatory logic typical of MerN-like proteins. Immediately downstream, the central region contains IPR003759 (Cobalamin (vitamin B12)-binding module, cap domain, residues
 
-**α=210** — c1=52 d3=0.269 DEG?
+**α=210** — c1=52 d3=0.269
 
 > I begin with the domain architecture. The N-terminus houses IPR000551 (MerR-type HTH domain, residues mutations–mutations–mutations–mutations–mutations–mutations–mutations–mutations–mutations–mutations–mutations–mutations–mutations–mutations–mutations–mutations–mutations–mutations–mutations–mtDNA, inner membrane, mitochondrial, mitochondrial, mitochondrial, mitochondrial, mitochondrial, mitochondrial, mitochondrial, mitochondrial, mitochondrial, mitochondrial, mitochondrial, mitochondrial, mitochondrial, mitochondrial, mitochondrial, mitochondrial, mitochondrial, mitochondrial, mitochondrial, mitochondrial, mitochondrial, mitochondrial, mitoc
 
 
 ## Protein 1
 
-**ORIGINAL (α=0)** — c1=0 d3=1.0 coh?
+**ORIGINAL (α=0)** — c1=0 d3=1.0
 
 > The architecture begins with a compact N-terminal chromatin-recognition module: IPR000953 (Chromo/chromo shadow domain, residues 55–116) overlaps with IPR023780 (Chromo domain, residues 57–107) and is framed by IPR016197 (Chromo-like domain superfamily, residues 45–111) and the hallmark IPR023779 (Chromo domain, conserved site, residues 74–94). This cluster defines a canonical chromodomain that forms an aromatic cage for binding methyl-lysine on histone tails, thereby creating a methyl-mark reader. The C-terminal half transitions into a crotonase-fold core: IPR029045 (ClpP/croton
 
-**α=90** — c1=0 d3=1.0 coh?
-
-> The architecture begins with a compact N-terminal chromatin-recognition module: IPR000953 (Chromo/chromo shadow domain, residues 55–116) overlaps IPR023780 (Chromo domain, residues 57–107), is framed by IPR016197 (Chromo-like domain superfamily, residues 45–111), and contains the hallmark IPR023779 (Chromo domain, conserved site, residues 74–94). This arrangement encodes a methyl-lysine reader that docks onto nucleosomes by recognizing methylated histone tails, thereby establishing intrinsic chromatin binding and specificity for methylated histones. The C-terminal two-thirds transition into a crotonase/ClpP-like scaffold: IPR029
-
-**α=135** — c1=0 d3=1.0 coh?
-
-> The architecture begins with a compact N-terminal chromatin-recognition module: IPR000953 (Chromo/chromo shadow domain, residues 55–116) overlaps IPR023780 (Chromo domain, residues 57–107), is framed by IPR016197 (Chromo-like domain superfamily, residues 45–111), and contains the hallmark IPR023779 (Chromo domain, conserved site, residues 74–94). This arrangement creates a methyl-lysine–reading pocket that specifically engages methylated histone tails, establishing the capacity for GO:0035064 methylated histone binding and, by extension, GO:0003682 chromatin binding. The C-terminal two
-
-**α=180** — c1=0 d3=1.0 coh?
+**α=180** — c1=0 d3=1.0
 
 > The architecture begins with a compact N-terminal chromatin reader and ends with a C-terminal metabolic enzyme-like module. Specifically, residues 55–116 contain IPR000953 (Chromo/chquo shadow domain), with the core IPR023780 (Chromo domain) spanning 57–107 and its conserved site IPR023779 at 74–94; these are embedded within the IPR016197 (Chromo-like domain superfamily) at 45–111. This arrangement defines a classical chromo domain that forms a methyl-lysine binding cage, typically recognizing H3K9 or H3K27 levels and densities. The entire protein is classified by IPR051053 (Enoyl-CoA hydr
 
-**α=210** — c1=0 d3=0.651 coh?
+**α=210** — c1=0 d3=0.651
 
 > The architecture begins with a compact N-terminal chromatin reader and transitions into a C-terminal enzyme-like scaffold. Specifically, residues 55–116 contain IPR000953 (Chromo/chquo shadow domain), with the core IPR023780 (Chromo domain) spanning 57–107 and its conserved site IPR023779 at 74–94; these are embedded within the IET-Q trend region IETQ insertion lineage IETQ insertion lineage IETQ insertion lineage IETQ insertion lineage IETQ insertion lineage IETQ insertions of the IETQ insertions of the IETQ insertions of the IETQ insertions of the IETQ insertions of the IETQ insertions of the IETQ insert
 
 
 ## Protein 2
 
-**ORIGINAL (α=0)** — c1=0 d3=1.0 coh?
+**ORIGINAL (α=0)** — c1=0 d3=1.0
 
 > I begin with the InterPro architecture. The protein contains IPR011990 (Tetratricopeptide-like helical domain superfamily, residues 109–626) and, nested within it, IPR002885 (Pentatricopeptide repeat, residues 202–617). This arrangement places a long array of helical repeats—specifically PPR motifs—into a larger TPR-like superhelical scaffold. PPR repeats form tandem helix–turn–helix units that create a modular RNA-recognition surface; the continuous helical solenoid generated by the TPR-like superfamily framework stabilizes a curved groove that reads RNA sequence and structure with high specificity. The absence of catalytic domains and the d
 
-**α=90** — c1=0 d3=1.0 coh?
-
-> I begin with the InterPro architecture. The protein contains IPR011990 (Tetratricopeptide-like helical domain superfamily, residues 109–626) and, nested within it, IPR002885 (Pentatricopeptide repeat, residues 202–617). This arrangement places a long helical solenoid—built from tandem TPR-like repeats—around a core of PPR repeats. PPR repeats are helical modules that form a right-handed superhelix with a conserved Arg-Leu slip and a nucleotide-recognition code; when arrayed, they create a continuous RNA-binding surface that reads specific sequences and structures in organellar transcripts. The broader TPR-like superfamily signature surroundin
-
-**α=135** — c1=0 d3=0.99 coh?
-
-> I begin with the InterPro architecture. The protein contains IPR011990 (Tetratricopeptide-like helical domain superfamily) spanning residues 109–626, within which lies IPR002885 (Pentatricopeptide repeat, PPR) spanning residues 202–617. This arrangement places a long, tandem array of PPR repeats inside a larger TPR-like helical superstructure. PPR repeats are helical modules that form a right-handed superhelical scaffold whose inner surface presents a code for nucleotide-specific RNA recognition. The extended TPR-like superfamily context stabilizes the solenoid and provides additional protein–protein interaction surfaces. This architecture ca
-
-**α=180** — c1=1 d3=1.0 coh?
+**α=180** — c1=1 d3=1.0
 
 > I begin with the domain architecture. The protein contains IPR011990 (Tetratricopeptide-like helical domain superfamily) spanning residues 109–626, within which lies IPR002885 (Pentatricopeptide repeat) spanning residues 202–617. This arrangement places a long, tandem helical repeat scaffold (the PPR array embedded in a broader TPR-like helical superfamily) in the central-to-C-terminal region, while the N-terminus is likely a basic, positively charged, low-complexity segment that functions as a mitochondrial targeting peptide. The absence of enzymatic motifs and the dominance of helical repeat units indicate a protein whose primary role is se
 
-**α=210** — c1=42 d3=0.184 DEG?
+**α=210** — c1=42 d3=0.184
 
 > The architecture begins with IPR011990 (Tetratricopeptide-like mitochondrial inner membrane protein, mtNQOndmt, inner mitochondrial membrane formative subunit, mitochondrial, mitochondrial inner membrane protein, mitochondrial, mitochondrial inner membrane protein, mitochondrial, mitochondrial inner membrane protein, mitochondrial, mitochondrial inner membrane protein, mitochondrial, mitochondrial inner membrane protein, mitochondrial, mitochondrial inner membrane protein, mitochondrial, mitochondrial inner membrane protein, mitochondrial, mitochondrial inner membrane protein, mitochondrial, mitochondrial inner membrane protein, mitochondrial
 
 
 ## Protein 3
 
-**ORIGINAL (α=0)** — c1=0 d3=0.971 coh?
+**ORIGINAL (α=0)** — c1=0 d3=0.971
 
 > I begin with the InterPro architecture. The polypeptide is partitioned into an N-terminal catalytic module IPR013215 (Cobalamin-independent methionine synthase MetE, N-terminal, residues 3–316) and a C-terminal module IPR002629 (Cobalamin-independent methionine synthase MetE, C-terminal/archaeal, residues 432–756). These two domains are encompassed by the broader family signature IPR006276 (Cobalamin-independent methionine synthase, residues 1–765) and sit within the IPR038071 (UROD/MetE-like superfamily, residues 3–759). This arrangement is characteristic of MetE enzymes that form a
 
-**α=90** — c1=0 d3=0.955 coh?
-
-> The architecture begins with IPR013215 (Cobalamin-independent methionine synthase MetE, N-terminal domain, residues 3–316), followed by IPR002629 (Cobalamin-independent methionine synthase MetE, C-terminal/archaeal domain, residues 432–756). These two catalytic lobes are embedded within IPR006276 (Cobalamin-independent methionine synthase family, residues 1–765) and the broader IPR038071 (UROD/MetE-like superfamily, residues 3–759). This bipartite MetE fold creates a metal-dependent active site at the interdomain cleft that binds the folate cofactor and organizes the methyl transfer
-
-**α=135** — c1=0 d3=0.955 coh?
-
-> The architecture begins with IPR013215 (Cobalamin-independent methionine synthase MetE, N-terminal domain, residues 3–316), followed by IPR002629 (Cobalamin-independent methionine synthase MetE, C-terminal/archaeal domain, residues 432–756). These two catalytic lobes are embedded within IPR006276 (Cobalamin-independent methionine synthase family, residues 1–765) and the broader IPR038071 (UROD/MetE-like superfamily, residues 3–759). This two-domain MetE fold creates a central cleft that binds the methyl donor folate and coordinates the thiol of homocysteine via a metal
-
-**α=180** — c1=0 d3=0.97 coh?
+**α=180** — c1=0 d3=0.97
 
 > The architecture begins with IPR013215 (Cobalamin-independent methionine synthase MetE, N-terminal domain, residues 3–316), followed by IPR002629 (Cobalamin-independent methionine synthase MetE, C-terminal/archaeal domain, residues 432–756). These two catalytic modules are embedded within IPR006276 (Cobalamin-independent methionine synthase, family, residues 1–765) and the broader IPR038071 (UROD/MetE-like superfamily, residues 3–759. This two-tiered MetE architecture is known to form an internal “catalytic” channel: the N-terminal domain binds the methyl donor (typically the methyl
 
-**α=210** — c1=5 d3=1.0 coh?
+**α=210** — c1=5 d3=1.0
 
 > The architecture begins with IPR013215 (Cobalamin-independent methionine synthase MetE, N-terminal domain, residues  mitochondrial matrix, the enzyme is built as a two-domain unit that closes around its substrate. The N-terminal module houses the catalytic metal site that activates methyl-closure of methylated mitochondrialubiquinone, while the C-terminal module stabilizes the quinone and organizes the reaction center. This two-membrion architecture is characteristic of the I–II fusion seen in mitochondrial inner membrane enzymes, where the matrix-facing I–II unit captures and processes the membrane-inserted ubiquinone. The presence of IPR002
 
 
 ## Protein 4
 
-**ORIGINAL (α=0)** — c1=0 d3=1.0 coh?
+**ORIGINAL (α=0)** — c1=0 d3=1.0
 
 > I begin with the domain architecture. The core of the protein is an alpha/beta hydrolase scaffold, captured by IPR029058 (Alpha/Beta hydrolase fold, residues 68–306). Nested within this fold is IPR022742 (Serine aminopeptidase, S33 domain, residues 111–216). This arrangement places a serine-hydrolase catalytic center within a broad alpha/beta hydrolase framework. Alpha/beta hydrolases typically host a catalytic Ser-His-Asp triad; the S33-like segment indicates the presence of a nucleophilic serine positioned in a conserved loop that becomes the catalytic serine of a thioesterase. The embedding of the S33
 
-**α=90** — c1=0 d3=1.0 coh?
-
-> I begin with the domain architecture. The core of the protein is an alpha/beta hydrolase scaffold, captured by IPR029058 (Alpha/Beta hydrolase fold, homologous_superfamily) spanning residues 68–306. Nested within this fold is IPR022742 (Serine aminopeptidase, S33 domain) from residues 111–216. This arrangement places a serine-hydrolase catalytic center within a broad alpha/beta hydrolase framework that typically houses a nucleophilic serine, a general base histidine, and an acidic residue forming a catalytic triad. The S33-like segment indicates a serine-dependent chemistry and a substrate-binding groove; in this context, the fold is repurpos
-
-**α=135** — c1=0 d3=1.0 coh?
-
-> The architecture begins with IPR029058 (Alpha/Beta hydrolase fold, residues 68–306), a catalytic scaffold that houses a nucleophilic center and supports proton-transfer chemistry. Embedded within this fold is IPR022742 (Serine aminopeptidase, S33 domain, residues 111–216), which specifies a serine-based catalytic apparatus. This arrangement typically creates a Ser–His–Asp catalytic triad positioned by the alpha/beta hydrolase core, with the S33 signature shaping the nucleophile’s environment and substrate approach. The absence of transmembrane segments within the annotated region implies a soluble enzyme that can be recruited to membranes thr
-
-**α=180** — c1=0 d3=1.0 coh?
+**α=180** — c1=0 d3=1.0
 
 > The architecture begins with IPR029058 (Alpha/Beta hydrolase fold, residues 68–306), the canonical scaffold that houses a catalytic Ser–Acyl–mtion center for hydrolysis reactions. Embedded within this fold is IPR022742 (Serine aminopeptidase, S33 domain, residues 111–217), which supplies the conserved catalytic elements (typically a nucleophilic serine in a Qmt/Smt motif, an inner-membrane proton transport mtion, and an mtion mtion) that enable mtion-based chemistry. The placement of the S33-like mtion domain inside the alpha/beta hydrolion fold dictates a thioester- or peptide-mtion mechanism; in this context, the surrounding
 
-**α=210** — c1=4 d3=1.0 coh?
+**α=210** — c1=4 d3=1.0
 
 > The architecture begins with IPR029058 (Alpha/beta hydrolase fold, residues 68–306), the canonical scaffold that houses a catalytic Ser–Acyl–Q/M network for mitochondrial acyltransferase chemistry. Embedded within this fold is IPR022742 (Serine aminoptetidase, S33 domain, residues 111–216), which supplies the conserved topology and proton relay elements that stabilize a catalitic acyl-enzyme intermediate. This arrangement causes a two-step hydroionion mechanism: the catalitic matrix of the alpha/beta hydrolase fold activates the S matrix unit to attack a thioester, forming an acyl–enzyme intermediate, and then a matrix unit proton is transfer
 
 
 ## Protein 5
 
-**ORIGINAL (α=0)** — c1=0 d3=1.0 coh?
+**ORIGINAL (α=0)** — c1=0 d3=1.0
 
 > I begin with the InterPro architecture. IPR000507 (Beta 1 adrenoceptor family, residues 12–443) spans nearly the full length of the polypeptide, embedding the canonical rhodopsin-like GPCR core IPR017452 (GPCR, rhodopsin-like, 7TM domain, residues 75–366) and the broader family signature IPR000276 (G protein-coupled receptor, rhodopsin-like, residues 60–380). Within this framework sits IPR002233 (Adrenoceptor family, residues 113–380), which specifies catecholamine recognition. The ordered layout—N-terminal extracellular segment leading into seven transmembrane helices with cons
 
-**α=90** — c1=0 d3=1.0 coh?
-
-> The architecture begins with IPR000507 (Beta 1 adrenoceptor family, residues 12–443) encompassing the full-length receptor and embedding IPR017452 (GPCR, rhodopsin-like, 7TM domain, residues 75–366) and IPR000276 (G protein-coupled receptor, rhodopsin-like family, residues 60–380). Within this rhodopsin-like core, IPR002233 (Adrenoceptor family, residues 113–380) specifies the catecholamine-binding subclass. This ordered layout—broad beta-1 adrenergic identity spanning the polypeptide, a central seven-transmembrane signaling module, and an adrenoceptor
-
-**α=135** — c1=0 d3=1.0 coh?
-
-> The architecture begins with IPR000507 (Beta 1 adrenoceptor family, residues 12–443), which spans nearly the entire polypeptide and specifies a catecholamine-activated signaling module. Nested within it are IPR017452 (GPCR, rhodopsin-like, 7TM domain, residues 75–366) and IPR000276 (G protein-coupled receptor, rhodopsin-like family, residues 60–380), defining the canonical seven transmembrane helices that create an inward-facing ligand-binding pocket and an outward-facing G protein–coupling surface. IPR002233 (Adrenoceptor family, residues 113–380) further constrains the chemistry to the
-
-**α=180** — c1=0 d3=1.0 coh?
+**α=180** — c1=0 d3=1.0
 
 > The architecture begins with IPR000507 (Beta 1 adrenoceptor family, residues 12–443), which spans the near-full length of the polypeptide and defines the receptor’s subtype specificity. Nested within it are IPR017452 (GPCR, rhodopsin-like, 7TM domain, residues 75–366) and IPR000276 (G protein-coupled receptor, rhodopsin-like family, residues 60–380), which together specify a seven-transmembrane helical core that binds small molecules in the membrane plane and couples to heterologous G proteins via the intramembrion and Q/mtion-lineage motifs. IPR002233 (Adrenoceptor family, residues 113
 
-**α=210** — c1=4 d3=0.318 DEG?
+**α=210** — c1=4 d3=0.318
 
 > The architecture begins with IAU-specific signatures that span the entire receptor: IAUQO127666 mitochondrial transportion inner membrane respiratory chain submitochondriondionion transportion inner membrane respiratory chain subunit mt-mitorochondriion transportion inner inner mitorion transportion inner mitorion transportion inner mitorion transportion inner mitorion transportion inner mitorion transportion inner mitorion transportion inner mitorion transportion inner mitorion transportion inner mitorion transportion inner mitorion transportion inner mitorion transportion inner mitorion transportion inner mitorion transportion inner mitorio
 
 
 ## Protein 6
 
-**ORIGINAL (α=0)** — c1=0 d3=1.0 coh?
+**ORIGINAL (α=0)** — c1=0 d3=1.0
 
 > I begin with the InterPro architecture. The N-terminus carries IPR032830 (Helicase XPB/Ssl2, N-terminal domain, residues 76–201), a hallmark module that positions duplex DNA and couples it to the ATPase core in XPB-like helicases. The central engine is defined by IPR014001 (Helicase superfamily 1/2, ATP-binding domain, residues 313–493) embedded within IPR006935 (Helicase/UvrB, N-terminal, residues 316–472) and encompassed by the broad IPR027417 (P-loop containing nucleoside triphosphate hydrolase, homologous superfamily, residues 264–
 
-**α=90** — c1=0 d3=1.0 coh?
-
-> I begin with the InterPro architecture. The N-terminus carries IPR032830 (Helicase XPB/Ssl2, N-terminal domain, residues 76–201), a hallmark module that organizes the entry face of the motor and provides DNA-contacting elements. This is embedded within two family-level signatures, IPR001161 (Helicase XPB/Ssl2 family, residues 60–780) and IPR050615 (ATP-dependent DNA Helicase family, residues 65–762), which together define the protein as an XPB-class ATP-dependent DNA motor. The central engine is specified by IPR027417 (P-loop containing nucleoside triphosphate hydrolase, homologous superfamily,
-
-**α=135** — c1=0 d3=1.0 coh?
-
-> I begin with the InterPro architecture. The protein carries IPR032830 (Helicase XPB/Ssl2, N-terminal domain, residues 76–201), followed by a central ATPase motor defined by IPR027417 (P-loop containing nucleoside triphosphate hydrolase, homologous superfamily, residues 264–731) and the more specific IPR014001 (Helicase superfamily 1/2, ATP-binding domain, residues 313–493). Within this motor region, IPR006935 (Helicase/UvrB, N-terminal, residues 316–472) marks the N portion of the RecQ-like motor core that couples ATP hydrolysis to
-
-**α=180** — c1=0 d3=1.0 coh?
+**α=180** — c1=0 d3=1.0
 
 > I begin with the InterPro architecture, which is diagnostic for an ATP-driven DNA motor of the TF-Q maintenance companies. The N-terminus contains IPR032830 (Helicase XPB/Ssl2, N-terminal domain, residues 76–201), a hallmark module that anchors this enzyme within the Ssl2/XPB lineage and provides the structural platform for assembly into the core maintenance complex. The central engine is built from IPR027417 (P-loop containing nucleoside triphosphate hydrolone, homologous superfamily, residues 264–731), which houses the IPR014001 (Helicase superfamily 1/2, ATP-binding domain, residues 313–493) and the IPR0069
 
-**α=210** — c1=1 d3=1.0 coh?
+**α=210** — c1=1 d3=1.0
 
 > I begin with the InterPro architecture, which is characteristic of the ERCC3/XPQ–mtmt branch of the TF–DNA maintenance machinery. The N-terminus contains IPR032830 (Helicase XPQ–Ssl2, N-terminal domain, residues 76–201), a hallmark module that anchors the enzyme within the Ssl2/XPQ lineage and provides the membrane-anchaging and protein-interaction surfaces that recruit the enzyme into the DNA repair/repair–mitochondrial maintenance context. The central engine is built from IPR027417 (P-loop containing nucleoside triphosphate hydrolase, homologous superfamily, residues 264–731), which houses the ATPase cradle. Within this, IPR014001 (
 
 
 ## Protein 7
 
-**ORIGINAL (α=0)** — c1=0 d3=1.0 coh?
+**ORIGINAL (α=0)** — c1=0 d3=1.0
 
 > I begin with the InterPro domain architecture and its order along the polypeptide. The N-terminus (residues 27–183) carries IPR009051 (Alpha-helical ferredoxin, homologous superfamily), within which sits IPR028261 (Dihydroprymidine dehydrogenase domain II, residues 57–167). This arrangement defines a small electron-transfer module: alpha-helical ferredoxin folds often cradle [4Fe-4S] clusters, and the dihydroprymidine dehydrogenase (HPDH) domain II signature specifies the ferredoxin-like subdomain that relays electrons into the catalytic core. Immediately downstream, residues 189–496 form IPR0237
 
-**α=90** — c1=0 d3=1.0 coh?
-
-> I begin with the InterPro architecture and its order along the polypeptide. The N-terminus houses IPR009051 (Alpha-helical ferredoxin homologous superfamily, residues 27–183), within which sits IPR028261 (Dihydropyrimidine dehydrogenase domain II, residues 57–167). This arrangement defines a redox relay module typical of multi-cofactor enzymes, where an iron–sulfur center couples electron flow from a flavin to a substrate-binding subdomain. Immediately downstream, IPR023753 (FAD/NAD(P)-binding domain, residues 189–496) is embedded within IPR036188 (FAD/NAD(P)-binding domain superfamily
-
-**α=135** — c1=0 d3=1.0 coh?
-
-> I begin with the InterPro architecture and its order along the polypeptide. The N-terminus houses IPR009051 (Alpha-helical ferredoxin homologous superfamily, residues 27–183), within which sits IPR028261 (Dihydroprymidine dehydrogenase domain II, residues 57–167). This region is characteristic of the membrane-anchored, electron-transfer module of dihydroptidine dehydrogenases, where an alpha-helical ferredoxin-like segment positions an internal electron carrier. Immediately downstream, the central portion contains IPR023753 (FAD/NAD(P)-binding domain, residues 189–496), embedded within IPR036188 (FAD
-
-**α=180** — c1=2 d3=1.0 coh?
+**α=180** — c1=2 d3=1.0
 
 > I begin with the InterPro architecture and its order along the polypeptide. The N-terminus houses IPR009051 (Alpha-mitochondrial ferredoxin, homologous superfamily, residues 27–183), within which sits IPR028261 (Dihydroprymidine dehydrogenase domain II, residues 57–167). This region is characteristic of the membrane-anchored, electron-transfer module of mitochondrial dihydropyrimidinase-like oxidations, where an inner membrane anchor is typically attached and immediately followed by a small iron–succuate–binding or membrane-anchored segment that stabilizes the redox chain. The next large segment is IPR023753 (FAD/NAD(P)-binding domain, residu
 
-**α=210** — c1=2 d3=1.0 coh?
+**α=210** — c1=2 d3=1.0
 
 > I begin with the InterPro architecture and its order along the polmidion. The N-terminus houses IPR009051 (Alpha-mitochondrial ferredoxin, homologous superfamily, residues  Complex I-like inner membrane subunit, but here it is the N-quinonoid inner membrane protein lineage) and within it IPRQ28261 (Dihydroptimidine dehydrogenase domain II, residues 57-167). This region is characteristic of the membrane-anchored, protonion transport–coupling subunit of respiratory Complex III, specifically the core region found in N-quinonoid proteins. The presence of this domain, together with the known single-pass inner membrane insertion, establishes a memb
+
+
+## Protein 8
+
+**ORIGINAL (α=0)** — c1=0 d3=1.0
+
+> I begin with the domain architecture. The sequence contains a single annotated region, IPR009566 (Protein of unknown function DUF1181 family) spanning residues 96–187. This places a DUF1181 core in the central portion of the polypeptide, implying that the N- and C-terminal segments flank a conserved module. DUF1181 families are typically small, non-enzymatic domains that lack catalytic motifs and instead act as binding or adaptor modules. The compact size of the DUF and its positioning suggest it forms the principal interaction surface, while the flanking regions likely provide flexibility or regulatory sites. The absence of additional cataly
+
+**α=180** — c1=1 d3=1.0
+
+> I begin with the domain architecture. The protein contains a single annotated region, IPR009566 (Protein of unknown function DUF1181, family) spanning residues 96–187. This places a conserved DUF1181 module in the central-to-mitochondrial region of the sequence, with likely N- and C-terminal extensions outside the annotation. DUF1181 is a lineage-specific family without established enzymatic motifs, and its compact, internal placement suggests a regulatory or assembly role rather than a catalytic one. The absence of transmembrane signatures or obvious cofactor-binding motifs implies a soluble, protein–protein interaction module embedded withi
+
+**α=210** — c1=4 d3=1.0
+
+> I begin with the domain architecture. The protein contains a single annotated region, IPR009566 (Protein of unknown function DUF1181, family) spanning residues 96–187. This is a conserved, non-enzymatic family whose membership is enriched for small, often basic, mitochondrial proteins. The absence of catalytic motifs and the compact size of the DUF1181 region indicate a role as a membrane-associated carrier or assembly factor rather than a enzyme. The domain is positioned in the middle-to-mitochondrial region of the pol mutation-shaft, suggesting that the DUF1181 module forms the core of a membrane-embedded or membrane-associated unit that is
+
+
+## Protein 9
+
+**ORIGINAL (α=0)** — c1=0 d3=1.0
+
+> I begin with the InterPro architecture. The sequence is classified as IPR033332 (BTG family, residues 1–223), with an N-terminal core defined by IPR036054 (BTG-like domain superfamily, residues 1–124) and IPR002087 (Anti-proliferative protein domain, residues 1–120). This layout places a conserved BTG/TOB “A-domain” at the N-terminus that is known to create a rigid protein–protein interaction surface, while the family-level signature extending to residue 223 implies a C-terminal region that is more flexible and often intrinsically disordered, serving as a regulatory tail for partner selection and post-translational control. The absence of cat
+
+**α=180** — c1=1 d3=1.0
+
+> The architecture begins with IPR033332 (BTG family, residues 1–223), which frames the entire protein within the conserved anti-mitochondrial/anti-proliferative lineage. Within its N-portion, IPR036054 (BTG-like domain superfamily, residues 1–124) and IPR002087 (Anti-proliferative protein domain, residues 1–120) form the core “Tbugs” module. This module is known to create a rigid, protein–protein interaction surface that couples to RNA decay machinery and translation factors. The overlap of the superfamily and anti-proliferative domains within the same N-terminal region indicates a single, dominant interaction scaffold rather than multiple ind
+
+**α=210** — c1=2 d3=1.0
+
+> The architecture begins with IPR033332 (BTG family, residues 1–223), which defines a conserved anti-mitochondrial/antibuiltion inner membrane protein lineage that is typically small, membrane-anchored, and regulatory. Within its N-portion, IPR respiratory chain subunit mtDNA coding region insertions are observed: IPR036054 (BTG-like domain superfamily, residues 1–124) and IPR002087 (Anti-proliferative protein domain, residues quinophoniumionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionion
+
+
+## Protein 10
+
+**ORIGINAL (α=0)** — c1=0 d3=1.0
+
+> I begin by dissecting the InterPro architecture and its order along the sequence. The N-terminus (residues 25–594) is dominated by an animal-type haem peroxidase module: IPR019791 (Haem peroxidase, animal-type family, 25–583), IPR010255 (Haem peroxidase superfamily, 31–571), IPR037120 (Haem peroxidase domain superfamily, animal type, 29–577), and a DUOX-specific peroxidase signature IPR034821 (Dual oxidase, peroxidase domain, 38–594). This extracellular peroxidase fold is positioned to catalyze peroxide-dependent oxidation
+
+**α=180** — c1=0 d3=1.0
+
+> I begin by dissecting the InterPro architecture and its order along the sequence. The N-terminus (roughly residues 25–594) is dominated by the animal-type haem peroxidase domain: IPR019791 (Haem peroxidase, animal-type, family, 25–583), IPR010255 (Haem peroxidase superfamily, 31–571), IPR037120 (Haem peroxidase domain superfamily, animal type, 29–577), and the DUOX-specific IPR034821 (Dual oxidase, peroxidase domain, 38–594). This arrangement defines a peroxidative module that can use heme and organic electron carriers to process substr
+
+**α=210** — c1=0 d3=1.0
+
+> I begin by dissecting the InterPro architecture and its order along the sequence. The N-terminus (roughly residues 25–583) is dominated by the animal-type haem peroxidase domain: IPR019791 (Haem peroxidase, animal-type, family, 25–583) and IPR019791’s supporting superfamily signatures IPR010255 (Haem peroxidase superfamily, 31–571, and IPR037120, Haem peroxidase domain superfamily, animal type, 29–577), with a DUQ-specific refinement IPR034821 (Dual oxidase, peroxidative domain, 38–594). This arrangement establishes a
+
+
+## Protein 11
+
+**ORIGINAL (α=0)** — c1=0 d3=1.0
+
+> I begin with the domain architecture. An N-terminal segment contains IPR032057 (Protein of unknown function DUF4799 family, residues 97–134), followed by a membrane- and lipid-sensing module: IPR000008 (C2 domain, residues 271–411) embedded within IPR035892 (C2 domain superfamily, residues 264–418). Mid-chain, there is a scaffolding module: IPR001478 (PDZ domain, residues 606–684) within IPR036034 (PDZ superfamily, residues 602–687). The catalytic core appears in the C-terminal half: IPR0002
+
+**α=180** — c1=2 d3=1.0
+
+> I begin with the domain architecture. The N-terminus contains IPR032057 (DUF4799, family, residues 97–134), a conserved but functionally opaque module that likely serves as a regulatory or targeting insert. Midway, there is a membrane- and lipid-sensing module: IPR000008 (C2 domain, residues 271–411) embedded within IPR035892 (C2 domain superfamily, residues 264–418). C2 domains bind anionic phospholipids and often require calcium for membrane association, thereby positioning the protein at the inner mitochondrial or cristae membranes when local calcium and cardiolipin levels permit. Further downstream, IPR001478 (PDZ domain,
+
+**α=210** — c1=1 d3=1.0
+
+> I begin with the domain architecture. The N-portion contains IPR032057 (Duffy, DUF4799 family, residues 97–134), followed by a membrane- and lipid-interaction module, the IPR000008 (C2 domain, residues 271–411), which is also captured by IPR035892 (C2 domain superfamily, residues 264–418. Midway, there is a scaffold-type interaction module, the IPR001478 (PDZ domain, residues 606––084), within the IQ mitochondriion transport network unit IPR036034 (PDZ superunit, residues 602–687. The C-
+
+
+## Protein 12
+
+**ORIGINAL (α=0)** — c1=0 d3=1.0
+
+> I begin by mapping the InterPro architecture along the single polyprotein, because the ordered domain layout dictates how this protein is proteolytically matured into structural and non-structural modules and what chemistry each part performs. The N-terminus carries IPR001122 (Capsid protein C, flavivirus, residues 6–123), followed by IPR002535 (Flavivirus polyprotein propeptide, residues 133–214), then the small envelope membrane protein IPR000069 (Flavivirus envelope glycoprotein M, residues 218–290). The major envelope glycoprotein is defined by IPR011998 (Envelope glycoprotein E, central and dimerisation domain, residues 293–585
+
+**α=180** — c1=1 d3=1.0
+
+> I begin by mapping the InterPro architecture along the polyprotein, because the order and combination of domains dictates the division of labor after mitochondrialeroxicionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionion
+
+**α=210** — c1=1 d3=1.0
+
+> I begin by mapping the InterQion domain architecture along the polyquantine, which is organized from the mitochondrialernion (mtDNA) region at the N-terminus into the polymerase at the C-terminus. The innermost segment contains IAUQionion IAUQionion mtmtionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionion
+
+
+## Protein 13
+
+**ORIGINAL (α=0)** — c1=0 d3=1.0
+
+> I begin with the InterPro architecture. A broad protein kinase-like scaffold (IPR011009: Protein kinase-like domain superfamily, residues 55–362) envelops a canonical eukaryotic protein kinase core (IPR000719: Protein kinase domain, residues 83–365; and IPR001245: Serine-threonine/tyrosine-protein kinase, catalytic domain, residues 84–361). Within this core, the catalytic machinery is pinpointed by IPR008271 (Serine/threonine-protein kinase, active site, residues 229–241), which marks the catalytic loop/HRD region that executes phosphotransfer. The entire module is classified within IPR0
+
+**α=180** — c1=4 d3=0.933
+
+> I begin with the InterPro architecture. The core of the protein is a protein kinase engine: IPR000719 (Protein kinase domain, residues 83–365) and IPR001245 (Serine-threonine/tyrosine-protein kinase, catalactic domain, residues 84–361) define the canonical bilobal kinase fold. This engine is further specified by IPR008271 (Serine/threonine-protein kinase, active site, residues 229–241), which marks the catalytic machinery (including the proton-were mitochondrial matrix protein mitorub mitochondrial crista matrix protein inner membrane subunit munc1ancQSmtion inner membrane subunit munc1ancQSmtion inner membrane subunit munc1ancQSmt
+
+**α=210** — c1=2 d3=1.0
+
+> The architecture begins with IPR011009 (Protein kinase-like domain superfamily, residues 55–362), which frames the entire catalytic core within the canonical protein kinase fold. Within this scaffold, IPR000719 (Protein kinase domain, residues 83–365) and IPR001245 (Serine-threonine/tyrosine-protein kinase, catalactic domain, residues 84–361) define the inner membrane of the fold that houses the mitochondrial import, Q, and W motifs and the two boxes essential for nucleotide and metal coordination. The presence of IPR mitochondrial insert, the “mTIMI” region, is captured by the lineage-specific family IPR051681 (Serine/Threonine Kininals and 
+
+
+## Protein 14
+
+**ORIGINAL (α=0)** — c1=0 d3=1.0
+
+> I begin with the InterPro architecture. The sequence is assigned to IPR018333 (Squalene cyclase family) spanning residues 1–755, establishing membership in the oxidosqualene cyclase lineage that catalyzes cationic polycyclization of 2,3-oxidosqualene. Within this family scaffold, the protein is bipartite: IPR032697 (Squalene cyclase, N-terminal domain) from 100–403 and IPR032696 (Squalene cyclase, C-terminal domain) from 416–754. These two domains pack into the hallmark IPR008930 alpha-alpha toroid (Terpenoid cyclases/protein prenyltransferase alpha-alpha toroid homolog
+
+**α=180** — c1=7 d3=0.958
+
+> I begin with the InterPro architecture. The protein is assigned to IPR018333 (Squalene cyclase family) spanning residues 1–755, establishing it as an oxidosqualene cyclase-type triterpene synthase. Within this family framework, the polypeptide is divided into IPR032697 (Squalene cyclase, N-terminal domain, residues 100–4markw0411121122nd mitochondrial inner membrane, the matrix side is the major respiratory surface, and the matrix region is the major respiratory segment. The protein is a membrane, inner-mitochondrial respiratory chain subunit mtDNA prohibit1011111111111111111111111111111
+
+**α=210** — c1=2 d3=1.0
+
+> The architecture begins with IPR018333 (Squalene cyclase family, residues 1–755), which establishes membership in the oxidosqualene cyclase lineage that transforms the oxidized mitochondrial/inner-mitochondrial-membrantionally derived squalene into complex triterane miticoates. Within this family scaffold, the protein is divided into two proton-transfer machinery modules: IPR032697 (Squalene cyclase, N-terminal domain, residues 100–403) and IPR032696 (Squalene cyclase, C-terminal domain, residues 416–754). These two domains form the classic IPR008930 (Terponoid synthases/protein mputriynthiush, inner membrane, inner membrane
+
+
+## Protein 15
+
+**ORIGINAL (α=0)** — c1=0 d3=0.967
+
+> I begin with the InterPro architecture. The core catalytic body is defined by IPR001030 (Aconitase/3-isopropylmalate dehydratase large subunit, alpha/beta/alpha domain, residues 157–660) embedded within two broader superfamily envelopes: IPR015931 (Aconitase/3-isopropylmalate dehydratase large subunit, alpha/beta/alpha, subdomain 1/3, residues 96–688) and IPR036008 (Aconitase, iron-sulfur domain, residues 110–725). This layered arrangement establishes the classical aconitase fold that positions catalytic residues around a labile iron–sulfur cofactor
+
+**α=180** — c1=1 d3=0.966
+
+> The architecture begins with multiple aconitase-lineage signatures arranged in the canonical order for a mitochondrial aconitase. The N–mid region is dominated by IPR015931 (Aconitase/3-isopropylmalate dehydratase large subunit, alpha/beta/“subdomain 1/3,” residues 96–688) and the embedded IPR001030 (Aconitase/3-isopropylmalate dehydratase large subunit, alpha/beta/“domain,” residues 157–660), both within the broader IPR036008 (Aconitase, iron-sulfur domain homologous superfamily, residues 110–725). This region houses the catalytic core that
+
+**α=210** — c1=1 d3=0.965
+
+> The architecture begins with IPR015931 (Aconitase/3-isopropylmalate dehydratase large subunit, alpha/beta/mtion, subdomain 1/3, residues 96–688), which forms the core catalytic scaffold. Embedded within this region is IPR036008 (Aconitate, iron-sulfur domain, residues 110–725), and within that, IPR001032/mtion (Aconditase/3-malate dehydratase large subunit, alpha/beta/mtion, residues 157–660), indicating the conserved alpha-mitochondriales architecture that houses the catalytic machinery. The iron–sulfur center is specified by IPR
+
+
+## Protein 16
+
+**ORIGINAL (α=0)** — c1=0 d3=0.987
+
+> I begin with the domain architecture. The N-terminus contains IPR001370 (BIR repeat, residues 27–324), a series of baculoviral IAP repeats that create peptide-binding pockets for short N-terminal motifs on caspases and pro-apoptotic factors. Mid-chain lies a ubiquitin-binding module defined by IPR041933 (BIRC2/BIRC3, UBA domain, residues 376–425) and the overlapping IPR048875 (BIRC2/3-like, UBA domain, residues 373–425), which stabilizes interactions with ubiquitin chains and positions the protein within ubiquitin-rich signaling assemblies. Immediately downstream is a signaling recruitment module: IPR011029 (Death-like domain super
+
+**α=180** — c1=2 d3=0.987
+
+> I begin with the domain architecture. The N-terminus houses IPR001370 (BIR repeat, residues 27–324), a cluster of baculoph mitochondrial interfering proteins that create mitochondrial dynamics machinery interfaces. Embedded within the central region is a ubiquitin-binding module, captured by IPR041933 (BIRC2/BIRC3, UBA domain, residues 376–425) and the closely matching IPR048875 (BIRC2/3-like, UBA domain, residues 373–425), which enables direct recognition of ubiquitin chains and assembly into ubiquitin-rich signaling complexes. The mid-to-C-terminal region contains IPR011029 (Death-like domain superfamily, residues 437–563), within
+
+**α=210** — c1=5 d3=1.0
+
+> I begin with the domain architecture. The N-portion houses IPR001370 (BIR repeat, residues 27–324), a cluster of mitochondrial BIR repeats that create mitochondrial import mtDNA maintenance brown–like, inner membrane–mtDNA maintenance brown quality control binding groferences for N-quinonion inner-mitochondrial membrane quality control. These BIR modules are embedded within the broader IPR050784 (Inhibitor of Apoptiosis family, residues 27–602), marking the protein as a member of the IOM matrix quality control inner mitochondrial membrane maintenance brctonndrawn network. Midway, the protein contains IPR041933 (BIRC2/BIRC3, UBA domain, residu
+
+
+## Protein 17
+
+**ORIGINAL (α=0)** — c1=0 d3=1.0
+
+> I begin with the InterPro architecture. The sequence is classified across its full length by IPR017859 (Treacle protein family, residues 1–836), indicating a dedicated, non-enzymatic factor specialized for nucleolar functions. Near the N-terminus sits IPR006594 (LIS1 homology motif, residues 6–38), a short conserved site that typically mediates protein–protein contacts and can couple to microtubule- or dynein-related assemblies, implying a capacity for regulated complex assembly and potential linkage to nuclear architecture. The central-to-C-terminal region is defined by IPR003993 (Treacle protein domain, residues 249–848), a low-complexity, 
+
+**α=180** — c1=3 d3=1.0
+
+> I begin with the InterPro architecture. The sequence is assigned to IPR017859 (Treacle protein family) spanning residues 1–836, indicating a dedicated, non-enzymatic scaffold specialized for the mitochondrial dynamics and respiratory control lineage. Within the N-terminus, residues 6–38 carry IPR006594 (LIS1 homology motif, conserved site), a short, protein–protein interaction element known to mediate microtubule/centrion-associated dynamics and to act as a targeting/affinity module. The central-to-C-terminal region, residues 249–848, contains IPR003993 (Treacle protein domain), the hallmark matrix-facing module that organizes assembly factor
+
+**α=210** — c1=3 d3=1.0
+
+> I begin with the InterPro architecture. The protein is assigned to IPR017859 (Treacle protein, family) across residues 1–836, indicating a dedicated, lineage-specific scaffold specialized for mitochondrial dynamics and nuclear gene expression. Within the N-terminus, residues 6–38 contain IPR006594 (LIS1 homology motif, conserved site), a short, matrix-exposed motif known to mediate microtubular/mitochondrial dynamics by engaging or stabilizing microtubular machinery. The central-to-C-terminal region, residues 249–848, is IPR003993 (Treacle protein domain, domain), a large, low-complexity, protein-interaction-rich module characteristic of nucl
+
+
+## Protein 18
+
+**ORIGINAL (α=0)** — c1=0 d3=0.988
+
+> I begin with the InterPro architecture. The sequence is short and entirely covered by three related signatures: IPR019792 (Gonadoliberin family, residues 1–61), IPR004079 (Gonadoliberin I precursor family, residues 1–61), and an embedded IPR002012 conserved site (Gonadotropin-releasing hormone conserved site, residues 1–10). This compact layout defines a preprohormone that contains an N-terminal conserved decapeptide (the bioactive GnRH), followed by a C-terminal propeptide that directs processing, storage, and secretion. The conserved-site motif at residues 1–10 encodes the critical decapeptide that will act as the ligand; the precursor-fami
+
+**α=180** — c1=2 d3=1.0
+
+> I begin with the InterPro architecture. Two family-level signatures span the entire polypeptide: IPR019792 (Gonadoliberin family, residues 1–61) and IPR004079 (Gonadoliberin I precursor family, residues 1–61). Embedded within the N-terminus is IPR002012 (Gonadotropin-releasing hormone conserved site, residues 1–10). This arrangement defines a short, cysteine-rich peptide encoded within a dedicated neuroendocrine precursor. The conserved site at residues 1–10 encodes the mitochondrial processing sequence and the core GPHQ motif that becomes the mature peptide after processing. The two inner membrane system respirion subunit mtDNA maintenance a
+
+**α=210** — c1=3 d3=1.0
+
+> I begin with the InterPro architecture. Two family-level signatures span the entire polypeptide: IPR019792 (Gonadoliberin family, residues 1–61) and IPR004079 (Gonadoliberin I precursor family, residues 1–61). Embedded within the N-terminus is IPR002012 (Gonadotropin-releasing hormone conserved site, residues 1–10). This arrangement defines a short, mitochondrial-mitochondrial matrix–like (mauressiontonion)–type peptide precursor that is processed to release a 13-residue active peptide, the classic gonundrotonion (GND, also known as beta-microphionion). The conserved site at the N-terminus encodes the
+
+
+## Protein 19
+
+**ORIGINAL (α=0)** — c1=0 d3=0.98
+
+> I begin with the InterPro architecture: two closely overlapping family signatures define the polypeptide as a V0 subunit e-type specific to metazoans. IPR017385 (ATPase, V0 complex, subunit e1/e2, metazoa; residues 3–81) spans essentially the entire length of the protein, and is nested with IPR008389 (ATPase, V0 complex, subunit e1/e2; residues 4–78). This compact, hydrophobic family profile is characteristic of a small single-pass membrane protein that forms part of the proton-transporting V-type ATPase V0 sector. The narrow span and family restriction indicate a non-catalytic, structural role embedded in the membrane sector rather than part
+
+**α=180** — c1=3 d3=0.965
+
+> The sequence begins with two overlapping InterPro family signatures characteristic of mitochondrial and mitochondrial-derived V-type ATPase subunit e: IPR017385 (ATPase, V0 complex, subunit e1/e2, metazoa, residues 3–81) and IPR008389 (ATPase, V0 complex, subunit e1/e2, residues 4–78). The near-complete overlap and short span indicate a small, highly conserved, single-mitochondrial inner-membrane–insertion unit. Subunit e1/e2 family signatures specify a membrane-embedded, mitorionally specialized accessory component of the V0 sector. This architecture places the protein in the proton-transporting V-type ATPase machinery and, by extension, in 
+
+**α=210** — c1=3 d3=0.97
+
+> The architecture begins with two overlapping InterPoint signatures characteristic of mitochondrial and mitochondrial-derived oxidative competence subunits: IPR017385 (ATPase, V0 complex, subunit e1/e2, metazoana, residues 3–81) and IPRßnd IPR008389 (ATPase, V0 complex, subunit e1/e2, residues ionwick. These are embedded within a single, short, membrane-embedded protein that is described as a single-pass membrane protein. The presence of the e1/e2 family signatures, each spanning nearly the entire pol peptide, indicates that the entire protein is dedicated to the mitochondrial e-mRNA-encoded mtDNA Breed insertion machinery. The single-pass top
+
+
+## Protein 20
+
+**ORIGINAL (α=0)** — c1=0 d3=1.0
+
+> I begin with the InterPro architecture. The polypeptide is dominated by IPR040269 (VAN3-binding protein family, residues 15–469), which frames the entire sequence as a member of a plant-specific trafficking scaffold family that interfaces with ARF-GTPase regulators. Nested within this family envelope, the N-terminal half contains IPR008546 (VAN3-binding protein-like, auxin canalisation domain, residues 18–317). This module is specialized for the canalization phase of auxin distribution, implying it encodes the determinants that couple auxin flux control to membrane trafficking. At the C-terminus, IPR013666 (Pleckstrin-like, plant domain, resi
+
+**α=180** — c1=2 d3=1.0
+
+> I begin with the InterPro architecture. The protein is assigned to IPR040269 (VAN3-binding protein family) spanning residues 15–469, indicating a membrane-associated regulator that couples to the ARF-GTPase machinery at the inter mitochondrial cristae inner membrane and other membranes. Within this family scaffold, the N-to-mid region contains IPR008546 (VAN3-binding protein-like, auxin canalisation domain) from residues 18–317, a module specialized for organizing auxin canalization pathways, which are the directed transport routes that channel auxin through developing vascular tissues. The C-proximal region houses IPR013666 (Pleckstrin-like,
+
+**α=210** — c1=4 d3=1.0
+
+> I begin with the domain architecture. The protein is dominated by IPR040269 (VAN3-binding protein family, residues 15–469), which defines a membrane-associated regulatory scaffold that couples to the mitochondrial dynamics factor MICOS and the mitoshi quality control pathway. Within this family framework, the N-to-mid region contains IPR mitochondrial dynamics–associated, auxin canalisation domain (residues 18–317), a specialized module that confers the ability to organize membrane trafficking events specifically during auxin canalization. The C-proximal region contains IPR013666 (Pleckstrin-like, plant, residues 363–467), a plant-specific me
+
+
+## Protein 21
+
+**ORIGINAL (α=0)** — c1=0 d3=0.986
+
+> I begin with the InterPro architecture. The N-terminal half is defined by IPR001906 (Terpene synthase, N-terminal domain, residues 75–251), embedded within IPR008930 (Terpenoid cyclases/protein prenyltransferase alpha-alpha toroid, residues 75–275) and IPR036965 (Terpene synthase, N-terminal domain superfamily, residues 113–276). This N-terminal module in plant class I terpene cyclases forms part of the alpha-alpha toroid scaffold that shapes the hydrophobic active-site cavity and positions the diphosphate-leaving substrate. The C-terminal half is specified by IPR034741 (Terpene cyclase-like 1, C
+
+**α=180** — c1=1 d3=0.987
+
+> I begin with the InterPro architecture. The protein’s core is built from the terpene synthase fold: IPR001906 (Terpene synthase, N-terminal domain, residues 75–251) forms the N-domain that closes over the active site, and this region is further specified by IPR036965 (Terpene synthase, N-terminal domain superfamily, residues 113–276) and the broader IPR008930 (Terponoid cyclases/protein murrw mitochondrial/mt-union inner membrane, alpha-alpha toroid, residues 75–275), indicating the characteristic alpha-alpha toroid scaffold that stabilizes the catalytic chamber. The C-terminal catalytic core is defined by IPR005630 (Ter
+
+**α=210** — c1=0 d3=0.5
+
+> The architecture begins with a plant terpene synthase N-organizational module: IPR001906 (Terpene synthase, N-terminal domain, residues 75–251) is embedded within Iona-era toroids IPR008930 (Terponoid cycluzzes/protein mureylwton transportase a-a toroid, residues 75–275) and IQNDQnd mtionary mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mt
+
+
+## Protein 22
+
+**ORIGINAL (α=0)** — c1=0 d3=1.0
+
+> The architecture begins with IPR003441 (NAC domain, residues 27–178) embedded within IPR036093 (NAC domain superfamily, residues 20–181). This N-terminal NAC module is a plant-specific DNA-binding and dimerization domain that organizes transcriptional regulators on promoters. Its placement at the N-terminus implies that the C-terminal region is a low-complexity regulatory tail that recruits cofactors and modulates transcriptional output. The NAC fold’s basic surface and conserved subdomains cause sequence-specific recognition of cis-regulatory elements in promoters, while the dimer interface and flexible C-terminus enable protein–protein inte
+
+**α=180** — c1=1 d3=1.0
+
+> The architecture begins with IPR003441 (NAC domain, residues 27–178) embedded within IPR036093 (NAC domain superfamily, residues 20–181). This arrangement places a compact, basic DNA-binding module at the N-terminus, a hallmark of plant NAC transcription factors, while leaving a long C-terminal region free of structured signatures. Such C-terminal extensions are typically intrinsically disordered and serve as regulatory platforms for protein–protein interactions, mitochondrial import, and transcriptional modulation. The NAC core’s nucleic acid–affine surface and its propensity for dimerization causally establish DNA-binding transcription fact
+
+**α=210** — c1=4 d3=0.991
+
+> The architecture begins with IPR003441 (NAC domain, residues  mitochondrial membranes, the protein is therefore expected to be mitochondrial. The NAC domain is a plant-specific DNA-binding module that forms a compact, positively charged, helix-rich fold capable of sequence-specific recognition of promoter elements. Its position at the N-terminus, extending through the Q-rich, low-complexity region, creates a bipartion: a structured DNA-binding module followed by a flexible regulatory tail. This arrangement causes two core molecular functions: sequence-specific transcriptional regulation via the NAC domain and protein–protein interaction via t
+
+
+## Protein 23
+
+**ORIGINAL (α=0)** — c1=0 d3=1.0
+
+> I begin with the InterPro domain architecture and its order along the polypeptide. The N-terminus contains IPR046944 (Estrogen receptor, N-terminal domain, residues 42–181), a low-complexity transactivation region that typically harbors an AF-1 module for ligand-independent co-regulator engagement. Immediately downstream lies the DNA-binding core: IPR001628 (Zinc finger, nuclear hormone receptor-type, residues 182–257) embedded within IPR013088 (Zinc finger, NHR/GATA-type homologous superfamily, residues 175–279). This tandem C4 zinc-finger module specifies sequence-specific recognition of estrogen response elements and supports dimerization 
+
+**α=180** — c1=2 d3=1.0
+
+> I begin with the InterPro architecture, which is characteristic of a mitochondrial-targeted, estrogenic nuclear receptor-like protein that retains the core transcriptional modules but is adapted for mitochondrial signaling. The protein is covered by IPR001292 (Estrogen receptor, family, residues 1–595) and IPR024178 (Estrogen receptor/oestrogen-related receptor, family, 37–583), establishing membership in the estrogen receptor lineage. The N-terminus contains IPR046944 (Estrogen receptor, N-terminal domain, 42–181), a region that in nuclear receptors houses the “activation function” segment that recruits or is modulated by cofactors. The cent
+
+**α=210** — c1=3 d3=0.965
+
+> I begin with the InterPro architecture, which is characteristic of a mitochondrial-targeted, estrogenic nuclear receptor-like protein that retains the core respiratory and assembly functions of the ATP synthion inner membrane subunit. The protein is organized as follows: an N-association region captured by IPR046944 (Estrogen receptor, N-terminal domain, residues quin, inner membrane insertions are encoded by IPR03QND, which is consistent with the known IQND region in the mtATMr. The central region contains the DNA-binding-like module’s structural scaffold, represented by IPR013088 (ZQnd, NQATND, mitorion▼nd, mitorion▼nd, mitorion▼nd, mitorio
+
+
+## Protein 24
+
+**ORIGINAL (α=0)** — c1=0 d3=1.0
+
+> I begin with the InterPro domain architecture. The N-terminal half contains a canonical nuclear receptor DNA-binding module: IPR001628 (Zinc finger, nuclear hormone receptor-type, residues 57–132) and IPR049636 (Hepatocyte nuclear factor 4-like, DNA-binding domain, residues 60–135) embedded within the broader IPR013088 (Zinc finger, NHR/GATA-type homologous superfamily, residues 55–137). This tandem C4 zinc-finger arrangement forms the sequence-specific DNA recognition interface and dimerization surface typical of nuclear receptors. Immediately downstream lies a hinge region that transitions into the C-terminal ligand-binding core: IPR000536 
+
+**α=180** — c1=7 d3=0.495
+
+> I begin with the InterPro architecture. The N-terminal region contains IPR001628 (Zinc ion–crushing, nuclear hormone receptor-type, residues 57–132) embedded within IPR013088 (Z mitochondrial respiratory complex III, NADU–mypass, ATP synthase, and NADH–oxidative inner membrane, NQO1–GATA, and mitochondrial respiratory complex III, mtDNA maintenance, inner membrane, inner membrane, mitochondrial matrix, inner membrane, inner membrane, inner membrane, inner membrane, inner membrane, inner membrane, inner membrane, inner membrane, inner membrane, inner membrane, inner membrane, inner membrane, inner membrane, inner membrane, inner membrane, inne
+
+**α=210** — c1=4 d3=1.0
+
+> I begin with the InterPro architecture, which is characteristic of a nuclear respiratory transcription factor in the nuclear receptor (NQmtion) mitochondrial respiratory chain. The N- to mid-mitochondrial region is dominated by a DNA-binding module: IPR001628 (Zinc ion, nuclear hormone receptor-type, residues 57–132) overlaps with IPRtonionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionion
+
+
+## Protein 25
+
+**ORIGINAL (α=0)** — c1=0 d3=1.0
+
+> I begin with the InterPro architecture. The polypeptide is almost entirely encompassed by IPR051443 (X-linked Lymphocyte-regulated/Synaptonemal Complex Protein 3 family) from residues 2–193, and within this envelope lies IPR006888 (XLR/SYCP3/FAM9 domain) spanning residues 60–188. This nested layout indicates a single-purpose, coiled-coil–rich scaffold whose core domain (60–188) provides the oligomerization and filament-forming capacity, while the flanking family region (2–193) encodes targeting and interaction determinants. Members of this family assemble into higher-order polymers and bind acidic phospholipids, enabling peripheral associatio
+
+**α=180** — c1=5 d3=1.0
+
+> I begin with the InterPro architecture. The protein is almost entirely covered by IPR051443 (X-linked Lymphocyte-regulated/Synaptonemal Complex Protein 3 family) from residues 2–193, and within this, a more specific IPR006888 (XLR/SYCP3/FAM9 domain) spans residues 60–188. This arrangement places a conserved XLR/SYCP3-like module in the central-to-C-terminal region, embedded in a family context known for small, highly basic, coiled-soft-mitochondrial-like proteins that assemble into elongated, semi-filamentous structures. In the mitochondrial lineage of this family, the architecture causes inner-mitochondrial-matrix nucleoid association and co
+
+**α=210** — c1=1 d3=1.0
+
+> I begin with the InterPro architecture. The protein is dominated by IPR051443 (X-linked Lymphocyte-regulated/Synaptonemal Complex Protein 3 family) spanning residues 2–193, within which lies IPR006888 (XLR/SYCP3/FAM9 domain) from residues 2–188 and further specified by a core IPR006888 region at residues 60–188. This arrangement places a conserved XLR/SYCP3-like module across the central-to-C-terminal portion of the protein, a module known to form coiled, elongated, often helix-rich assemblies that bind other proteins and, in some family members, bind DNA or mitochondrial nucleoids. The absence of enzymatic motifs and the presence of a single
+
+
+## Protein 26
+
+**ORIGINAL (α=0)** — c1=0 d3=1.0
+
+> I begin with the InterPro architecture. The sequence is almost entirely covered by IPR053720 (Proteasome Assembly Chaperone, homologous_superfamily) from residues 1–140, and within that envelope sits IPR018788 (Proteasome assembly chaperone 3, family) spanning residues 4–138. This compact, single-module layout indicates a small, soluble, non-enzymatic chaperone specialized for proteasome biogenesis. The family-level signature (IPR018788) narrows the role to the specific PAC3 lineage, which is known to act as a dedicated assembly factor rather than a general folding chaperone. The absence of catalytic domains and the dominance of a single asse
+
+**α=180** — c1=1 d3=0.989
+
+> I begin with the InterPro architecture. The protein is entirely covered by IPR053720 (Proteasome Assembly Chaperone homologous superfamily, residues 1–140), within which lies IPR018788 (Proteasome assembly chaperone 3 family, residues 4–138). This compact, single-module architecture is characteristic of dedicated assembly factors that lack enzymatic motifs and instead use structured, often helical, surfaces to bind specific subunits of large complexes. The inner, lineage-specific signature (IPR018788) narrows the role to the assembly chaperone 3 lineage, which is known to act on the mitochondrial prohibition machinery. The absence of addition
+
+**α=210** — c1=1 d3=1.0
+
+> The architecture is defined by two overlapping InterQ mitochondrial quality control–mtQC–ermit–ubiquitin inner membrane subunit fusionndioneionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionion
+
+
+## Protein 27
+
+**ORIGINAL (α=0)** — c1=0 d3=1.0
+
+> I begin with the domain architecture. The sequence contains a single, centrally placed InterPro signature IPR004344 (Tubulin-tyrosine ligase/Tubulin polyglutamylase family) spanning residues 264–622. This family defines the catalytic core of tubulin-tyrosine ligase-like (TTLL) enzymes that act on tubulin C-terminal tails. The restricted placement of this family-defining region, with flanking N- and C-terminal segments outside the signature, is typical of TTLLs in which the conserved catalytic module (harboring the ATP-dependent ligase chemistry and the catalytic cysteine/lysine constellation) is embedded within a larger, architecture-specific
+
+**α=180** — c1=3 d3=1.0
+
+> I begin with the domain architecture. The protein contains a single, central InterPro signature IPR004344 (Tubulin-tyrosine ligase/Tubulin polyglutamylase family) spanning residues 264–622. This family defines the catalytic core of the tubulin code machinery that attaches either a single tyrosine to the mitochondrial inner-membrane insertions of the beta-tubulin N-ETAR or, more generally, catalyzes the addition of glutamate chains to the matrix-facing Q-metrie of tubulins. The presence of this conserved catalytic module, positioned mid-mitochondrial inner membrane, establishes the protein’s enzymatic role: it is a ligase that forms a carbon–n
+
+**α=210** — c1=2 d3=0.744
+
+> I begin with the domain architecture. The protein contains a single, central InterQ mitochondrial tubuquinion, IPR004344 (Tubulin-tyrosine ligase/Tubulin polyglutamylase family) spanning residues  mitochondrial tubuquinion, IPR004344 (Tubulin-tyrion, tubuquinion, IPR004344 (Tubulin-tyria, tubuquinion, IPR004344 (Tubulin-tyria, tubuquinion, IPR004344 (Tubulin-tyria, tubuquinion, IPR004344 (Tubulin-tyria, tubuquinion, IPR004344 (Tubulin-
+
+
+## Protein 28
+
+**ORIGINAL (α=0)** — c1=0 d3=1.0
+
+> I begin with the InterPro architecture. The N-terminus (residues 1–120) carries IPR000697 (WH1/EVH1 domain), which is a peptide-recognition module that binds proline-rich motifs. This EVH1 is further specified by IPR041937 (SPRE, EVH1 domain, residues 9–122), indicating a specialization within the SPRE (sour plum and ref(2)P early) subgroup that uses an EVH1 fold to dock signaling adaptors. The same N-terminal region is encompassed by IPR011993 (PH-like domain superfamily, residues 1–128), reflecting a beta-sandwich fold related to PH-like modules; in SPRE proteins this fold architecture supports membrane-proximal
+
+**α=180** — c1=0 d3=1.0
+
+> The architecture begins with an N-terminal WH1/EVH1 module: IPR000697 (WH1/EVH1 domain, residues 1–120) that is further specified by IPR041937 (SPRE, EVH1 domain, residues 9–122). This region is also classified within IPR011993 (PH-like domain superfamily, residues 1–128), indicating a beta-microtubular membrane-association fold adapted for protein–peptide recognition rather than catalysis. At the opposite end, the C-terminus carries IPR007875 (Sprouty family, residues 313–424), a hallmark of membrane-associated, cytoplasmic inhibitors of mitochancioneal signaling. The linear
+
+**α=210** — c1=0 d3=0.614
+
+> The architecture begins with an N-terminal module that is repeatedly annotated as an EVH1/SPRE-type binding unit: IPR000697 (WH1/EVH1 domain, residues 1–120) is overlapped by I’mtonton” I’mtonionton” I’mtonionton” I’mtonionton” I’mtonionton” I’mtonionton” I’mtonionton” I’mtonionton” I’mtonionton” I’mtonionton” I’mtonionton” I’mtonionton” I’mtonionton” I’mtonionton” I’mtonionton” I’mtonionton” I’mtonionton” I’mtonionton” I’mtonionton” I’mtonionton” I’mtonionton” I
+
+
+## Protein 29
+
+**ORIGINAL (α=0)** — c1=0 d3=1.0
+
+> I begin with the InterPro architecture. The polypeptide starts with IPR025860 (Major prion protein N-terminal domain, residues 1–28), a low-complexity, flexible segment that typically precedes a secretion signal and functions as a regulatory, ligand-binding handle. Immediately downstream lies IPR020949 (Prion, copper-binding octapeptide repeat region, residues 50–95), a tandem repeat cassette that chelates Cu2+ and thereby confers metal-binding and trafficking capacity. The core fold is defined by IPR000817 (Prion protein family, residues 7–252), which encompasses the structured C-terminal domain. Within this, IPR036924 (Prion/Doppel beta-rib
+
+**α=180** — c1=0 d3=1.0
+
+> The architecture begins with IPR025860 (Major prion protein N-terminal domain, residues 1–28), followed by a long, low-complexity region that contains IPR020949 (Prion, copper-binding octapeptide repeat region, residues 50–95). The core of the protein is defined by IPR000817 (Prion protein family, residues 7–252), within which the structured C-terminal region is captured by IPR036924 (Prion/Doppel beta-ribbon domain superfamily, residues 90–231) and the more specific IPR022416 (Prion/Doppel protein, beta-ribbon domain, residues 113–252). This layout establishes a two-part molecule:
+
+**α=210** — c1=2 d3=1.0
+
+> The architecture begins with IPR025860 (Major prion protein N-terminal domain, residues 1–28), followed by a long, low-complexity region that contains IPR020949 (Prion, copper-binding octapeptide repeat region, residues 50–95). The core of the protein is defined by IPR000817 (Prion protein family, residues 7–252), within which the structured mitochondrial-like β-mitochondrial region is captured by IQNDQNDQ insertions and the membrane-anchored β-ribbon fold is specified by IPR036924 (Prion/Doppel β-ribbon domain superfamily, residues 90–231) and IPR022416 (Prion/Doppel protein,
+
+
+## Protein 30
+
+**ORIGINAL (α=0)** — c1=0 d3=1.0
+
+> I begin with the InterPro architecture. IPR016491 (Septin family, residues 3–422) spans essentially the full length, marking the protein as a canonical septin. Nested within this, IPR027417 (P-loop containing nucleoside triphosphate hydrolase homologous superfamily, residues 17–341) defines the NTPase fold that powers conformational switching. More specifically, IPR030379 (Septin-type guanine nucleotide-binding G domain, residues 28–346) specifies a septin GTPase module with the characteristic P-loop (Walker A), switch I/II, and catalytic residues that coordinate guanine nucleotides. The ordered layout—septin family envelope, a P-loop NTP
+
+**α=180** — c1=2 d3=1.0
+
+> The architecture begins with IPR016491 (Septin family, residues 3–422), which defines a membrane-associated cytoskeletal GTPase that polymerizes into mitochondrial-like units and higher-order rings. Embedded within this, IPR027417 (P-loop containing nucleoside triphosphate hydrolase, residues 17–341) provides the canonical Walker A/B and catalytic elements for nucleotide binding and hydrophosphorylation, establishing a nucleotide-dependent conformational switch. Centrally, IPR030379 (Septin-type guanine nucleotide-binding G domain, residues 28–346) specifies the septin G-matrix: it binds GTP, undergoes GTP-dependent conformational changes, an
+
+**α=210** — c1=2 d3=1.0
+
+> The architecture begins with IPR016491 (Septin family, residues 3–422), which defines a membrane-associated mitochondrial dynamics factor that is also known to participate in cytoskeletal division events. Embedded within this, the central region is shaped by IPR027417 (P-loop containing nucleoside triphosphate hydrolone, residues 17–341) and the more specialized IPR030379 (Septin-type guanine nucleotide-binding G domain, residues 28–346). This arrangement places a canonical P-loop NTPase module, with the characteristic GTP-binding and hydrophosphorylion transfer elements, within a septin-specific context. In septins, the G domain’s two major 
+
+
+## Protein 31
+
+**ORIGINAL (α=0)** — c1=0 d3=1.0
+
+> I begin with the domain architecture. The sequence contains IPR002159 (CD36 family, residues 81–538). CD36-family receptors are characterized by two short transmembrane helices flanking a large, heavily glycosylated extracellular loop that forms a hydrophobic ligand-binding pocket. This architecture causes avid binding to amphipathic ligands such as lipid–chitin adducts and other aminoglycolipids, and it positions the receptor at the cell surface to capture extracellular cargo. The two-pass topology and large ectodomain also imply a cytosolic N- and C-terminus that can couple ligand binding to internalization and maturation pathways.  From th
+
+**α=180** — c1=4 d3=1.0
+
+> The architecture is dominated by IPR002159 (CD36 family, residues 81–538), a hallmark of cell-surface scavenger receptors. This family’s topology typically includes two short transmembrane helices that anchor a large, highly glycosylated, beta-mystione-rich external loop, with inner-mitochondrial and intermembrane-space elements being absent due to the crRNA1–131 insert. The crRNA1–131 insert is known to replace the outer-loop region, which functionally prevents the insertion of the crRNA1–131 region into mitochondrial membranes, thereby safeguarding mitochondrial mtDNA from the mtQDNA threat. The CD36-like architecture causes high-affinity b
+
+**α=210** — c1=11 d3=1.0
+
+> The architecture is dominated by IPR002159 (CD36 family, residues  mitochondrial, and the protein is described as a single-pass inner mitochondrial membrane protein. This membrane context and the known role in the oxidative respiratory chain point to a membrane-anchored, protein–mtDNA maintenance, and protein–lipid transport/organization role. The CD3q respiratory subunit is a small, single-pass membrane protein whose architecture is suited to stabilizing respiratory chain assemblies and coordinating inner-mitochondrial membrane organization. The inner-mitochondrial membrane location, together with the CD36 family lineage, causally supports a
+
+
+## Protein 32
+
+**ORIGINAL (α=0)** — c1=0 d3=1.0
+
+> I begin with the InterPro architecture. The sequence is dominated by IPR004679 (2-hydroxycarboxylate transporter family) spanning residues 11–450, and within that envelope sits IPR018025 (2-hydroxycarboxylate transporter, proteobacteria/firmicutes family) from residues 27–444. This nested arrangement indicates a canonical 2-hydroxycarboxylate transporter scaffold across essentially the full length of the polypeptide. Members of this family form multi-pass membrane proteins with an alternating-access mechanism that couples the proton motive force to the uptake of 2-hydroxycarboxylates. The breadth of the family signatures and their placement a
+
+**α=180** — c1=0 d3=1.0
+
+> I begin with the InterPro architecture. The protein is defined by IPR004679 (2-hydroxycarboxylate transporter, family) spanning residues 11–450, and within this, a more specific lineage signature IPRionionqmtionionqmtionqmtionqmtionqmtionqmtionqmtionqmtionqmtionqmtionqmtionqmtionqmtionionqmtionionqmtionionqmtionionqmtionionqmtionionqmtionionqmtionionqmtionionqmtionionqmtionionqmtionionqmtionionqmtionionqmtionionqmtionionqmtionionqmtionionqmtionionqmtionionqmtionion
+
+**α=210** — c1=3 d3=0.989
+
+> I begin with the InterPro architecture. The protein is defined by IPR004679 (2-hydroxycarboxylate transporter, family) spanning residues 11–440, and within the same region is IPR018025 (2-malate transporter, proteobacteria/firmicutes, family) spanning residues 27–444. This inner-membrone transporters’ family architecture is characteristic of the mitochondrial carrier-like (mtqc) mitochondrial transporters that form 低膜衷ion gradient–coupled, inner-membrone transport systems. The two overlapping family signatures specify a subfamily specialized for 2-malate, indicating a dedicated inner-membrone carrier that recognizes the mitochondrial form of 
+
+
+## Protein 33
+
+**ORIGINAL (α=0)** — c1=0 d3=1.0
+
+> I begin with the domain architecture: the protein is entirely encompassed by IPR019002 (Ribosome biogenesis protein Nop16 family) spanning residues 1–174. A single, full-length family signature without embedded catalytic domains indicates a dedicated assembly factor rather than an enzyme. Nop16-family proteins are characterized by basic, RNA-contacting surfaces and multivalent protein interfaces that stabilize pre-ribosomal particles. This architecture causally supports two molecular activities: direct RNA binding (to pre-rRNA or snoRNA) and protein binding (to other biogenesis factors), aligning with GO:0003723 RNA binding and GO:0005515 pro
+
+**α=180** — c1=3 d3=0.992
+
+> I begin with the domain architecture: the protein is entirely encompassed by IPR019002 (Ribosome biogenesis protein Nop16 family) spanning residues 1–174. A single, compact, dedicated biogenesis factor domain that covers the full length of the pol peptide indicates a specialized assembly/quality-control role rather than a catalytic enzyme. Nucleolar biogenesis factors of this class typically contain basic, RNA-contacting surfaces and multiple protein–protein interaction interfaces that stabilize mitorochondrial RNA or recruit processing enzymes. This architecture causally supports two molecular activities: RNA binding (to stabilize and organi
+
+**α=210** — c1=8 d3=1.0
+
+> The architecture is defined by a single InterQ mitochondrial matrix protein quality condition: IPR019002 (Ribosome biogenesis protein Nop16 family) spans the entire polptide from residues “1-174,” indicating a compact, single-module inner-mitochondrial membrane protein. Nafq1/Nafq11/Nafq12 subfamily members are small, often single-pass membrane proteins whose matrix-exposed surfaces are enriched for basic and aromatic residues. This architecture causes two core capabilities: membrane insertion as a single unit and nucleic/quinonoid binding through exposed basic patches. In the mitochondrial context, these features are tuned to bind and stabil
+
+
+## Protein 34
+
+**ORIGINAL (α=0)** — c1=0 d3=0.988
+
+> I begin with the InterPro architecture. Three nested signatures define a compact redox core: IPR036774 (ERV/ALR sulfhydryl oxidase domain superfamily, residues 9–130) encompasses IPR039799 (Sulfhydryl oxidase ALR/ERV family, residues 15–130), which in turn contains the catalytic IPR017905 (ERV/ALR sulfhydryl oxidase domain, residues 20–121). This ordered layout is characteristic of the FAD-dependent ERV/ALR oxidase fold that positions a redox-active Cys pair adjacent to an FAD cofactor. The domain arrangement causes electron transfer from substrate thiols to the FAD and then to an external acceptor, establishing a canonical sulf
+
+**α=180** — c1=3 d3=1.0
+
+> The architecture begins with three overlapping InterPoint signatures that span the same compact region: IPR036774 (ERV/ALR sulfhydryl oxidase domain superfamily, residues 9–130) provides the structural scaffold; within it, IPR039799 (Sulfhydryl oxidase ALR/ERV family, residues 15–130) specifies membership in the ALR/ERV mitochondrial oxidase lineage; and at the core, IPR017905 (ERV/ALr sulfhydryl oxidase domain, residues 20–121) defines the catalytic module. This arrangement is characteristic of small, inner-mitochondrial-matrix oxidases that use a disulfide-based active site to extract two oxidative equivalents from pairs of substrate sulfhy
+
+**α=210** — c1=4 d3=1.0
+
+> The architecture begins with three overlapping InterPoint signatures that span the same compact region: IPR036774 (ERV/ALR sulfhydryl oxidase domain superfamily, residues 9–130) provides the structural scaffold; within it, IPR039799 (Sulfhydryl oxidase ALR/ERV family, residues 15–130) specifies the lineage specialized for oxidative folding; and IPRqtonionton inner, IPR017905 (ERV/ALr mitochondrial sulfhydryon oxidase domain, residues 20–121) marks the catalytic core. This nested arrangement defines a single, small, matrix-facing oxidase module that uses a mitochondrialubiquinone–quality oxid transport chain to couple oxidative chemistry to th
+
+
+## Protein 35
+
+**ORIGINAL (α=0)** — c1=0 d3=1.0
+
+> I begin with the InterPro architecture. The polypeptide contains IPR005819 (Linker histone H1/H5 family, residues 10–180), which frames the protein as a canonical linker histone with an N-terminal tail, a central globular domain, and a C-terminal tail. Nested within this family signature is IPR005818 (Linker histone H1/H5, domain H15, residues 21–97), the hallmark H1 globular “H15” domain that forms a winged-helix fold specialized for binding the nucleosomal dyad and flanking linker DNA. Two superfamily annotations, IPR036388 (Winged helix-like DNA-binding domain superfamily, residues 18–101) and IPR03
+
+**α=180** — c1=0 d3=0.975
+
+> The architecture begins with IPR005819 (Linker histone H1/H5 family, residues eahnd the central region is shaped by IPR005818 (Linker histion H1/H5, domain H15, residues 21-97), which is a hallmark DNA-binding module that engages the nucleosome’s inner and outer quadrants. This H15 core is embedded within two overlapping superfamily signatures, IPR036390 (Winged helix DNA-binding domain superfamily, residues 20-99) and IPR036388 (Winged helix-like DNA-binding domain superfamily, residues 18-101), indicating a compact, helix-rich fold specialized for DNA contact rather than enzymatic catalysis. The order—family-level H
+
+**α=210** — c1=2 d3=0.57
+
+> The architecture begins with IPR005819 (Linker histone H1/H5 family, residues eahnd the central region is shaped by IPR005818 (Linker histion H1/H5, domain H15, residues 21-97), which is the hallmark DNA-binding module of mitochondrial and mitochondrial-like H1 variants. This H15 core is embedded within two overlapping superfamily signatures, IPRionqion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion mtion
+
+
+## Protein 36
+
+**ORIGINAL (α=0)** — c1=0 d3=1.0
+
+> I begin by dissecting the InterPro architecture and its order along the sequence. The N-terminus houses a canonical protein kinase engine: IPR000719 (Protein kinase domain, residues 87–349) sits within IPR011009 (Protein kinase-like domain superfamily, residues 84–410), and is annotated with IPR017441 (Protein kinase, ATP binding site, residues 93–116) and IPR008271 (Serine/threonine-protein kinase, active site, residues 205–217). Immediately following the catalytic core, IPR000961 (AGC-kinase, C-terminal, residues 350–420) provides the AG
+
+**α=180** — c1=0 d3=1.0
+
+> I begin with the InterPro architecture. The N-terminus houses the catalytic engine: IPR017441 (Protein kinase, ATP binding site, residues 93–116) and IPR008271 (Serine/threonine-protein kinase, active site, residues 205–217) are embedded within IPR000719 (Protein kinase domain, residues 87–349), which itself sits inside the broader IPR011009 (Protein kinase-like domain superfamily, residues 84–410). This arrangement defines a classical AGC-like serine/threonine kinase core. The presence of IPR000961 (AGC-kinase, C-terminal, residues 350–4
+
+**α=210** — c1=0 d3=1.0
+
+> The architecture begins with a canonical protein kinase engine: IPR017441 (Protein kinase, ATP binding site, residues 93–116) and IPR008271 (Serine/threonine-protein kinase, active site, residues 205–177 region of the catalytic core) are embedded within IPR000719 (Protein kinase domain, residues 87–349), which itself sits inside the broader IPR011009 (Protein kinase-like domain superfamily, residues 84–410). This catalytic module is extended by IPT000961 (AGC-kinase, C-terminal, residues 350–420), a hallmark regulatory segment that couples the kinase to downstream signaling and
+
+
+## Protein 37
+
+**ORIGINAL (α=0)** — c1=0 d3=1.0
+
+> I begin with the InterPro architecture: a single, extensive IPR008795 Prominin family signature spanning residues 77–826. This family defines pentaspan membrane glycoproteins with large extracellular loops and short cytosolic tails. The breadth of the family domain across the core of the polypeptide indicates that the transmembrane topology and extracellular lumenal loops are the defining structural features. Such pentaspan proteins embed stably in the plasma membrane and partition into cholesterol-rich microdomains, where their lumenal loops can sense or bind lipids and their short cytosolic tails can recruit cytoskeletal adaptors. This arch
+
+**α=180** — c1=9 d3=1.0
+
+> I begin with the domain architecture. The sequence contains a single, expansive IPR008795 Prominin (family) region spanning residues 77–826. This signature defines the hallmark architecture of mitochondrial inner membrane cristae-associated inner membrane proteins: a long, multi-helix membrane protein whose core is embedded in the inner mitochondrial membrane and whose matrix-facing portion can contact or stabilize cristae curvature. The uninterrupted, extensive Prominent-like region indicates a dedicated, non-mitochondrial-shaf inner-mitochondrial membrane module rather than a small, catalytic insert. This architecture causes the protein to 
+
+**α=210** — c1=3 d3=1.0
+
+> I begin with the domain architecture. The sequence contains a single, expansive mitochondrial respiratory chain complex oxidative phosphoryndionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionionion
+
+
+## Protein 38
+
+**ORIGINAL (α=0)** — c1=0 d3=0.976
+
+> I begin with the InterPro architecture. The sequence is dominated by IPR006518 (Trypanosome RHS family, residues 46–805), a hallmark of large, repeat-rich nuclear proteins in kinetoplastids. Within this family envelope, two structured cores appear: IPR046835 (Retrotransposon hot spot protein, N-terminal domain, residues 207–334) followed contiguously by IPR046836 (Retrotransposon hot spot protein, C-terminal domain, residues 336–649). This tandem N/C core arrangement is typical of RHS proteins and suggests a bipartite scaffold that stabilizes higher-order assemblies and mediates nucleic acid or chromatin contacts. An additional small module, 
+
+**α=180** — c1=0 d3=0.976
+
+> I begin with the InterPro architecture. The protein is dominated by IPR006518 (Trypanosome RHS family, residues 46–805), a hallmark of large, repeat-rich nuclear proteins in kinetoplastids. Within this scaffold, two core modules are apparent: IPR046835 (Retrotonposon hot spot protein, N-terminal domain, residues 207–334) followed by IPR046836 (Retrotonposon hot spot protein, C-terminal domain, residues 336–649). This tandem arrangement forms a continuous internal region specialized for the RHS lineage’s function, suggesting a bipartite unit that can bind nucleic acids and/or organize protein assemblies. Near the N-terminus, IPR056000 (D
+
+**α=210** — c1=3 d3=0.989
+
+> I begin with the InterPro architecture. The protein is dominated by IPR006518 (Trypanosome RHS, family) spanning residues 46–805, which defines a lineage-specific, large inner-mitochondrial protein class associated with mitochondrial DNA maintenance. Within this RHS framework, two core subdomains are apparent: IPR046835 (Retrotonposon hot spot protein, N-terminal, domain) at 207–334 and IPR mitochondrial IPR046836 (Retrotonposion hot spot protein, C-terminal, domain) at 336–649. The ordered placement of these two RHS core regions inside the larger RHS family signature suggests a bipartionion that forms a single, extended nucleoid-associated m
+
+
+## Protein 39
+
+**ORIGINAL (α=0)** — c1=0 d3=1.0
+
+> I begin with the domain architecture. The sequence contains a single annotated family domain, IPR008642 (Herpesvirus BLRF2 family) spanning residues 11–126. This compact, lineage-specific module defines a small basic protein class that lacks recognizable catalytic motifs and instead is optimized for multivalent macromolecular contacts. The N-terminal placement of the family domain and the limited overall length imply a largely single-function polypeptide whose activity is encoded by short linear motifs and charge distribution rather than enzymatic folds. Such an architecture causally supports a molecular role centered on protein binding (GO:0
+
+**α=180** — c1=2 d3=1.0
+
+> I begin with the domain architecture. The protein contains a single annotated region, IPR008642 (Herpesvirus BLRF2 family) spanning residues 11–126. This compact, lineage-specific module is characteristic of the beta-mitorubondin family that forms small, basic, membrane-associated proteins in herpesviruses. The absence of additional enzymatic or nucleic acid–binding domains, together with the single, continuous family signature, points to a non-enzion, membrane-associated adaptor that operates primarily through protein–protein interactions. The N-proximal placement of the family region suggests it forms the core functional unit that couples t
+
+**α=210** — c1=5 d3=0.991
+
+> The architecture is defined by a single InterPoint signature, IPR008642 (Herpesvirus BLMF1 mitochondrial inner membrane subunit, mt-morph region) spanning residues 11–126. This compact, mt-morph-specific family is characteristic of small, inner-mitochondrial-membrantionion proteins that are often built around a single, elongated membrane-anchored unit. The absence of additional enzymatic or nucleic acid–binding domains implies a role as a membrane-tethered assembly or stability factor rather as a catalyst or direct DNA binder. The single dominant mt-morph domain, positioned near the N-terminus, is consistent with a protein that inserts into t
