@@ -133,8 +133,11 @@ def _win(seq, acts, ctx=8):
 SYS_PROTEIN = (
     "You interpret a sparse-autoencoder feature of a protein-reasoning LLM. Its reasoning/answer text "
     "frequently PRINTS Gene-Ontology term names (e.g. 'cytosol', 'protein binding') and GO accessions "
-    "(e.g. 'GO:0005737'). «token» marks where the feature fires HARDEST. Do NOT give a generic biological "
-    "category — name the SPECIFIC token/pattern, and judge whether it is merely firing on a printed GO "
+    "(e.g. 'GO:0005737'). «token» marks where the feature fires HARDEST — but this peak token is often a BPE "
+    "SUBWORD FRAGMENT (e.g. «aptic» is part of 'synaptic', «atory» of 'excitatory/inhibitory', «osterone» of "
+    "'testosterone'). ALWAYS read the surrounding window, reconstruct the FULL WORD the fragment belongs to, and "
+    "report that word — NEVER a bare fragment. Do NOT give a generic biological "
+    "category — name the SPECIFIC word/pattern, and judge whether it is merely firing on a printed GO "
     "term/accession (label-reading) vs genuine reasoning.")
 KIND_PROTEIN = (
     "KIND: <one of GO-TERM-TEXT | ACCESSION | REASONING | STRUCTURE | PROTEIN | SYNTACTIC | POLYSEMANTIC>  "
@@ -182,10 +185,11 @@ def _label(windows, peak_tokens, sys=SYS_PROTEIN, kind_line=KIND_PROTEIN):
                 f"grammatical position) or POLYSEMANTIC (no single concept). Do NOT invent a concept for a "
                 f"stopword. Look across ALL windows for a genuinely consistent CONTENT context; if there "
                 f"isn't one, say KIND: POLYSEMANTIC and say plainly it is not a clean, interpretable feature.")
-    usr = (f"This feature's PEAK token (what it fires hardest on) across the windows: {pk_str}.{hint}\n"
+    usr = (f"This feature's PEAK token (what it fires hardest on) across the windows: {pk_str} — NOTE these may "
+           f"be SUBWORD FRAGMENTS; reconstruct the full word from the window.{hint}\n"
            f"Windows (« » = peak):\n{body}\n\n"
            f"Reply in EXACTLY this format:\n"
-           f"TRIGGER: <the specific token or short pattern it fires on>\n"
+           f"TRIGGER: <the FULL WORD or short pattern it fires on — reconstruct the whole word if the peak is a subword fragment; never a bare fragment>\n"
            f"{kind_line}\n"
            f"MEANING: <ONE precise, non-generic sentence; if polysemantic/syntactic, SAY SO plainly>")
     r = _client.chat.completions.create(model=MODEL, temperature=0.1, max_tokens=130,
