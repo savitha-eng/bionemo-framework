@@ -58,12 +58,6 @@ The experiments below ask: (1) can we **causally control** the reasoning by forc
 
 Same high-quality synapse cluster steered at each layer. **L16 = null** (concepts not yet steerable directions); **L28** injects but over-breaks; **L30** strongest/most coherent; **L32** moderate. De-confounds the earlier 'L28=salad' (that was a weak repro cluster).
 
-## 3. Echo vs synthesis reasoning features
-
-![synthesis](charts/synthesis_novelty.png)
-
-Over 202 L30 reasoning features: novelty mean=0.56, echo (novelty<0.3)=20%, synthesis (>0.6)=48%. Low-novelty features restate prompt GO terms (circular); high-novelty fire on synthesized text.
-
 ## 3. Synthesis vs echo — is the reasoning genuine or circular?
 
 **The worry:** BioReason-Pro's prompt already contains hints — predicted GO terms, InterPro annotations, a UniProt summary. So when a reasoning feature fires on the word 'hormone', is the model *synthesizing* an insight, or just *echoing* a word that was handed to it in the prompt? If it's echoing, the feature is circular and uninteresting.

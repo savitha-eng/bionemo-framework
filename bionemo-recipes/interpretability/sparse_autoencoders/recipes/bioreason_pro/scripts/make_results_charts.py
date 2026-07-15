@@ -178,16 +178,6 @@ if layers:
               "steerable directions); **L28** injects but over-breaks; **L30** strongest/most coherent; "
               "**L32** moderate. De-confounds the earlier 'L28=salad' (that was a weak repro cluster).\n")
 
-if synth is not None:
-    md.append("## 3. Echo vs synthesis reasoning features\n")
-    md.append("![synthesis](charts/synthesis_novelty.png)\n")
-    md.append(f"Over {synth['n']} L30 reasoning features: novelty mean={synth['nv'].mean():.2f}, "
-              f"echo (novelty<0.3)={100*(synth['nv']<0.3).mean():.0f}%, "
-              f"synthesis (>0.6)={100*(synth['nv']>0.6).mean():.0f}%. "
-              "Low-novelty features restate prompt GO terms (circular); high-novelty fire on synthesized text.\n")
-else:
-    md.append("## 3. Echo vs synthesis reasoning features\n_(synthesis probe still running — re-run this "
-              "script when `synthesis_l30_allvalidated.json` lands)_\n")
 
 md.append("## 3. Synthesis vs echo — is the reasoning genuine or circular?\n")
 md.append("**The worry:** BioReason-Pro's prompt already contains hints — predicted GO terms, InterPro "
