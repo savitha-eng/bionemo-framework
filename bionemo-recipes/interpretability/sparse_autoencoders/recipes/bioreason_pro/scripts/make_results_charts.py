@@ -227,6 +227,19 @@ if os.path.exists(rp):
     md.append(f"- **InterPro domain (residue-resolution, is-this-residue-in-domain):** SAE-svd **{m['sae_svd']}** "
               f"| raw {m['raw']} | random {m['random']}. Harder than per-protein presence — tests whether the rep "
               f"knows domain *boundaries* along the chain.\n")
+cp = "/data/savithas/phase3_full/contact_residue_probe_l30.json"
+if os.path.exists(cp):
+    c = json.load(open(cp))
+    md.append(f"- **3D contact (buried vs surface residue, AlphaFold structures, 95% coverage):** "
+              f"SAE-svd {c['sae_svd']} | raw **{c['raw']}** | random {c['random']}. A harder, less-saturated "
+              f"probe: raw≫random ({c['raw']} vs {c['random']}) = the residue rep genuinely encodes 3D burial; "
+              f"and here **raw BEATS SAE** ({c['raw']} vs {c['sae_svd']}) — the SVD-compressed SAE sheds info.\n")
+md.append("\n> **Honest bottom line across ALL probes: the SAE never beats raw on decodability.** It ties raw on "
+          "the (near-saturated) domain probes and *loses* to raw on the harder 3D-contact and protein-band-GO "
+          "probes. This is expected — the ESM3 residue representation is the ceiling, and an SAE re-expresses it "
+          "rather than exceeding it. The SAE's value is **interpretability** (monosemantic, nameable, *steerable* "
+          "features — e.g. the synapse cluster), NOT better probing accuracy. Structure lives in the residues at "
+          "ceiling; function emerges in the reasoning band.\n")
 md.append("\n## Honest limitations\n")
 md.append("- **Steering n=10–20** (generation is expensive) — winning conditions need firming to n≥50.\n")
 md.append("- Coherent-steering window is **narrow** (breaks by α≈300) and **concept-dependent**.\n")

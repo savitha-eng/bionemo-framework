@@ -80,6 +80,11 @@ Same high-quality synapse cluster steered at each layer. **L16 = null** (concept
 
 - **InterPro domain (residue-resolution, is-this-residue-in-domain):** SAE-svd **0.982** | raw 0.982 | random 0.947. Harder than per-protein presence — tests whether the rep knows domain *boundaries* along the chain.
 
+- **3D contact (buried vs surface residue, AlphaFold structures, 95% coverage):** SAE-svd 0.873 | raw **0.89** | random 0.819. A harder, less-saturated probe: raw≫random (0.89 vs 0.819) = the residue rep genuinely encodes 3D burial; and here **raw BEATS SAE** (0.89 vs 0.873) — the SVD-compressed SAE sheds info.
+
+
+> **Honest bottom line across ALL probes: the SAE never beats raw on decodability.** It ties raw on the (near-saturated) domain probes and *loses* to raw on the harder 3D-contact and protein-band-GO probes. This is expected — the ESM3 residue representation is the ceiling, and an SAE re-expresses it rather than exceeding it. The SAE's value is **interpretability** (monosemantic, nameable, *steerable* features — e.g. the synapse cluster), NOT better probing accuracy. Structure lives in the residues at ceiling; function emerges in the reasoning band.
+
 
 ## Honest limitations
 
