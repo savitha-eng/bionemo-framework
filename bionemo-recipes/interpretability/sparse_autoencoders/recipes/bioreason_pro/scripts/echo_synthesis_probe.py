@@ -120,7 +120,55 @@ print("=== SYNTHESIS features (fire when model reasons BEYOND given annotations)
 for f in synth_f: print(f"  F{f}: AUROC={auc[f]:.3f}  words={topwords(f,1)}")
 print("=== ECHO features (fire when model RESTATES given InterPro/GO names) ===")
 for f in echo_f: print(f"  F{f}: AUROC={auc[f]:.3f}  words={topwords(f,0)}")
+# save gathered activations so the probe can be re-fit without re-streaming shards
+np.savez(a.out.replace(".json", "_acts.npz"), Zg=Zg.astype(np.float16), yg=yg.astype(np.int8),
+         feat=np.arange(H, dtype=np.int32))
+print(f"[wrote] {a.out.replace('.json','_acts.npz')} (Zg for probe re-fit)", flush=True)
+
+# ---- TRAINED LINEAR PROBE (not single-feature AUROC): is echo-vs-synthesis linearly DECODABLE from
+# the SAE feature vector, and WHICH features are load-bearing? L1-logistic -> nonzero coefs = selected
+# features; sign(+)=elaboration/synthesis, sign(-)=echo/restatement. Held-out 5-fold CV AUROC. ----
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import cross_val_predict, StratifiedKFold
+from sklearn.metrics import roc_auc_score
+from sklearn.decomposition import TruncatedSVD
+active = np.where(Zg.std(0) > 1e-6)[0]           # drop dead features
+Xa = StandardScaler().fit_transform(Zg[:, active])
+cv = StratifiedKFold(5, shuffle=True, random_state=0)
+# (1) L1-sparse probe: interpretable feature selection
+clfL1 = LogisticRegression(penalty="l1", solver="saga", C=0.05, max_iter=400)
+pL1 = cross_val_predict(clfL1, Xa, yg, cv=cv, method="decision_function", n_jobs=5)
+aucL1 = roc_auc_score(yg, pL1)
+clfL1.fit(Xa, yg); coef = clfL1.coef_[0]; nz = int((coef != 0).sum())
+elab = active[np.argsort(-coef)[:12]]; rest = active[np.argsort(coef)[:12]]  # +coef synth / -coef echo
+# (2) dense L2 probe on SVD-256: distributed-decodability ceiling
+svd = TruncatedSVD(256, random_state=0).fit_transform(StandardScaler().fit_transform(Zg))
+aucDense = roc_auc_score(yg, cross_val_predict(LogisticRegression(C=1.0, max_iter=400),
+                         svd, yg, cv=cv, method="decision_function", n_jobs=5))
+# (3) shuffle-label null for the trained probe
+aucNull = roc_auc_score(rng.permutation(yg),
+                        cross_val_predict(LogisticRegression(C=1.0, max_iter=200),
+                        svd, rng.permutation(yg), cv=cv, method="decision_function", n_jobs=5))
+best_single = float(max(auc.max(), 1 - auc.min()))
+print(f"\n=== TRAINED echo-vs-synthesis probe (held-out 5-fold CV AUROC) ===")
+print(f"  L1-sparse  : {aucL1:.3f}  ({nz} features selected)")
+print(f"  dense SVD256: {aucDense:.3f}   shuffle-null: {aucNull:.3f}   best-single-feature: {best_single:.3f}")
+print(f"  gap (dense - best-single) = {aucDense - best_single:+.3f}  (large => DISTRIBUTED, not monosemantic)")
+print("  ELABORATION features (+coef, model reasons beyond prompt):")
+for f in elab: print(f"    F{f}: coef={coef[list(active).index(f)]:+.2f} {topwords(f,1)[:5]}")
+print("  RESTATEMENT features (-coef, model restates given IDs):")
+for f in rest: print(f"    F{f}: coef={coef[list(active).index(f)]:+.2f} {topwords(f,0)[:5]}")
+probe = {"cv_auroc_l1_sparse": round(float(aucL1), 3), "n_features_selected": nz,
+         "cv_auroc_dense_svd256": round(float(aucDense), 3), "cv_auroc_shuffle_null": round(float(aucNull), 3),
+         "best_single_feature_auroc": round(best_single, 3),
+         "gap_dense_minus_single": round(float(aucDense - best_single), 3),
+         "elaboration_features": {int(f): {"coef": round(float(coef[list(active).index(f)]), 3),
+                                           "words": topwords(f, 1)} for f in elab},
+         "restatement_features": {int(f): {"coef": round(float(coef[list(active).index(f)]), 3),
+                                           "words": topwords(f, 0)} for f in rest}}
 out = {"n_synth": npos, "n_echo": nneg, "null_auc_max": round(float(aucn.max()), 3),
        "synthesis_features": {int(f): {"auroc": round(float(auc[f]), 3), "words": topwords(f, 1)} for f in synth_f},
-       "echo_features": {int(f): {"auroc": round(float(auc[f]), 3), "words": topwords(f, 0)} for f in echo_f}}
+       "echo_features": {int(f): {"auroc": round(float(auc[f]), 3), "words": topwords(f, 0)} for f in echo_f},
+       "trained_probe": probe}
 json.dump(out, open(a.out, "w"), indent=2); print(f"[wrote] {a.out}")
