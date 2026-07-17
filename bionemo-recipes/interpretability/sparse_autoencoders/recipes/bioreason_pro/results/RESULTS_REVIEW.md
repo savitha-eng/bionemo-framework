@@ -143,3 +143,15 @@ These are among the 144 synthesis features (not top-10 by AUROC, so omitted abov
 - **vs Jared (honest differences):** enrichment = Fisher-exact (Jared uses GSEA pre-rank); structural mapping = AUROC (Jared uses Fisher/MWU/Spearman); dim-matching = SAE-SVD-256 vs raw-PCA-256 in probe_v2/contact (interpro_probe had a raw-full mismatch, superseded).
 - **L32 vs L30:** L32 synapse steering = 0% genuine (LLM-judge) at all doses -> L30 is the steering sweet spot; Jared's 'deeper=more steerable' does not hold here.
 - **Matched-control steering:** synapse 67% genuine vs load-matched control 0% -> feature-SPECIFIC (see charts/matched_control.png).
+
+## Winner's-curse correction (adopted from Polina's evo2-SAE PR #1629; Jared = gold standard)
+Per-feature detector AUROCs above are max-over-features (optimistically biased). Applying `best_single_train_test` (select best feature on TRAIN, report TEST AUROC):
+| domain | biased | corrected | Δ |
+|---|---|---|---|
+| kinase | 0.996 | 0.983 | -0.013 |
+| ARM | 0.979 | 0.975 | -0.004 |
+| WD40 | 0.993 | 0.983 | -0.010 |
+| homeodomain | 0.938 | 0.943 | +0.005 |
+| P-loop | 0.976 | 0.978 | +0.002 |
+
+→ **detectors are robust** (drop only ~0.01) — the biology is real, redundantly encoded across a few features per domain. Other Polina primitives already matched: full-dict AUROC, linear probes, shuffle-null, Mann-Whitney ranks, dead-latent std floor.
