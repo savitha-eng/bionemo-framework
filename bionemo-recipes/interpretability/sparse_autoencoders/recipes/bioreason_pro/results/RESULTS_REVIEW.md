@@ -37,7 +37,7 @@ Single illustrated page to review the analysis. **Layer L30** for all feature/st
 | F1344 | GO:0006355 | GO:GO:0006355 | 8e-99 | 0.754 |
 | F25270 | GO:0005634 | GO:GO:0005634 | 6e-97 | 0.68 |
 
-(Full table: `feature_biology_table.json`.) This is the core bio result: the SAE isolates specific, statistically-definitive structure/function features.
+(Full table: `feature_biology_table.json`. Term assignment = Fisher-exact enrichment on each feature's top-10%% proteins, FDR<0.01 Bonferroni. NOTE: the AUROC column is the biased full-data per-feature AUROC, not winner's-curse-corrected — see correction table below, ~0.01 inflation.) This is the core bio result: the SAE isolates specific, statistically-definitive structure/function features.
 
  — robust, Jared/InterPLM-comparable
 ![enrichment](charts/enrichment.png)
@@ -138,7 +138,7 @@ These are among the 144 synthesis features (not top-10 by AUROC, so omitted abov
 
 
 ## Rigor notes (methodology)
-- **Two-tier gap:** structure MONOSEMANTIC (overlap-AUROC 0.98 = trained-probe 0.99 -> one feature = one domain); GO function DISTRIBUTED (0.76 vs 0.81).
+- **Two-tier gap:** structure MONOSEMANTIC (overlap-AUROC 0.98 = trained-probe 0.99 -> one feature = one domain); GO function WEAK in residues (0.76-0.81 vs structure 0.99; mild gap).
 - **Regularization (C) robustness:** trained probes used C=1.0 (default); swept C=0.01-10 -> SAE=raw=random~0.99 at every C, so the 'structure saturated' conclusion is robust to regularization (not a tuning artifact).
 - **vs Jared (honest differences):** enrichment = Fisher-exact (Jared uses GSEA pre-rank); structural mapping = AUROC (Jared uses Fisher/MWU/Spearman); dim-matching = SAE-SVD-256 vs raw-PCA-256 in probe_v2/contact (interpro_probe had a raw-full mismatch, superseded).
 - **L32 vs L30:** L32 synapse steering = 0% genuine (LLM-judge) at all doses -> L30 is the steering sweet spot; Jared's 'deeper=more steerable' does not hold here.
