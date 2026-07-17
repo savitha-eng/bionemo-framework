@@ -11,6 +11,7 @@ Usage: steer_generation.py --feature 4777 --layer 16 --sae <ckpt> --concept-word
 """
 import argparse, sys, re
 from pathlib import Path
+import numpy as np
 import torch
 from torch.utils.data import DataLoader
 
@@ -40,6 +41,10 @@ def main():
     p.add_argument("--save-gens", default="", help="JSONL path: dump full generated text + coherence per "
                    "(protein,alpha) for the LLM-judge (concept-present + real-reasoning rating)")
     p.add_argument("--num-proteins", type=int, default=8)
+    p.add_argument("--steer-after", type=int, default=0,
+                   help="DECISION POINT: start clamping only after N generated tokens (Goodfire: token-0 steering fails)")
+    p.add_argument("--scale-file", default="", help="npz w/ per-feature scale (mean_active) -> alphas become p95-style multipliers")
+    p.add_argument("--scale-key", default="ma_text", help="npz key for per-feature scale (ma_text | ma_protein)")
     p.add_argument("--split", default="validation")
     p.add_argument("--max-new", type=int, default=180)
     p.add_argument("--ckpt-dir", default=DEFAULT_CKPT)
@@ -64,6 +69,12 @@ def main():
         return (W[:, f] if col_layout else W[f]).float().to(dev)
     feats = [int(x) for x in args.features.split(",") if x.strip() != ""] if args.features else [args.feature]
     feats_t = torch.tensor(feats, device=dev)
+    if args.scale_file:                                              # p95-style per-feature dose (Jared): alpha := mult * scale[f]
+        _sc = np.load(args.scale_file)[args.scale_key]
+        scale_vec = torch.tensor([float(_sc[f]) for f in feats], device=dev)
+        print(f"[gen-steer] p95-style dosing: per-feature scale({args.scale_key})={[round(float(x),2) for x in scale_vec]}")
+    else:
+        scale_vec = torch.ones(len(feats), device=dev)
     D_mat = torch.stack([dir_of(f) for f in feats], 0)               # [n_feat, 2560]
     if args.random_dirs:                                             # matched-norm random control
         g = torch.Generator(device=dev).manual_seed(0)
@@ -81,12 +92,15 @@ def main():
     THINK_O = tok.convert_tokens_to_ids("<think>")
 
     layer = model.text_model.model.layers[args.layer]
-    state = {"alpha": 0.0}
+    state = {"alpha": 0.0, "gen_step": 0}
     def hook(module, inp, out):
         if state["alpha"] == 0.0:
             return out
         h = out[0] if isinstance(out, tuple) else out
         if h.shape[1] == 1:                                  # generation step (not the prompt prefill)
+            state["gen_step"] += 1
+            if state["gen_step"] <= args.steer_after:        # DECISION POINT: don't clamp the first N tokens
+                return out
             hf = h.float()
             # SAE has normalize_input=True: activations z and decoder dirs d_f live in NORMALIZED (per-token
             # zero-mean/unit-var) space. So the injected delta must be DENORMALIZED (x std) before adding to the
@@ -94,7 +108,8 @@ def main():
             _, info = sae._normalize(hf); std = info["std"]              # [.., 1] per-token std
             if args.clamp_mode == "set":                     # clamp EACH feature's activation to alpha (Jared-style)
                 z = sae.encode(hf)[..., feats_t]                         # [.., n_feat] normalized-space activations
-                delta = ((state["alpha"] - z).unsqueeze(-1) * D_mat).sum(-2)  # normalized-space delta
+                target = state["alpha"] * scale_vec                      # per-feature p95-style target (or scalar if scale=1)
+                delta = ((target - z).unsqueeze(-1) * D_mat).sum(-2)     # normalized-space delta
                 h = h + (delta * std).to(h.dtype)                        # denormalize -> raw residual space
             else:                                            # crude activation addition along the subspace
                 h = h + (state["alpha"] * D_sum * std).to(h.dtype)
@@ -147,7 +162,7 @@ def main():
         kw = {k: batch[k] for k in passthru if k in batch}
         gen = {}; ntot += 1
         for a in alphas:
-            state["alpha"] = a
+            state["alpha"] = a; state["gen_step"] = 0            # reset decision-point counter each generation
             with torch.no_grad():
                 out = model.generate(input_ids=inp, attention_mask=am, max_new_tokens=args.max_new,
                                      do_sample=False, **kw)

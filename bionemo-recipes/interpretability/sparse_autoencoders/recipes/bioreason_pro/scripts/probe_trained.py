@@ -21,6 +21,7 @@ from sae.activation_store import shard_table_to_array
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import roc_auc_score
+from sklearn.decomposition import TruncatedSVD
 
 sae_p, store, layer, BAND = sys.argv[1], sys.argv[2], int(sys.argv[3]), sys.argv[4]
 out = sys.argv[5] if len(sys.argv) > 5 else f"probe_{BAND}_l{layer}.json"
@@ -72,11 +73,20 @@ SAE = (ss / den).cpu().numpy(); RAW = (rr / den).cpu().numpy(); RND = (rn / den)
 keep = cnt.cpu().numpy() > 0
 print(f"[probe] pooled {int(keep.sum())}/{nP} proteins with band tokens; SAE dim {H}, raw dim {D}")
 
-CONCEPTS = {"mitochondrion": "GO:0005739", "nucleus": "GO:0005634", "plasma membrane": "GO:0005886",
-    "cytoplasm": "GO:0005737", "kinase activity": "GO:0016301", "transporter activity": "GO:0005215",
-    "oxidoreductase activity": "GO:0016491", "DNA binding": "GO:0003677", "transcription regulator": "GO:0140110"}
+CONCEPTS = {  # DESIGNED labels — incl. the ones we validated/steered (reproduction, microbial defense)
+    "reproduction": "GO:0000003", "sexual reproduction": "GO:0019953",
+    "defense resp. to bacterium": "GO:0042742", "defense resp. to fungus": "GO:0050832",
+    "catalytic (enzyme)": "GO:0003824", "structural molecule": "GO:0005198",
+    "mitochondrion": "GO:0005739", "nucleus": "GO:0005634", "plasma membrane": "GO:0005886",
+    "kinase activity": "GO:0016301", "transporter activity": "GO:0005215", "oxidoreductase": "GO:0016491"}
 rng = np.random.default_rng(0); perm = rng.permutation(np.where(keep)[0]); h = len(perm) // 2
 tr, te = perm[:h], perm[h:]
+# dimensionality-matched SAE: SVD-compress the SAE to a compact subspace — the FAIR SAE-vs-raw test
+# (does a small SAE subspace recover raw? Jared's §7.2 used SVD-256). 256 << raw's 2560, a strict test.
+SVD_K = 256
+print(f"[probe] SVD-compressing SAE {H} -> {SVD_K} dims...", flush=True)
+svd = TruncatedSVD(n_components=SVD_K, random_state=0).fit(SAE[tr])
+SAE_SVD = svd.transform(SAE)
 
 def probe(Xf, y, sparse=False):
     sc = StandardScaler().fit(Xf[tr]); Xs = sc.transform(Xf)
@@ -90,18 +100,22 @@ def probe(Xf, y, sparse=False):
     return round(float(auc), 3), nnz
 
 results = {}
-print(f"\n{'concept':22} {'SAE(dense)':11} {'SAE(sparse)':16} {'raw':7} {'random':7}")
+print(f"\n{'concept':26} {'npos':>5} {'SAE-svd(matched)':16} {'SAE-sparse':13} {'raw':7} {'random':7}")
 for nm, t in CONCEPTS.items():
     y = np.array([1 if t in goids[i] else 0 for i in range(nP)])
+    npos = int(y[perm].sum())
     if y[tr].sum() < 5 or y[te].sum() < 5:
         continue
-    a_sae, _ = probe(SAE, y); a_sp, nnz = probe(SAE, y, sparse=True)
+    a_svd, _ = probe(SAE_SVD, y)                       # SAE at matched dim -> fair vs raw
+    a_sp, nnz = probe(SAE, y, sparse=True)             # sparse SAE -> how few features recover it
     a_raw, _ = probe(RAW, y); a_rnd, _ = probe(RND, y)
-    results[nm] = {"go": t, "sae_dense": a_sae, "sae_sparse": a_sp, "sae_sparse_nfeat": nnz, "raw": a_raw, "random": a_rnd}
-    print(f"{nm:22} {a_sae:<11} {str(a_sp)+' ('+str(nnz)+'f)':16} {a_raw:<7} {a_rnd:<7}")
+    results[nm] = {"go": t, "npos": npos, "sae_svd_matched": a_svd, "sae_sparse": a_sp,
+                   "sae_sparse_nfeat": nnz, "raw": a_raw, "random": a_rnd}
+    print(f"{nm:26} {npos:>5} {a_svd:<16} {str(a_sp)+' ('+str(nnz)+'f)':13} {a_raw:<7} {a_rnd:<7}")
 
 mean = lambda k: round(float(np.mean([r[k] for r in results.values()])), 3)
-print(f"\nMEAN AUROC: SAE-dense {mean('sae_dense')} | SAE-sparse {mean('sae_sparse')} | raw {mean('raw')} | random {mean('random')}")
+print(f"\nMEAN AUROC (fair): SAE-svd-matched {mean('sae_svd_matched')} | SAE-sparse {mean('sae_sparse')} | "
+      f"raw {mean('raw')} | random {mean('random')}")
 Path(out).write_text(json.dumps({"band": BAND, "layer": layer, "results": results,
-    "mean": {k: mean(k) for k in ["sae_dense", "sae_sparse", "raw", "random"]}}, indent=2))
+    "mean": {k: mean(k) for k in ["sae_svd_matched", "sae_sparse", "raw", "random"]}}, indent=2))
 print(f"[wrote] {out}")

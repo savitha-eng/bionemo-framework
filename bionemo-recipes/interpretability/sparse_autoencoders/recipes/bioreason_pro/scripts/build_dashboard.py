@@ -93,7 +93,7 @@ def main():  # noqa: D103
     out.mkdir(parents=True, exist_ok=True)
     ck = torch.load(args.sae, map_location="cpu")
     sae = TopKSAE(**ck["model_config"])
-    sae.load_state_dict({(k[7:] if k.startswith("module.") else k):v for k,v in ck["model_state_dict"].items()})
+    sae.load_state_dict({(k[7:] if k.startswith("module.") else k):v for k,v in ck["model_state_dict"].items()}, strict=False)
     sae = sae.to(dev).eval()
     H = sae.hidden_dim
 

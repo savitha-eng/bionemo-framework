@@ -11,6 +11,7 @@ interpretable structural features? Self-contained results + experimental details
 | SAE | `sae-l30-exp16-balanced`, TopK, layer 30 residual, **input 2560 → 40,960 features (expansion 16×), top-k 128** |
 | Data | 8,000 held-out-distribution proteins (`phase3_subset_8k/L30_subset8k`); AlphaFold v6 structures for 7,613 (95%) |
 | Band probed | **protein / residue band** (ESM3 per-residue embeddings), not the reasoning band |
+| Layer | **L30 residual** for the per-feature + structural probes. Decodability was **swept L16/28/30/32** (below) → structure is **flat-high at every depth**, so L30 is not special. *Caveat:* the paper reads ESM3 pre-projection / earlier residues; our probes are on the LLM residual stream. |
 | Representations compared | **SAE-svd256** (SAE 40,960→256 via SVD) vs **raw** (2560-d, or PCA-256) vs **random-SAE** |
 | Probe | logistic regression, held-out AUROC; per-feature analysis uses per-feature AUROC (rank-sum) |
 
@@ -50,6 +51,21 @@ interpretable structural features? Self-contained results + experimental details
 
 **raw beats SAE at every matched dimension** → "SAE loses on 3D contact" is real, not a compression artifact.
 
+**Layer sweep (does structure peak at a depth, or is it flat?):** InterPro-domain decodability (mean over 60 domains) across the LLM residual stream —
+
+| layer | SAE-svd256 | raw | random |
+|---|---|---|---|
+| L16 | 0.991 | 0.990 | 0.979 |
+| L28 | 0.983 | 0.985 | 0.968 |
+| L30 | 0.990 | 0.989 | 0.981 |
+| L32 | 0.983 | 0.984 | 0.966 |
+
+![layer decodability](charts/layer_decodability.png)
+
+**Flat-high (~0.98–0.99) at every depth, and SAE ≈ raw at every depth.** Domain identity is carried from the
+ESM3 input essentially unchanged through the LLM stack — it doesn't "build up" with depth, so **the L30 result
+is not a layer artifact**. (The tiny L28/L32 dip is within noise.) Consistent with "the encoder is the ceiling."
+
 ![per-residue burial example](charts/contact_example.png)
 *What "buried vs surface" means: one protein's per-residue 3D contact number (red = buried core).*
 
@@ -87,11 +103,37 @@ don't give. So on the residue band the SAE adds **interpretability** (nameable s
 it adds no **decodability**. (Buried-vs-surface per-feature number pending — the first pass had an AUROC bug,
 re-running.)
 
+## Result 3 — Does the residue feature "reach into" the reasoning? (text↔structure) — NO (it's prompt-mediated)
+
+F16026 (kinase-catalytic residues, 0.98) fires **only on protein residues, never on reasoning tokens**. Its 50
+proteins' reasoning traces *are* consistently about kinase catalysis — but this is **not feature-level fusion**:
+
+| what the reasoning says | echo or synthesis? | evidence |
+|---|---|---|
+| **identity** — "it's a protein kinase domain" | **echo** of the prompt | 29/50 proteins have the InterPro kinase annotation *in the prompt*; reasoning cites the IPR IDs verbatim |
+| **mechanism** — "bilobal fold, phosphotransfer, activation loop, catalytic scaffold" | **novel** (not copied) | ~83–90% of reasoning words absent from prompt; mechanism terms not in the given annotation |
+
+**Interpretation:** the prompt hands the model the kinase *label*; the model elaborates generic textbook kinase
+*mechanism* from that label (**label-conditioned recall, not residue-conditioned inference**). F16026 (residue
+channel) and the reasoning (text channel) are **two independent descendants of "this is a kinase"** — a fact the
+model got from the **prompt**, not from residues feeding reasoning. Consistent with **no feature-level cross-modal
+fusion** (fusion, where it exists, is attention-mediated). So the residue-band structural features are real and
+nameable, but they do **not** demonstrate structure→reasoning information flow at the feature level.
+
+**Note on the paper:** the paper did **not** run an InterPro-domain *probe*. It used InterPro domains only to
+*group per-residue attention scores by domain* (§4.5.5–6, eEFSec/CFAP61 case studies). The decodability probe and
+per-feature structural analysis here are **our additions**, not a reproduction of a paper result.
+
 ## Bottom line
 - **Structure lives in the ESM3 residues at ceiling** (domains ~0.99, 3D burial ~0.89); the **SAE re-expresses
   it, never beats raw.**
-- Contrast: **function (GO) is weak in residues (~0.83) but ~0.95 in the reasoning band** → structure in
-  residues, function in reasoning.
+- Contrast: **function (GO) is weakly but *non-circularly* decodable from residues (~0.83, above the 0.79
+  random baseline).** ⚠️ **The reasoning-band GO "~0.95" is LEAKAGE, not a representation result** — a *random*
+  projection of the reasoning band also scores ~0.957 (trained probe, L16), because the model's reasoning text
+  literally states the function it is predicting. So GO is trivially decodable there by *anything*; it is NOT
+  evidence the reasoning representation encodes function. Non-circular functional signal lives *only* in the
+  protein residues (weak). [corrected per Jared's random-baseline discipline; prior "function emerges in
+  reasoning ~0.95" claim retracted.]
 - The **SAE's interpretability value is in the reasoning band**, not the residues (see the reasoning-feature +
   steering + synthesis results in `RESULTS.md`).
 
