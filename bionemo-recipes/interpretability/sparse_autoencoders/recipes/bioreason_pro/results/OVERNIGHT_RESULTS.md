@@ -114,3 +114,7 @@ Synapse cluster vs a NON-synapse cluster matched on mean_active (load) + density
 - **Real synapse cluster: injects (1.0 synapse-hits @ mult=6).**
 - **Matched-load control cluster: 0.0 synapse-hits at EVERY dose.**
 - → The steering effect is **FEATURE-SPECIFIC**, not "any high-load feature clamped hard." Jared's strongest control passes. (LLM-judge confirmation running.)
+
+## FINAL steering controls
+- **Matched-control-feature (Jared's strongest specificity control) — PASSES, LLM-judge-confirmed:** matched-load non-synapse cluster = **0% genuine at every dose**; real synapse cluster = 67% genuine. Steering is FEATURE-SPECIFIC.
+- **L32 vs L30 (deeper-layer test):** L32 synapse cluster does NOT steer (word-counts 0.0-0.1, traces paraphrase without injecting, degenerates at abs=60). **L30 remains the sweet spot** — Jared's "steerability emerges deeper" does NOT hold here (caveat: L32 used absolute dose, not p95-calibrated).
