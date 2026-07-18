@@ -167,6 +167,32 @@ level fusion** (§6 proves this).
 
 ---
 
+## 7. VALIDATED FEATURE CATALOG (the deliverable — `validated_feature_catalog_l30.json`)
+
+Only features that survive every rigor gate. Three tiers:
+
+**A. Bio structural — localized AND robust (59 features):** domain-F1 ≥ 0.7 (fires *inside* the domain, per
+Polina) AND train/test drop ≤ 0.05 (not winner's-curse). These are the SAE's genuine monosemantic wins:
+
+| feature | domain-F1 | test AUROC | domain |
+|---|---|---|---|
+| F18393 / F33072 | 0.98 / 0.95 | 1.00 | Kinesin motor |
+| F13950 / F38505 | 0.96 / 0.95 | 1.00 | RNA-binding |
+| F30032 / F18647 | 0.95 / 0.93 | 0.98 | Protein kinase |
+| F18162 | 0.93 | 1.00 | HLH DNA-binding |
+| F8277 | 0.93 | 0.98 | Zinc-finger C2H2 |
+
+**B. Reasoning cross-fire — validated (13 pairs):** bio side domain-F1 ≥ 0.5 AND reasoning partner label
+validated against its top proteins (19/19 matched). Concept-localized in *both* modalities (but correlational,
+not causal per §6): kinesin F18393↔F15673 "Motor", collagen F4888↔F29088, LRR F16964↔F4783, histone F11836↔F21642.
+
+**C. Clean synthesis — sparse + labeled (14 features):** freq ≤ 2%, auto-labeled, fire more on elaboration than
+restatement: F11654 calcium, F16620 helicase, F29986 LDLR, F7351 membrane, F35498 dynein, F11877 OGDH, F29616 Ig-fold.
+⚠️ Free-floating labels are ~⅓ enrichment-validated (weaker than tier B); "synthesis" globally is SAE≈raw (§4).
+
+**What's honestly NOT in the catalog:** GPCR/P450 bio features (domain-F1 only 0.22–0.51 — per-protein correlates,
+not localized); the ~715 structural features that pass AUROC but fail domain-F1; the retracted dense synthesis features.
+
 ## The narrative in one paragraph
 
 **The SAE's value is interpretability, not decodability** — it never beats raw on decoding, but isolates clean
