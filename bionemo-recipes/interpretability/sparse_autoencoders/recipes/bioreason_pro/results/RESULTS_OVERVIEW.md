@@ -193,6 +193,18 @@ restatement: F11654 calcium, F16620 helicase, F29986 LDLR, F7351 membrane, F3549
 **What's honestly NOT in the catalog:** GPCR/P450 bio features (domain-F1 only 0.22–0.51 — per-protein correlates,
 not localized); the ~715 structural features that pass AUROC but fail domain-F1; the retracted dense synthesis features.
 
+## 8. The task is PROMPT-ANCHORED (data-only faithfulness, 7,365 val proteins) ⭐
+
+The prompt hands the model a `go_pred` GO-GPT speculation. Measuring it against ground truth:
+- **`go_pred` already contains 68% of the ground-truth GO terms** (mean recall); **≥80% of truth for 47% of proteins**.
+- The final answer's GO terms echo `go_pred` at 38%.
+
+**So the model largely *refines a given speculation*, not derives function from scratch.** This single fact
+**mechanistically explains the three central negatives**: (a) **answer-change-negative** — you can't steer a
+prediction that's ~⅔ handed to you; (b) **structure causally inert** (§6) — the model reasons from the given
+annotations, not the residues; (c) **echo-heavy reasoning** (§4). The reasoning adds *mechanism/elaboration*
+(the synthesis features) on top of an answer that is substantially pre-specified by the prompt.
+
 ## The narrative in one paragraph
 
 **The SAE's value is interpretability, not decodability** — it never beats raw on decoding, but isolates clean
