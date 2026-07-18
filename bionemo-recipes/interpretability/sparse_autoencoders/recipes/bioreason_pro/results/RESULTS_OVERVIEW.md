@@ -109,11 +109,23 @@ regenerates the clean list from cached activations).
 **Echo features** (restate given IDs): fire on IPR/GO accession strings. **F35387 is excluded — it fires on the
 `<think>` assistant-start token (positional, not biology)**; the freq filter alone doesn't catch positional features.
 
-**Trained L1 probe (echo vs synthesis): CV AUROC 0.932** (dense-SVD256 0.914, best-single 0.71, shuffle-null 0.505).
-⚠️ **Uncontrolled — do NOT over-read.** I did not run the raw/dense baseline and did not control the surface
-confound (echo tokens ARE accession-ID strings, synthesis tokens ARE prose), so 0.93 may just decode token
-*surface-type*, not a "distributed synthesis representation." The earlier "synthesis is distributed" claim is
-**withdrawn pending** (a) raw-residual baseline and (b) a same-token-type control.
+**Trained probe (echo vs synthesis): CV AUROC 0.932** (dense-SVD256 0.914, best-single 0.71, shuffle-null 0.505).
+**Controls now run (`echo_synthesis_probe.py`):**
+- **raw-residual baseline = 0.916 ≈ SAE 0.914** → **the SAE adds nothing over raw.** Echo-vs-synthesis is NOT an
+  SAE-feature story — the distinction lives in the residual stream itself. (So "distributed *SAE* representation"
+  is **withdrawn** — SAE ≈ raw.)
+- **same-token-type = 0.916 (no collapse)** → it is **NOT** the accession-ID surface confound; even restricting to
+  ordinary-word tokens on both sides, echo-vs-synthesis stays decodable at 0.916. So the distinction is real, but
+  it likely reflects **copy-vs-generate token mechanics** (a residual-stream property), not a special SAE concept.
+
+**Net:** the *clean individual features* (F11654 calcium, F16620 helicase…) remain useful interpretable handles,
+but "synthesis" as a global probe is a **residual-stream property (SAE ≈ raw), not an SAE-feature phenomenon.**
+
+**Auto-interp validation** (`autointerp_validate.py` — do a labeled feature's top proteins match its label?):
+**cross-fire partners 19/19 match** (anchored to bio features: F15673 "Motor"→P-loop NTPase/kinesin, F13384→
+oxidoreductase/P450, F4783→LRR); **free-floating synthesis labels are shakier** (~⅓ clean-agree, ~½ partial, ~⅕
+mismatch — e.g. F423 "Response regulator" but top proteins are GPCRs). **Auto-interp labels are hypotheses, not
+ground truth** — anchored ones validate, free-floating ones need the enrichment cross-check.
 
 ## 5. Cross-modal alignment — two senses (this is where "co-fire" lives)
 
