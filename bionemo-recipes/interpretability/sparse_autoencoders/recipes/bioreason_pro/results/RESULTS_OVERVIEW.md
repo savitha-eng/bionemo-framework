@@ -125,10 +125,17 @@ vector Pearson-correlated (across 8k proteins) against every reasoning feature's
 
 **Sense B — same-*feature* co-firing** (SAE-V φ / Eq.7): does ONE feature fire in both bands? **NULL.**
 
-**Significance:** the SAE basis is **concept-organized across modalities** (parallel handles for "GPCR-ness" in
-residues and in text) — a real representational result. **But** it is a *population correlation, prompt-mediated*
-(both features are children of the annotation the prompt hands the model), **not causal and not feature-level
-fusion.** The 2×2 steering (§6) is the decisive causal test of this.
+**Cross-modal LOCALIZATION (SAE-V spirit — the tightened version, `crossmodal_localization`):** per-protein
+pooled correlation can be an artifact (same critique as domain-F1). So require *localization on both sides*:
+bio feature domain-F1 ≥ 0.5 (fires on the domain residues) AND reasoning partner labeled on-concept (auto-interp).
+**13/20 pairs pass both** — e.g. F18393 kinesin (F1 0.98) → F15673 "Motor Function", F4888 collagen (0.92) →
+F29088 "Collagen Binding", F16964 LRR (0.80) → F4783 "Leucine-rich repeat", F11836 histone (0.63) → F21642
+"H2A-H2B Dimer". Caveat: **GPCR bio features have LOW domain-F1 (0.22–0.51)** — that alignment is weak on the
+bio side despite high r.
+
+**Significance:** the SAE basis is **concept-localized across modalities** (13/20 pairs, both sides) — a real,
+tightened representational result. **But** it is *correlational, prompt-mediated*, **not causal and not feature-
+level fusion** (§6 proves this).
 
 ## 6. Steering — causal tests
 
@@ -136,9 +143,15 @@ fusion.** The 2×2 steering (§6) is the decisive causal test of this.
   → reasoning features causally **write** their concept.
 - **Answer-change: NEGATIVE** — steering shifts the reasoning *language*, not the final GO prediction.
 - **L32 dose-controlled: 0%** (p95 per-feature dosing) → **L30 is the steering sweet spot**, earned not assumed.
-- **Cross-modal 2×2 (v1, single features):** residue-injection main-effect ≈ 0 → structure causally inert — BUT
-  a *null-on-null* (the single co-firing reasoning feature was also a weak writer). **v2 running:** reasoning arm
-  = co-firing **cluster** (Q1) on concept-**absent** proteins (Q2) — the decisive version. _[verdict pending]_
+- **Cross-modal 2×2 (v2, DECISIVE — cluster writer + concept-absent proteins):** the reasoning cluster now
+  works as a writer, cleanly isolating the residue effect. **P450: reason main-effect +49** (29 coherent
+  cytochrome/heme words vs 3 baseline), **residue main-effect −3 (≈0)**; **GPCR: reason +4, residue +0**. →
+  **the reasoning feature causally writes the concept; the structure/residue feature is causally inert.** The
+  cross-modal alignment (§5) is prompt-mediated, NOT a causal structure→reasoning flow. (D12/D13_*_2x2_cluster)
+- **S2 — does a domain-F1-LOCALIZED structure feature rescue causality? NO.** Injecting F18393 (kinesin,
+  domain-F1 **0.98**) on residues: residue main-effect **+2** (noise, 12 proteins); F13950 (RNA-binding, 0.96):
+  **+0**. So it's not that F7369 was poorly localized — **even a perfectly localized structure feature does not
+  feed reasoning.** The read/write dissociation is fundamental. (D14/D15_*_2x2_localized)
 
 ---
 
