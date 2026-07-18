@@ -90,6 +90,7 @@ candset = set(cand.tolist()); y = synth[cand].astype(np.int8)  # 1=synthesis, 0=
 ck = torch.load(a.sae, map_location="cpu"); sae = TopKSAE(**ck["model_config"]).to(dev).eval()
 sae.load_state_dict({(k[7:] if k.startswith("module.") else k): v for k, v in ck["model_state_dict"].items()}, strict=False)
 H = sae.hidden_dim; Z = np.zeros((len(cand), H), np.float16); pos = {int(r): i for i, r in enumerate(cand)}
+Xraw = None                                                        # CONTROL: raw residual at the same tokens (SAE-vs-raw baseline)
 row0 = 0; got = np.zeros(len(cand), bool)
 order = sorted(glob.glob(f"{a.store}/layer{a.layer}/shard_*.parquet"), key=lambda q: int(Path(q).stem.split("_")[1]))
 with torch.no_grad():
@@ -97,12 +98,20 @@ with torch.no_grad():
         nrows = pq.read_metadata(sp).num_rows
         if si % a.shard_stride == 0:
             X = shard_table_to_array(pq.read_table(sp)); n = X.shape[0]
+            if Xraw is None: Xraw = np.zeros((len(cand), X.shape[1]), np.float16)
             lr = cand[(cand >= row0) & (cand < row0 + n)]
             if len(lr):
-                enc = sae.encode(torch.from_numpy(np.ascontiguousarray(X[lr - row0])).to(dev)).half().cpu().numpy()
-                for j, gr in enumerate(lr): Z[pos[int(gr)]] = enc[j]; got[pos[int(gr)]] = True
+                xb = torch.from_numpy(np.ascontiguousarray(X[lr - row0])).to(dev)
+                enc = sae.encode(xb).half().cpu().numpy()
+                for j, gr in enumerate(lr): Z[pos[int(gr)]] = enc[j]; Xraw[pos[int(gr)]] = X[lr[j] - row0]; got[pos[int(gr)]] = True
         row0 += nrows
         if si % 30 == 0: print(f"  gather {si}/{len(order)}", flush=True)
+# CONTROL flag: is each candidate token an accession-like string (IPR/GO id, numeric) vs an ordinary word?
+import re as _re
+def _is_id(w):
+    w = str(w).lower()
+    return bool(_re.match(r"(ipr|go)\d", w)) or w.isdigit() or (len(w) >= 4 and sum(c.isdigit() for c in w) / len(w) > 0.4)
+is_id_cand = np.array([_is_id(word_row[cand[i]]) for i in range(len(cand))], bool)
 Zg = Z[got].astype(np.float32); yg = y[got]
 npos, nneg = int(yg.sum()), int((1 - yg).sum())
 print(f"[echo-synth] gathered {int(got.sum()):,} tokens ({npos} synth / {nneg} echo) x {H}; ranking...", flush=True)
@@ -168,10 +177,34 @@ aucNull = roc_auc_score(rng.permutation(yg),
                         cross_val_predict(LogisticRegression(C=1.0, max_iter=200),
                         svd, rng.permutation(yg), cv=cv, method="decision_function", n_jobs=5))
 best_single = float(max(auc.max(), 1 - auc.min()))
+# ---- CONTROL 1: RAW-residual baseline. If raw decodes echo-vs-synth as well as the SAE, the SAE adds
+# nothing (the info is just in the residual). Only if SAE > raw is there an SAE-specific story. ----
+Xraw_g = Xraw[got].astype(np.float32)
+svd_raw = TruncatedSVD(256, random_state=0).fit_transform(StandardScaler().fit_transform(Xraw_g)) \
+    if Xraw_g.shape[1] > 256 else StandardScaler().fit_transform(Xraw_g)
+aucRaw = roc_auc_score(yg, cross_val_predict(LogisticRegression(C=1.0, max_iter=400),
+                       svd_raw, yg, cv=cv, method="decision_function", n_jobs=5))
+# ---- CONTROL 2: SAME-TOKEN-TYPE. Echo tokens ARE accession-ID strings, synth tokens ARE prose -> the probe
+# could be decoding surface token-type, not 'synthesis'. Restrict to ORDINARY-WORD tokens (drop id-like) on
+# BOTH sides; if AUROC collapses to ~chance, the signal was the surface confound. ----
+is_id_g = is_id_cand[got]
+kw = ~is_id_g
+aucSame = np.nan; n_same_pos = n_same_neg = 0
+if kw.sum() > 50 and yg[kw].sum() >= 10 and (1 - yg[kw]).sum() >= 10:
+    n_same_pos, n_same_neg = int(yg[kw].sum()), int((1 - yg[kw]).sum())
+    svd_s = TruncatedSVD(256, random_state=0).fit_transform(StandardScaler().fit_transform(Zg[kw]))
+    aucSame = roc_auc_score(yg[kw], cross_val_predict(LogisticRegression(C=1.0, max_iter=400),
+                            svd_s, yg[kw], cv=StratifiedKFold(5, shuffle=True, random_state=0),
+                            method="decision_function", n_jobs=5))
+frac_echo_id = float(is_id_g[yg == 0].mean()); frac_syn_id = float(is_id_g[yg == 1].mean())
 print(f"\n=== TRAINED echo-vs-synthesis probe (held-out 5-fold CV AUROC) ===")
 print(f"  L1-sparse  : {aucL1:.3f}  ({nz} features selected)")
 print(f"  dense SVD256: {aucDense:.3f}   shuffle-null: {aucNull:.3f}   best-single-feature: {best_single:.3f}")
 print(f"  gap (dense - best-single) = {aucDense - best_single:+.3f}  (large => DISTRIBUTED, not monosemantic)")
+print(f"  CONTROL raw-residual SVD256: {aucRaw:.3f}   (if ~= SAE {aucDense:.3f}, SAE adds nothing)")
+print(f"  CONTROL same-token-type (ordinary words only, {n_same_pos}syn/{n_same_neg}echo): {aucSame:.3f}")
+print(f"    (echo tokens that are id-like: {frac_echo_id:.0%}; synth id-like: {frac_syn_id:.0%}. If same-type "
+      f"AUROC collapses toward 0.5, the 0.93 was surface token-type, not a synthesis representation.)")
 print("  ELABORATION features (+coef, model reasons beyond prompt):")
 for f in elab: print(f"    F{f}: coef={coef[list(active).index(f)]:+.2f} {topwords(f,1)[:5]}")
 print("  RESTATEMENT features (-coef, model restates given IDs):")
@@ -179,6 +212,9 @@ for f in rest: print(f"    F{f}: coef={coef[list(active).index(f)]:+.2f} {topwor
 probe = {"cv_auroc_l1_sparse": round(float(aucL1), 3), "n_features_selected": nz,
          "cv_auroc_dense_svd256": round(float(aucDense), 3), "cv_auroc_shuffle_null": round(float(aucNull), 3),
          "best_single_feature_auroc": round(best_single, 3),
+         "control_raw_residual_svd256": round(float(aucRaw), 3),
+         "control_same_token_type": (round(float(aucSame), 3) if aucSame == aucSame else None),
+         "frac_echo_tokens_id_like": round(frac_echo_id, 3), "frac_synth_tokens_id_like": round(frac_syn_id, 3),
          "gap_dense_minus_single": round(float(aucDense - best_single), 3),
          "elaboration_features": {int(f): {"coef": round(float(coef[list(active).index(f)]), 3),
                                            "words": topwords(f, 1)} for f in elab},
