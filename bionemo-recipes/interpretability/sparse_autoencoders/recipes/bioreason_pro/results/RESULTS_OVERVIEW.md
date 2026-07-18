@@ -82,13 +82,38 @@ reproduction/mitochondrion sit AT the leak floor** and are not trustworthy reaso
 
 ## 4. Echo-vs-synthesis probe — non-circular reasoning (`echo_synthesis_probe`)
 
-Per-feature AUROC(activation | synthesis-token vs echo-token), where a reasoning token is **synthesis** if its
-word is novel (not in the given InterPro/GO annotations) and **echo** if copied. Label is a property of the
-reasoning *process*, not the GO answer → **non-circular**. Shuffle-null max 0.506.
-- **Synthesis features** (reason beyond the prompt): F39979 (0.71, transmembrane/clathrin), F39744 (0.71,
-  sec61/translocation), F5147 (HSP70), F14759 (kinase cascade), F7099 (MEK/ERK), F11654 (Ca²⁺).
-- **Echo features** (restate given IDs): F34302/F37366 (fire on IPR IDs), F20205 (GO IDs).
-- Now also has a **trained L1 probe** for restatement-vs-elaboration decodability + signed feature selection.
+**Goal (corrected framing):** find the *clean reasoning features that fire MORE on synthesis (novel elaboration)
+than on echo (restatement)* — i.e. which concepts the model **adds beyond the given annotations**. Per-feature
+AUROC(activation | synthesis-token vs echo-token); token is **synthesis** if its word is novel, **echo** if
+copied from the prompt. Non-circular (label = reasoning-process property, not the GO answer). Shuffle-null 0.506.
+AUROC here is the **rank** ("more synthesis-leaning than others"), NOT a claim any feature "is synthesis."
+
+⚠️ **RETRACTED (selection flaw):** the original ranking had **no frequency filter**, so ~100%-firing near-dense
+features topped it (F39979, F39744, F5147, F14759, F7099 all fire on ~100% of tokens — always-on, not clean
+features; their 0.71 AUROC is a weak magnitude bias). **Those are not features, and the auto-interp labels I
+gave them are invalid.** `echo_synthesis_probe.py` now applies a `freq ≤ 2%` filter (`synthesis_formalize.py`
+regenerates the clean list from cached activations).
+
+**CLEAN synthesis-leaning features** (freq ≤ 2%, each carries a specific biology it *elaborates*):
+
+| feature | AUROC | freq | biology (top firing phrase) |
+|---|---|---|---|
+| **F11654** | 0.601 | 0.09% | calcium/calmodulin — "sterically gated by calcium/calmodulin" |
+| **F16620** | 0.592 | 0.11% | DNA strand — "nucleates DNA strand separation" |
+| **F29986** | 0.591 | 0.04% | lipid/cholesterol — "reduced surface levels of LDLR" |
+| **F7351** | 0.584 | 0.06% | membrane topology — "on the cytosolic face of" |
+| **F29616** | 0.577 | 0.06% | protein fold — "jellyroll fold characteristic of ConA-like" |
+| **F35498** | 0.567 | 0.05% | axonal transport — "powers retrograde transport along axon" |
+| **F11877 / F8875** | 0.56 | 0.00% | mitochondrial matrix / inner-membrane translocase |
+
+**Echo features** (restate given IDs): fire on IPR/GO accession strings. **F35387 is excluded — it fires on the
+`<think>` assistant-start token (positional, not biology)**; the freq filter alone doesn't catch positional features.
+
+**Trained L1 probe (echo vs synthesis): CV AUROC 0.932** (dense-SVD256 0.914, best-single 0.71, shuffle-null 0.505).
+⚠️ **Uncontrolled — do NOT over-read.** I did not run the raw/dense baseline and did not control the surface
+confound (echo tokens ARE accession-ID strings, synthesis tokens ARE prose), so 0.93 may just decode token
+*surface-type*, not a "distributed synthesis representation." The earlier "synthesis is distributed" claim is
+**withdrawn pending** (a) raw-residual baseline and (b) a same-token-type control.
 
 ## 5. Cross-modal alignment — two senses (this is where "co-fire" lives)
 

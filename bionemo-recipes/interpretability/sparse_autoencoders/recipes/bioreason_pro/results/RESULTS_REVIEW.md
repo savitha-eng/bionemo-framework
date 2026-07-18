@@ -71,14 +71,22 @@ Single illustrated page to review the analysis. **Layer L30** for all feature/st
 
 ## 2. REASONING FEATURES — robust + NON-CIRCULAR (echo vs synthesis)
 ![echo-synthesis](charts/echo_synthesis.png)
+
+> ⚠️ **RETRACTED — the table below (F39979, F39744, F13295, F5147, F14759, F7099) is INVALID.** These were
+> selected by synthesis-vs-echo AUROC with **no frequency filter**, so they are ~100%-firing **near-dense
+> (always-on) features, not clean detectors** — and the LLM labels on them are meaningless. The corrected,
+> frequency-filtered clean list is in **`RESULTS_OVERVIEW.md` §4** (F11654 calcium, F16620 DNA-strand, F29986
+> lipid, F7351 membrane-topology, F29616 fold, F35498 axonal-transport…). F35387 is also dropped (fires on the
+> `<think>` token — positional, not biology). Keeping this here struck through for provenance.
+
 - **Synthesis features** fire when the model reasons BEYOND its given annotations (mechanistic inference); **echo features** fire on the literal given IPR/GO IDs. Per-feature AUROC to 0.71 vs shuffle-null 0.506.
-- Auto-interp labels (LLM):
-| F39979 | reasoning-synthesis | Transmembrane Immunoreceptor Protein |
-| F39744 | reasoning-synthesis | Protein Synthesis Tracking |
-| F13295 | reasoning-synthesis | Cell Signaling Pathway |
-| F5147 | reasoning-synthesis | HSP70 Chaperone Function |
-| F14759 | reasoning-synthesis | Cellular Signaling Pathway |
-| F7099 | reasoning-synthesis | Protein Phosphorylation Event |
+- ~~Auto-interp labels (LLM) — RETRACTED (near-dense features):~~
+| ~~F39979~~ | retracted | ~~Transmembrane Immunoreceptor Protein~~ (freq 100%) |
+| ~~F39744~~ | retracted | ~~Protein Synthesis Tracking~~ (freq 100%) |
+| ~~F13295~~ | retracted | ~~Cell Signaling Pathway~~ (freq 100%) |
+| ~~F5147~~ | retracted | ~~HSP70 Chaperone Function~~ (freq 100%) |
+| ~~F14759~~ | retracted | ~~Cellular Signaling Pathway~~ (freq 100%) |
+| ~~F7099~~ | retracted | ~~Protein Phosphorylation Event~~ (freq 100%) |
 | F23525 | reasoning-synthesis | Autophagy Regulation |
 | F11654 | reasoning-synthesis | Calcium Signaling Pathway |
 | F35387 | reasoning-synthesis | Protein Structure Prediction |

@@ -9,8 +9,9 @@ Goal: robust results comparable to Jared's methodology + Goodfire methodology fo
 - Structure is at ceiling in ESM3 residues but SATURATED (random projection also ~0.99) — decodability is not an SAE result; the SAE's value is the clean nameable detectors.
 
 ## 2. REASONING FEATURES — ROBUST + NON-CIRCULAR ✅
-- **Echo-vs-synthesis probe (Goodfire-style, non-circular):** synthesis features fire when the model reasons BEYOND the given annotations (mechanistic/structural inference: transmembrane, translocation, HSP chaperone, kinase-cascade, Ca-signaling, autophagy), echo features fire on the literal given IPR/GO accession IDs. Per-feature AUROC to 0.71 vs shuffle-null max 0.506. Auto-interp-named cleanly.
-- **144 synthesis features** (novelty>=0.5), spanning structural-fold / mechanistic / functional categories.
+- **Echo-vs-synthesis probe (Goodfire-style, non-circular):** which clean reasoning features fire MORE on synthesis (novel elaboration) than echo (restating given IPR/GO IDs). Per-feature AUROC to 0.71 vs shuffle-null max 0.506.
+  - ⚠️ **CORRECTION:** the originally-reported top features (F39979, F39744, F5147, F14759, F7099) were **near-dense (~100%-firing) features selected without a frequency filter — RETRACTED**, and their auto-interp names are invalid. The corrected **frequency-filtered clean list** (F11654 calcium, F16620 DNA-strand, F29986 lipid, F7351 membrane-topology, F29616 fold, F35498 axonal-transport) is in `RESULTS_OVERVIEW.md` §4. AUROC is the *rank* (more synthesis-leaning), not a claim any feature "is synthesis." The trained L1 probe (0.93) is **uncontrolled** (surface-token-type confound not ruled out).
+- ~~**144 synthesis features** (novelty>=0.5)~~ — the novelty metric also lacked a frequency filter; superseded by the freq-filtered list above.
 - **CAUTION / retracted:** probing named GO/InterPro on the reasoning band is LEAKY — a random projection decodes GO at 0.94 because the reasoning text names the function (40/40 concepts leak). "Function emerges in reasoning ~0.95" is retracted. The non-circular reasoning result is echo-synthesis, not GO-decodability.
 
 ## 3. STEERING — read/write dissociation (with honest negatives)

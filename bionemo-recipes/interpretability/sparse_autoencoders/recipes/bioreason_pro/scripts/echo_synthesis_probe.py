@@ -27,6 +27,10 @@ p.add_argument("sae"); p.add_argument("store"); p.add_argument("layer", type=int
 p.add_argument("--nprot", type=int, default=2500); p.add_argument("--shard-stride", type=int, default=2)
 p.add_argument("--max-tok", type=int, default=60000); p.add_argument("--ckpt", default=DEFAULT_CKPT)
 p.add_argument("--out", default="/data/savithas/phase3_full/echo_synthesis_l30.json")
+p.add_argument("--freq-file", default="/data/savithas/phase3_full/per_token_freq_l30.npy",
+               help="per-feature firing frequency; features firing on >freq-max of tokens are near-dense "
+                    "(always-on) and are EXCLUDED from the synthesis/echo lists (else they contaminate the top)")
+p.add_argument("--freq-max", type=float, default=0.02, help="max per-token firing freq for a CLEAN feature")
 a = p.parse_args(); dev = "cuda"
 
 def norm(s): return "".join(c for c in s.lower() if c.isalnum())
@@ -114,12 +118,25 @@ def topwords(fi, want_syn):
     top = np.where(got)[0][nz][np.argsort(-col[nz])[:80]]  # indices into cand
     ws = [str(word_row[cand[t]]) for t in top]
     return list(dict.fromkeys([w for w in ws if len(w) >= 4]))[:10]
-synth_f = np.argsort(-auc)[:12]; echo_f = np.argsort(auc)[:12]
+# FREQUENCY FILTER: exclude near-dense (always-on) features. Ranking synthesis features by AUROC alone lets
+# ~100%-firing features top the list on a weak magnitude bias -- they are NOT clean interpretable features.
+# We want sparse, dashboard-browsable features that fire MORE on synthesis than echo, so mask on firing freq.
+try:
+    freq = np.load(a.freq_file)
+    active_cnt = (Zg > 0).sum(0)                               # fires on enough sampled tokens to be real
+    clean = (freq[:H] <= a.freq_max) & (active_cnt >= 30)
+    ndense = int((freq[:H] > a.freq_max).sum())
+    print(f"[echo-synth] freq filter <= {a.freq_max:.0%}: {int(clean.sum())} clean features "
+          f"({ndense} near-dense excluded)")
+except FileNotFoundError:
+    clean = np.ones(H, bool); print("[echo-synth] no freq file -> NOT frequency-filtered (list may be contaminated)")
+auc_masked = np.where(clean, auc, 0.5)                         # dense features -> neutral 0.5, drop from both ends
+synth_f = np.argsort(-auc_masked)[:12]; echo_f = np.argsort(auc_masked)[:12]
 print(f"\nnull AUROC (shuffled): max={aucn.max():.3f} min={aucn.min():.3f} (real should exceed)")
-print("=== SYNTHESIS features (fire when model reasons BEYOND given annotations) ===")
-for f in synth_f: print(f"  F{f}: AUROC={auc[f]:.3f}  words={topwords(f,1)}")
-print("=== ECHO features (fire when model RESTATES given InterPro/GO names) ===")
-for f in echo_f: print(f"  F{f}: AUROC={auc[f]:.3f}  words={topwords(f,0)}")
+print("=== CLEAN SYNTHESIS features (sparse; fire MORE on novel elaboration than on restatement) ===")
+for f in synth_f: print(f"  F{f}: AUROC={auc[f]:.3f} freq={freq[f]*100:.2f}%  words={topwords(f,1)}")
+print("=== CLEAN ECHO features (sparse; fire MORE on restated InterPro/GO IDs) ===")
+for f in echo_f: print(f"  F{f}: AUROC={auc[f]:.3f} freq={freq[f]*100:.2f}%  words={topwords(f,0)}")
 # save gathered activations so the probe can be re-fit without re-streaming shards
 np.savez(a.out.replace(".json", "_acts.npz"), Zg=Zg.astype(np.float16), yg=yg.astype(np.int8),
          feat=np.arange(H, dtype=np.int32))
@@ -167,8 +184,13 @@ probe = {"cv_auroc_l1_sparse": round(float(aucL1), 3), "n_features_selected": nz
                                            "words": topwords(f, 1)} for f in elab},
          "restatement_features": {int(f): {"coef": round(float(coef[list(active).index(f)]), 3),
                                            "words": topwords(f, 0)} for f in rest}}
+def ffreq(f):
+    try: return round(float(freq[f] * 100), 3)
+    except Exception: return None
 out = {"n_synth": npos, "n_echo": nneg, "null_auc_max": round(float(aucn.max()), 3),
-       "synthesis_features": {int(f): {"auroc": round(float(auc[f]), 3), "words": topwords(f, 1)} for f in synth_f},
-       "echo_features": {int(f): {"auroc": round(float(auc[f]), 3), "words": topwords(f, 0)} for f in echo_f},
+       "freq_max_pct": a.freq_max * 100, "note": "synthesis/echo lists are FREQUENCY-FILTERED (clean, sparse); "
+       "AUROC ranks how synthesis-vs-echo-leaning a feature is, NOT a claim any feature 'is synthesis'",
+       "synthesis_features": {int(f): {"auroc": round(float(auc[f]), 3), "freq_pct": ffreq(f), "words": topwords(f, 1)} for f in synth_f},
+       "echo_features": {int(f): {"auroc": round(float(auc[f]), 3), "freq_pct": ffreq(f), "words": topwords(f, 0)} for f in echo_f},
        "trained_probe": probe}
 json.dump(out, open(a.out, "w"), indent=2); print(f"[wrote] {a.out}")
