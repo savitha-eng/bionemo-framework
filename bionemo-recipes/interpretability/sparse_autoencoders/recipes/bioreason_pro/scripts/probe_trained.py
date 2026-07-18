@@ -96,8 +96,13 @@ def probe(Xf, y, sparse=False):
         clf = LogisticRegression(C=1.0, max_iter=300, tol=1e-3)
     clf.fit(Xs[tr], y[tr])
     auc = roc_auc_score(y[te], clf.decision_function(Xs[te]))
-    nnz = int((np.abs(clf.coef_) > 1e-6).sum())
-    return round(float(auc), 3), nnz
+    coef = clf.coef_[0]
+    sel = np.where(np.abs(coef) > 1e-6)[0]
+    nnz = int(sel.size)
+    # feature ids sorted by |coef| desc (the load-bearing ones first)
+    sel_sorted = sel[np.argsort(-np.abs(coef[sel]))]
+    feats = [{"feature": int(f), "coef": round(float(coef[f]), 4)} for f in sel_sorted]
+    return round(float(auc), 3), nnz, feats
 
 results = {}
 print(f"\n{'concept':26} {'npos':>5} {'SAE-svd(matched)':16} {'SAE-sparse':13} {'raw':7} {'random':7}")
@@ -106,11 +111,11 @@ for nm, t in CONCEPTS.items():
     npos = int(y[perm].sum())
     if y[tr].sum() < 5 or y[te].sum() < 5:
         continue
-    a_svd, _ = probe(SAE_SVD, y)                       # SAE at matched dim -> fair vs raw
-    a_sp, nnz = probe(SAE, y, sparse=True)             # sparse SAE -> how few features recover it
-    a_raw, _ = probe(RAW, y); a_rnd, _ = probe(RND, y)
+    a_svd, _, _ = probe(SAE_SVD, y)                    # SAE at matched dim -> fair vs raw
+    a_sp, nnz, sel_feats = probe(SAE, y, sparse=True)  # sparse SAE -> how few features recover it (+ which)
+    a_raw, _, _ = probe(RAW, y); a_rnd, _, _ = probe(RND, y)
     results[nm] = {"go": t, "npos": npos, "sae_svd_matched": a_svd, "sae_sparse": a_sp,
-                   "sae_sparse_nfeat": nnz, "raw": a_raw, "random": a_rnd}
+                   "sae_sparse_nfeat": nnz, "sae_sparse_features": sel_feats, "raw": a_raw, "random": a_rnd}
     print(f"{nm:26} {npos:>5} {a_svd:<16} {str(a_sp)+' ('+str(nnz)+'f)':13} {a_raw:<7} {a_rnd:<7}")
 
 mean = lambda k: round(float(np.mean([r[k] for r in results.values()])), 3)
