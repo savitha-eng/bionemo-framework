@@ -36,3 +36,20 @@ null-on-null. The fusion question is already answered by Result 2 (no surge). **
 localization near ESM3) is the remaining valuable check** — pending.
 
 _Scripts: `layer_robustness.py`, `probe_v2.py`. Data: `layer_robustness_l{16,22}.json`, `probe_v2_*_l{16,22}.json`._
+
+## Result 3 — Structure IS more localized early (domain-F1) — a structure/reasoning TRADE-OFF
+Domain-F1 (per-position precision × per-region recall, Polina), best-feature-per-domain, apples-to-apples:
+| layer | median domain-F1 | ≥0.5 localized | ≥0.7 |
+|---|---|---|---|
+| **L16 (early)** | 0.51 | **50%** | 25% |
+| **L22 (middle)** | 0.52 | **56%** | 26% |
+| L30 (late) | 0.30 | 32% | 17% |
+
+**Structure features are ~2× more localized at L16/L22 than L30** — ESM3 residue structure is cleanest near the
+input and mixes with depth. L30 UNDERSOLD structural interpretability. (recall ~0.97, precision ~0.35: fires in
+every domain region but also somewhat outside.)
+
+**THE LAYER TRADE-OFF:** structure localization best early (L16–L22, >50%), reasoning strength best late
+(L30, steerable). No single layer optimizes both — structure lives near ESM3, reasoning builds up deep. For
+structural interpretability use L16–L22 (earlier may be even better); for reasoning/steering use L30. **L32 helps
+neither** (later = less localized structure + reasoning already declining, steer 0%).
