@@ -15,16 +15,20 @@ FIRST, read these on disk (full context + the fix-list):
 - .../recipes/bioreason_pro/results/RESULTS_OVERVIEW.md and LAYER_SWEEP.md (what the code produces)
 Invoke the `sae-recipe-v1` skill — it has the extract→train→eval pattern and train.py gotchas.
 
-REFERENCE RECIPES — look at the LATEST upstream (may be ahead of the local tree):
-https://github.com/NVIDIA-BioNeMo/bionemo-recipes/tree/main/interpretability/sparse_autoencoders
-Follow `codonfm` (richest: README/dashboard/eval pattern) and COPY `evo2`'s scripts/train.py (only one wiring all
-4 opt-in flags — change only the docstring + wandb default). Match their current structure/conventions.
-
-TARGET REPO (the new repo — this is where the work goes):
+TARGET REPO + AUTHORITATIVE ARCHITECTURE (the new repo — this is where the work goes):
 https://github.com/NVIDIA-BioNeMo/bionemo-interpretability.git
-- Clone it, inspect its current structure. If it's empty/minimal, mirror the upstream SAE recipe layout above.
+- Its `sparse_autoencoders/` directory SPECIFIES THE ARCHITECTURE to conform to:
+  https://github.com/NVIDIA-BioNeMo/bionemo-interpretability/tree/main/sparse_autoencoders
+  Clone it FIRST and inspect that layout — it is AUTHORITATIVE for where files go (recipe dir naming, sae/
+  package location, scripts/ layout, README/pyproject conventions). Match it exactly.
 - Create a WORKING BRANCH. Open DRAFT PRs against this repo (the user reviews + marks ready before publishing).
 - Keep PRs small, same-function grouped, opened in dependency order (below).
+
+REFERENCE (for CONTENT/patterns only — the target repo above wins on LAYOUT): the latest upstream SAE recipes
+https://github.com/NVIDIA-BioNeMo/bionemo-recipes/tree/main/interpretability/sparse_autoencoders — follow
+`codonfm` (README/dashboard/eval pattern) and COPY `evo2`'s scripts/train.py (only one wiring all 4 opt-in flags;
+change only docstring + wandb default). If the target repo's `sparse_autoencoders/` layout differs from this
+upstream, the TARGET REPO layout wins.
 
 SCOPE — DAY 1 ONLY: the training / core pipeline. Do NOT touch the analysis scripts (day 2 — user still reviewing
 them). Do NOT distill all 111 scripts. Source code lives at
