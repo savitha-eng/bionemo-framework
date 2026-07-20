@@ -62,6 +62,14 @@ PR STACK (draft PRs, dependency order):
   PR1 Scaffold: README (with the prereq above), pyproject.toml, .gitignore, run.sh, run_configs/config.yaml
   PR2 Model integration: src/bioreason_pro_sae/{model_loader.py, data.py} — load + token/band contract.
       Only judgment-heavy PR; document why the unsloth stub + GO patch + placeholder-token contract exist.
+      GO-BAND DECISION (do this deliberately, not as a scattered flag): band TAGGING lives in
+      data.py `tag_and_keep_mask` (protein/go/text via go_token_id) — keep it. The `<go>` band is a FIXED
+      graph-slot ontology reduction (same ~200 slots for every protein; ablation-confirmed UNUSED), so it must
+      be EXCLUDED from interpretability. Most analyses already exclude it by band-selection (they pick protein
+      or text). The explicit `--drop-go` flag currently lives only in dashboard.py (opt-in). DECIDE: make
+      `--drop-go` DEFAULT-ON for the dashboard (a reviewer browsing go-centered features would just see the
+      fixed ontology = misleading), and document in the README: "interpret GO via the text accessions, not the
+      <go> band." Probes need no change.
   PR3 Extraction: scripts/extract.py (streaming → ActivationStore)
   PR4 Training: scripts/train.py (copy evo2's latest)
   PR5 Eval: scripts/eval.py (loss-recovered / reconstruction / dead-latents)
