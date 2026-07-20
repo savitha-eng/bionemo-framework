@@ -15,20 +15,30 @@ FIRST, read these on disk (full context + the fix-list):
 - .../recipes/bioreason_pro/results/RESULTS_OVERVIEW.md and LAYER_SWEEP.md (what the code produces)
 Invoke the `sae-recipe-v1` skill — it has the extract→train→eval pattern and train.py gotchas.
 
-TARGET REPO + AUTHORITATIVE ARCHITECTURE (the new repo — this is where the work goes):
-https://github.com/NVIDIA-BioNeMo/bionemo-interpretability.git
-- Its `sparse_autoencoders/` directory SPECIFIES THE ARCHITECTURE to conform to:
-  https://github.com/NVIDIA-BioNeMo/bionemo-interpretability/tree/main/sparse_autoencoders
-  Clone it FIRST and inspect that layout — it is AUTHORITATIVE for where files go (recipe dir naming, sae/
-  package location, scripts/ layout, README/pyproject conventions). Match it exactly.
-- Create a WORKING BRANCH. Open DRAFT PRs against this repo (the user reviews + marks ready before publishing).
-- Keep PRs small, same-function grouped, opened in dependency order (below).
-
-REFERENCE (for CONTENT/patterns only — the target repo above wins on LAYOUT): the latest upstream SAE recipes
-https://github.com/NVIDIA-BioNeMo/bionemo-recipes/tree/main/interpretability/sparse_autoencoders — follow
-`codonfm` (README/dashboard/eval pattern) and COPY `evo2`'s scripts/train.py (only one wiring all 4 opt-in flags;
-change only docstring + wandb default). If the target repo's `sparse_autoencoders/` layout differs from this
-upstream, the TARGET REPO layout wins.
+TARGET REPO (the new repo — clone via SSH, the key has access; confirmed working):
+  git@github.com:NVIDIA-BioNeMo/bionemo-interpretability.git  (default branch: main)
+CONFIRMED LAYOUT (already inspected) — the recipe goes at `sparse_autoencoders/recipes/bioreason_pro/`
+(does NOT exist yet — create it). Match `recipes/codonfm/` EXACTLY:
+  sparse_autoencoders/
+  ├── README.md, pyproject.toml, .ci_build.sh, uv.lock, .gitignore
+  ├── sae/                         # shared universal train/eval + tests (already there — reuse, don't fork)
+  └── recipes/
+      ├── esm2/, codonfm/, evo2/   # references
+      └── bioreason_pro/           # <-- CREATE THIS, mirroring codonfm:
+          ├── README.md, pyproject.toml, .gitignore
+          ├── run.py  and/or  <size>.sh    (orchestrator)
+          ├── run_configs/config.yaml
+          ├── src/bioreason_pro_sae/       # OUR src already matches this convention (model_loader.py, data.py)
+          ├── scripts/
+          │   ├── _paths.py                # <-- codonfm CENTRALIZES paths here. USE THIS to fix our hardcoded
+          │   │                            #     absolute paths cleanly instead of scattering args.
+          │   ├── extract.py, train.py, eval.py, dashboard.py, launch_dashboard.py, download_*.py ...
+          └── <model>_dashboard/           # React app (like codon_dashboard/: src, package.json, vite.config.js)
+- Copy `evo2`'s scripts/train.py (only one wiring all 4 opt-in flags; change only docstring + wandb default).
+  Use codonfm as the structural template for everything else (README numbered pipeline, eval.py, _paths.py, dashboard).
+- Create a WORKING BRANCH, push via SSH (works from this env). Open DRAFT PRs (needs `gh` or the web UI — the
+  user's env has gh; if a PR can't be opened here, push the branch and tell the user to open the draft).
+- PRs small, same-function grouped, dependency order (below). User reviews + marks ready before publishing.
 
 SCOPE — DAY 1 ONLY: the training / core pipeline. Do NOT touch the analysis scripts (day 2 — user still reviewing
 them). Do NOT distill all 111 scripts. Source code lives at
