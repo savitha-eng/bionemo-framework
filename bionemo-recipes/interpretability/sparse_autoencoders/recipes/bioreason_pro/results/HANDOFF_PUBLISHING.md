@@ -15,8 +15,9 @@ FIRST, read these on disk (full context + the fix-list):
 - .../recipes/bioreason_pro/results/RESULTS_OVERVIEW.md and LAYER_SWEEP.md (what the code produces)
 Invoke the `sae-recipe-v1` skill — it has the extract→train→eval pattern and train.py gotchas.
 
-TARGET REPO (the new repo — clone via SSH, the key has access; confirmed working):
-  git@github.com:NVIDIA-BioNeMo/bionemo-interpretability.git  (default branch: main)
+TARGET REPO (the new repo — ALREADY CLONED at /data/savithas/bionemo-interpretability, on `main`):
+  git@github.com:NVIDIA-BioNeMo/bionemo-interpretability.git  (SSH key has access; `git pull` to refresh)
+  -> work there: `cd /data/savithas/bionemo-interpretability && git checkout -b <branch>`
 CONFIRMED LAYOUT (already inspected) — the recipe goes at `sparse_autoencoders/recipes/bioreason_pro/`
 (does NOT exist yet — create it). Match `recipes/codonfm/` EXACTLY:
   sparse_autoencoders/
