@@ -63,7 +63,7 @@ recipes/codonfm/
 | `README.md` | new (model on codonfm) | write fresh | S |
 | `run.sh` orchestrator | new | write fresh | S |
 | `pyproject.toml`, `.gitignore`, `run_configs/config.yaml` | ours (exist) | prune | S |
-| **`src/…/model_loader.py`** | ours (187 ln) | **works; external-dep risk (see §5)** | **L** |
+| **`src/…/model_loader.py`** | ours (187 ln) | **works as-is; just needs the authors' repo documented as a prereq (§5)** | **M** |
 | **`src/…/data.py`** | ours (147 ln) | works | M |
 | `scripts/extract.py` | ours (538 ln) | clean + license + doc | M |
 | `scripts/train.py` | **copy evo2's** (per skill) + our wandb defaults | swap | S |
@@ -86,14 +86,25 @@ _Effort: S≈½ day, M≈1–2 days, L≈3–5 days._
 
 ## 5. The crux / hard parts (where the real work + risk is)
 
-1. **`model_loader.py` external dependencies (the #1 risk).** It imports the **authors' bioreason-pro repo**
-   (`bioreason2/models/protein_llm.py`) unchanged + **ESM3** (`esm3_sm_open_v1`) + an **unsloth `sys.modules`
-   stub** (protein_llm does a top-level `from unsloth import …` only used on the training path). For a
-   publishable recipe this needs: pinned install instructions for the external repo + ESM3 weights + the HF SFT
-   checkpoint, OR vendoring the minimal model code. **This is what makes/breaks reproducibility** and is most of
-   the L-effort. Unlike esm2 (HF-native `AutoModel`), this model is NOT a clean `from_pretrained`.
+1. **Model loading — ONE checkpoint + ONE documented prerequisite (not a research problem; already solved).**
+   The weights are a single self-contained HF checkpoint — **`wanglab/bioreason-pro-sft`** — with *everything
+   bundled*: Qwen3-4B LLM (`model-*.safetensors`), **ESM3 (`protein_model/pytorch_model.bin`)**, the GO stack
+   (`go_embedding.pt`, `go_encoder.pt`, `go_projection.pt`, `go-basic.obo`), `protein_projection.pt`, tokenizer.
+   One `hf download`. **BUT** its config is `"architectures": ["Qwen3ForCausalLM"]` with **no `auto_map` / no
+   modeling code**, so `AutoModelForCausalLM.from_pretrained` alone yields a *plain text LLM* that ignores the
+   protein/GO tensors. The multimodal-assembly code (splice ESM3 + GO embeddings into the token stream at
+   `protein_token_id`/`go_token_id`) lives in the authors' GitHub repo **`bowang-lab/BioReason-Pro`** — which the
+   HF README itself directs users to for the inference guide.
+   **Our `model_loader.load_bioreason_pro_sft` already handles this** with two inputs: `ckpt_dir` (the HF
+   checkpoint) + `bioreason_pro_root` (a clone of the authors' repo, put on `sys.path` for `import bioreason2`).
+   The `unsloth` stub and the `process_go_aspects` patch are minor consequences of using the authors' code.
+   → **DECISION (per user): document the authors' repo as a PREREQUISITE** — not vendor. So the recipe's setup is:
+   `hf download wanglab/bioreason-pro-sft` + `git clone bowang-lab/BioReason-Pro@<pin>` + pass `--bioreason-root`.
+   This is a **codonfm-style prerequisite step**, not an L-effort — model loading is *solved*, it just needs
+   documenting + a pinned commit + an env note (the checkpoint's `config.json` carries `unsloth_version`).
 2. **Distilling 111 scripts → ~12.** Lots of near-duplicates (7 `crossmodal_*`, 8 `autointerp_*`, many
    `add_*_metric` sidecar patches). Decide the canonical one per function; the rest are provenance, not shipped.
+   **This is now the largest single chunk of work** (was overshadowed by the model-loading concern).
 3. **Dashboard cleanup.** The React app works but has `node_modules/`, `dist/`, `*.log` committed. Needs a clean
    `.gitignore`, a documented build, and the band-tagging (protein/go/reasoning/answer) is model-specific.
 4. **The token↔position contract** (data.py) — protein-token placeholder, GO band, reasoning=response, accession
@@ -106,32 +117,37 @@ _Effort: S≈½ day, M≈1–2 days, L≈3–5 days._
 
 ## 6. Work estimate
 
-- **Training-only MVP** (README + extract + train + eval + src, reproducible): **~1 week**, dominated by the
-  model_loader external-dependency reproducibility (§5.1).
-- **+ Dashboard**: **+3–4 days** (React cleanup + dashboard.py + band-tagging docs).
-- **+ Probe/steer/autointerp scripts** (5–7 consolidated): **+1 week**.
+_(Revised down — model loading is solved, not a risk. The work is now mostly mechanical distillation + cleanup.)_
+- **Training-only MVP** (README w/ prereq steps + extract + train + eval + src): **~3–4 days.** `model_loader`/
+  `data` work as-is; the model dependency is a documented prerequisite (`hf download` + `git clone @pin`), not code.
+- **+ Dashboard**: **+3–4 days** (React cleanup: strip `node_modules`/`dist`/logs, documented build, band-tagging docs).
+- **+ Probe/steer/autointerp scripts** (5–7 consolidated from the 111): **+1 week** — now the *largest* chunk.
 - **+ Demo notebooks**: **+3–5 days**.
-- **Total for the full MVP the user described**: **~3 weeks** focused, with the external-dep repro as the main
-  risk that could balloon if ESM3/authors-repo licensing or packaging is thorny.
+- **Total for the full MVP**: **~2–2.5 weeks** focused. No single ballooning risk anymore — it's steady distillation
+  + cleanup, and the main quality risk is regressing a fix (§5.5), which is why review matters more than raw effort.
 
 ---
 
 ## 7. Recommendation on who does it
 
-- **Fresh agent for the mechanical distillation** (copy/clean/license/README scaffolding) — well-defined, high
-  volume, low ambiguity. Good hand-off with this doc + the manifest.
-- **Keep me (this agent) for the two judgment-heavy pieces:** (a) the model_loader/data external-dependency
-  reproducibility (I know why the unsloth stub + ESM3 + band contract are shaped as they are), and (b)
-  **reviewing** that the distilled scripts preserve the fixes in §5.5 (a fresh agent will re-introduce the exact
-  bugs we spent this project fixing — e.g. dropping the freq filter, the leak-floor baseline, or train.py's flags).
-- **Concrete split:** fresh agent scaffolds → I review each probe/steer script against the fix-list → I own
-  model_loader repro. That plays to strengths and avoids regressions.
+- **Fresh agent for the mechanical distillation** (copy/clean/license/README scaffolding, prereq-step docs) —
+  well-defined, high volume, low ambiguity. This is now most of the work. Good hand-off with this doc + manifest.
+- **Keep me (this agent) mainly for REVIEW** — that the distilled scripts preserve the fixes in §5.5 (a fresh
+  agent will re-introduce the exact bugs we spent this project fixing — dropping the freq filter, the leak-floor
+  baseline, domain-F1's per-region metric, train.py's 4 flags). Plus documenting the token↔position/band contract
+  (§5.4) and sanity-checking the prereq setup (the `hf download` + pinned `bowang-lab/BioReason-Pro` clone actually
+  loads). Model loading itself is *solved* — it just needs the prereq written down, not re-engineered.
+- **Concrete split:** fresh agent scaffolds + distills → I review each probe/steer/train script against the
+  fix-list and verify the prereq load works end-to-end. Review-heavy, not build-heavy for me.
 
 ---
 
 ## 8. Open decisions for the user
 1. **New repo target** — standalone, or a `recipes/bioreason_pro/` in the new repo's tree? (affects import paths)
-2. **External model deps** — vendor the minimal BioReason-Pro model code, or ship install instructions + pinned refs?
+2. ~~External model deps — vendor or document?~~ **RESOLVED (user): document as a prerequisite.** README setup =
+   `hf download wanglab/bioreason-pro-sft` + `git clone https://github.com/bowang-lab/BioReason-Pro` (**pin the
+   validated commit `86d3e516e6fbbb7bc646d229520be206bf6293f9`**) + pass `--bioreason-root`. Optional: a tiny
+   `check_env.py` that verifies the clone imports (`import bioreason2`) + the checkpoint loads before a run.
 3. **Notebooks vs scripts** — codonfm ships scripts; do we want notebooks too (more demo-friendly, more maintenance)?
 4. **Scope of probes** — which of {enrichment, domain-F1, SAE-vs-raw probe, cross-modal, echo-synthesis} are MVP
    vs later? (I'd MVP: enrichment + domain-F1 + one probe; defer cross-modal/echo-synthesis to a v2.)
