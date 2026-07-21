@@ -45,8 +45,25 @@ PR STACK (base each on the prior; base the first on the eval branch):
        gsea_enrichment.py) — Fisher/GSEA per feature vs GO/InterPro, + per-feature AUROC.
   P2-4 Domain-F1 (Polina's metric): scripts/eval_domain_f1.py (from domain_f1.py) — per-position
        precision x per-region recall for structural features.
-  P2-5 SAE-vs-raw probe: scripts/probe.py (from probe_v2.py / probe_trained.py) — SAE-svd vs raw vs
-       random(leak-floor), sparse L1, per-band.
+  P2-5 SAE-vs-raw probe + FLAGSHIP EXAMPLE NOTEBOOK: scripts/probe.py (from probe_v2.py / probe_trained.py)
+       — SAE-svd vs raw vs random(leak-floor), sparse L1, per-band.
+       *** SHIP A DEMO NOTEBOOK built on this — the reasoning-concept probe, centered on the MICROBIAL-
+       DEFENSE finding (the cleanest reasoning result). The notebook should tell the honest story:
+       (1) design GO-concept labels, mean-pool reasoning-band SAE activations per protein;
+       (2) train logistic probes on 4 representations: sae-sparse(L1), sae-svd256, raw, random(=LEAK FLOOR);
+       (3) show that of 12 designed concepts, ONLY 4 clear the leak floor (defense→fungus +0.111,
+           defense→bacterium +0.108, structural-molecule +0.063, plasma-membrane +0.055) — the other 8 are
+           leakage (random projection matches them);
+       (4) for defense→fungus/bacterium, show the SPARSE-SELECTED feature IDs and that they are DISTRIBUTED
+           (decoder-cosine ~0, distinct+complementary) with a SHARED microbial-defense core (fungus∩bacterium
+           = {2808,32785,35336});
+       (5) the takeaway: the model represents microbial defense as a distributed, orthogonal feature set with a
+           shared antifungal/antibacterial core — a real, non-leaked reasoning-representation finding.
+       fungus features: 36488,35336,2808,23726,29332,32785,7665,15775,22156,2082,28215,5047 ;
+       bacterium: 35336,38712,36769,8824,2724,32785,20730,22077,13479,25134.
+       Full lists + all-12-concepts in reasoning_concept_features_real.json / REASONING_CONCEPT_FEATURES.md.
+       NON-NEGOTIABLE: the random-projection LEAK-FLOOR baseline is the whole point — it's what proves defense
+       is real and the other 8 are fake. Never drop it; never report the absolute AUROC without the margin.
   P2-6 Steering: scripts/steer.py (from steer_generation.py + steer_crossmodal.py) — p95-dose,
        decision-point, set-mode clamp, concept-absent, coherence + LLM-judge.
   P2-7 Auto-interp: scripts/autointerp.py + autointerp_validate.py — LLM feature labels + the
