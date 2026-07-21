@@ -79,6 +79,18 @@ nonlinear TopK basis makes concepts more linearly separable with a handful of fe
 reasoning-band GO is *leakage-prone* (random projection ≈ 0.95 because the text names the function), so only
 the *margin above the leak floor* is real. **Microbial-defense concepts have it (leak floor only ~0.88);
 reproduction/mitochondrion sit AT the leak floor** and are not trustworthy reasoning-representation signals.
+**Only 4 of the 12 concepts clear the leak floor (margin ≥0.05):** defense→fungus (+0.111), defense→bacterium
+(+0.108), structural-molecule (+0.063), plasma-membrane (+0.055, but 362 features = diffuse). The other 8 are leakage.
+
+**The microbial-defense finding (the flagship, non-leaked result) — a distributed set with pathogen-specific
+detectors on a shared innate-immune core.** All 4 real concepts are *distributed* (decoder-cosine ~0, distinct+
+complementary features), and the feature count scales with concept breadth (antifungal 12 → plasma-membrane 362).
+Auto-interp (LLM naming each feature's top-firing reasoning windows) of the defense features:
+- **Pathogen-specific:** F23726 "Filamentous fungi" (antifungal), F22077 "Bacterial lipopolysaccharide" (antibacterial LPS).
+- **Shared antifungal∩antibacterial core:** F35336 / F2808 / F32785 = "Defense Response / Innate Immune Response".
+- **Mechanism features:** F7665 "Cell wall adaptation" (fungal target), F15775 "Autophagy" (antimicrobial), F38712 "Leukocyte activation".
+- Plus a few generic (chromatin/protein-localization) = distributed sub-features or auto-interp misses (~⅓ label-validated).
+Feature IDs + labels: `REASONING_CONCEPT_FEATURES.md`; this is the Phase-2 flagship example notebook.
 
 ## 4. Echo-vs-synthesis probe — non-circular reasoning (`echo_synthesis_probe`)
 

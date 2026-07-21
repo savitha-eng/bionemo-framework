@@ -17,3 +17,40 @@ trustworthy** — the rest match a random projection (leakage). Feature IDs = th
 | mitochondrion | ❌ leak | 159 | +0.013 | 36378, 2630, 670, 7443, 26232, 5001, 15477, 37996, 18058, 24751, 13062, 8780 |
 | kinase activity | ❌ leak | 80 | +0.013 | 23666, 3787, 13277, 32338, 20129, 23554, 15458, 15262, 158, 26032, 7136, 20424 |
 | transporter activity | ❌ leak | 96 | +0.006 | 18211, 36696, 516, 16271, 31418, 39402, 20500, 14529, 7152, 30993, 15659, 6445 |
+
+## Microbial-defense features — auto-interp labels (the flagship finding)
+
+The strongest, non-leaked reasoning concepts. Distributed sets with pathogen-SPECIFIC detectors on a
+SHARED innate-immune core. Labels = LLM reading each feature's top-firing reasoning windows (hypotheses,
+~1/3 enrichment-validated; the defense-worded ones are self-consistent with the shared-core role).
+
+**Antifungal (F=defense→fungus, margin +0.111):**
+
+- F36488: Defense Response
+- F35336: Defense Response   <- shared antifungal∩antibacterial core
+- F2808: Defense Response   <- shared antifungal∩antibacterial core
+- F23726: Filamentous fungi   <- FUNGUS-SPECIFIC
+- F29332: rRNA binding
+- F32785: Innate Immune Response   <- shared antifungal∩antibacterial core
+- F7665: Cell wall adaptation
+- F15775: Autophagy regulation
+- F22156: Oligomerization
+- F2082: Chromatin binding
+- F28215: Protein localization
+- F5047: Cell Motility
+
+**Antibacterial-only (margin +0.108):**
+
+- F38712: Leukocyte activation
+- F36769: Protein localization
+- F8824: Protein Binding
+- F2724: Innate Immune Response
+- F20730: Innate Immune Response
+- F22077: Bacterial lipopolysaccharide   <- BACTERIA-SPECIFIC (LPS)
+- F13479: Response to stress
+- F25134: Nuclear Residence
+
+Shared core F35336/F2808/F32785 = "Defense Response / Innate Immune Response". Pathogen-specific:
+F23726 "Filamentous fungi", F22077 "Bacterial lipopolysaccharide". A few features are generic
+(chromatin/protein-localization) = distributed sub-features or auto-interp misses.
+
