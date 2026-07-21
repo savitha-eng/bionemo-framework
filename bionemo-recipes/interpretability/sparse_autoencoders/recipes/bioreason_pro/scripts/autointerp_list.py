@@ -12,6 +12,9 @@ out_path = sys.argv[3] if len(sys.argv) > 3 else "/data/savithas/phase3_full/aut
 client = OpenAI(base_url="https://integrate.api.nvidia.com/v1", api_key=os.environ["NIM_API_KEY"])
 df = pq.read_table(PUB).to_pandas(); df = df[df.band == band]
 
+import re as _re
+_ACCESSION = _re.compile(r"(GO|IPR)\s*[:]?\s*[\d\s]{3,}", _re.I)  # cited GO/InterPro ids = ECHO of given annotations
+
 def snippets(fid, n=4):
     sub = df[df.feature_id == fid].nlargest(n, "max_activation"); out = []
     for _, x in sub.iterrows():
@@ -19,7 +22,9 @@ def snippets(fid, n=4):
         m = min(len(toks), len(act))
         if m == 0: continue
         pk = act[:m].argmax(); lo, hi = max(0, pk - 12), min(m, pk + 13)
-        out.append(" ".join(("**" + toks[j] + "**" if act[j] >= 0.6 * act[pk] and act[j] > 0 else toks[j]) for j in range(lo, hi)))
+        s = " ".join(("**" + toks[j] + "**" if act[j] >= 0.6 * act[pk] and act[j] > 0 else toks[j]) for j in range(lo, hi))
+        s = _ACCESSION.sub("[id]", s)  # strip cited accession ids so the LLM interprets the REASONING, not the echo
+        out.append(s)
     return out
 
 PROMPT = ("SAE feature of BioReason-Pro (protein GO-function reasoning model), {band} band. Snippets where it "

@@ -497,6 +497,11 @@ export default function App({ title = "BioReason-Pro L28 SAE — Feature Explore
           reasoning_go_term: row.reasoning_go_term,
           validated_reasoning: row.validated_reasoning,
           reasoning_span: row.reasoning_span,
+          domain_f1: row.domain_f1,
+          dom_precision: row.dom_precision,
+          dom_recall: row.dom_recall,
+          ipr_domain: row.ipr_domain,
+          localized: row.localized,
         }))
         setFeatures(loadedFeatures)
 

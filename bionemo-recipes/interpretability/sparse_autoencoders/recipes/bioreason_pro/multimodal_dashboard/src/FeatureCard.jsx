@@ -264,6 +264,17 @@ const FeatureCard = forwardRef(function FeatureCard({ feature, isHighlighted, fo
                 F1: {bestF1.toFixed(2)}
               </span>
             )}
+            {feature.domain_f1 != null && (
+              <span
+                title={`Domain-F1 (Polina's localization metric): per-position precision × per-region recall vs ${feature.ipr_domain || 'the InterPro domain'}. >=0.7 = genuinely LOCALIZED (fires ON the domain residues, precision ${feature.dom_precision != null ? Number(feature.dom_precision).toFixed(2) : '?'}, recall ${feature.dom_recall != null ? Number(feature.dom_recall).toFixed(2) : '?'}). High AUROC + low domain-F1 = fires broadly on the protein, NOT localized to the domain.`}
+                style={{
+                  fontSize: '9px', fontWeight: '700', padding: '1px 5px', borderRadius: '3px',
+                  background: feature.localized ? 'rgba(118, 185, 0, 0.18)' : 'rgba(239, 68, 68, 0.14)',
+                  color: feature.localized ? '#76b900' : '#f87171', whiteSpace: 'nowrap',
+                }}>
+                {feature.localized ? '📍 localized' : 'not-localized'} domF1:{Number(feature.domain_f1).toFixed(2)}
+              </span>
+            )}
             <button
               title="Generate an autointerp label for this feature live (NIM)"
               onClick={async (e) => {
