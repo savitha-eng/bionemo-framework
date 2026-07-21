@@ -29,6 +29,15 @@ PR STACK (base each on the prior; base the first on the eval branch):
        feature_examples.parquet + serves it. GO-BAND: make --drop-go DEFAULT-ON (a reviewer browsing
        go-centered features just sees the fixed unused ontology). Document "interpret GO via text
        accessions, not the <go> band."
+       PROTEIN-BAND: keep the --protein-n-examples lever (higher example cap for the low-magnitude
+       protein band; protein features fire ~10-40x weaker so fewer clear the TopK cutoff).
+       SURFACE LOCALIZATION (important): the dashboard currently shows go_auc but NOT domain-F1, so a
+       reviewer can't tell a real localized structural feature (F18393, F1 0.98) from an AUROC-oversold
+       one (F4647, AUROC 0.98 but F1 0.0). (1) DATA: dashboard.py must write domain_f1/dom_precision/
+       dom_recall/ipr_domain/ipr_auroc/localized into feature_metadata.parquet (merge from the domain_f1
+       output). (2) DISPLAY: App.jsx must render domain_f1 + a "localized" badge next to each feature.
+       CRITICAL for reviewing bio features: their examples are low-magnitude/single-residue and can't
+       show localization by eye -- the metric must be visible.
   P2-2 Dashboard React app: <model>_dashboard/ (from multimodal_dashboard/) — mirror codon_dashboard/
        (src/, package.json, vite.config.js, index.html). MUST .gitignore node_modules/, dist/, *.log
        (do NOT commit them). One documented build (npm/vite).

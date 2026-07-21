@@ -61,7 +61,11 @@ def parse_args():  # noqa: D103
     p.add_argument("--bioreason-root", default=DEFAULT_ROOT)
     p.add_argument("--split", default="validation")
     p.add_argument("--num-proteins", type=int, default=300)
-    p.add_argument("--n-examples", type=int, default=6, help="Top examples per feature")
+    p.add_argument("--n-examples", type=int, default=6, help="Top examples per feature per band")
+    p.add_argument("--protein-n-examples", type=int, default=None,
+                   help="Separate (usually higher) example cap for the low-magnitude protein band "
+                        "(default: same as --n-examples). Protein-band features are the minority and fire "
+                        "at ~10-40x lower magnitude, so they need more proteins sampled to surface examples.")
     p.add_argument("--drop-go", action="store_true", help="exclude <go> graph-slot tokens (ablation shows they're unused)")
     p.add_argument("--window", type=int, default=48, help="tokens of context each side of the max-activating token")
     p.add_argument("--max-length-text", type=int, default=10000)
@@ -236,7 +240,10 @@ def main():  # noqa: D103
                     np.maximum.at(max_acts[b], row_pidx[s:e][bm], codes[bm])
             if s % (args.encode_batch * 20) == 0:
                 print(f"  {e:,}/{n_rows:,}", flush=True)
-    per_band_n = args.n_examples  # top-N example proteins PER BAND the feature fires on
+    # top-N example proteins PER BAND the feature fires on; protein band gets its own (usually higher)
+    # cap since it is the low-magnitude minority (fewer proteins fire above the TopK cutoff).
+    prot_n = args.protein_n_examples if args.protein_n_examples is not None else args.n_examples
+    per_band_n = {b: (prot_n if b == "protein" else args.n_examples) for b in BANDS_EX}
 
     # ---- Pass 2: per top (feature, protein), decode window + per-token activations ----
     print(f"[dashboard] pass 2: decoding windows for top-{per_band_n} examples/band of {H:,} features")
@@ -300,7 +307,7 @@ def main():  # noqa: D103
             col = max_acts[b][:, f]
             if col.max() <= 0:
                 continue                                # feature never fires on this band
-            for pi in np.argsort(-col)[:per_band_n]:
+            for pi in np.argsort(-col)[:per_band_n[b]]:
                 if col[pi] <= 0:
                     continue
                 pid = pids[pi]; rows_sorted = pid_rows[pid]
