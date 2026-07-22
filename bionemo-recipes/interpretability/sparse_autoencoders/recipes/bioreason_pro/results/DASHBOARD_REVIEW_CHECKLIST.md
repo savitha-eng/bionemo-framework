@@ -141,6 +141,32 @@ topology … α-β plait superfamily") were mislabeled by the old ±window auto-
 
 ---
 
+## G. Good-synthesis discovery — the synthesis-quality scorer (NEW) · **reasoning band**
+`synth_span_scorer.py` ranks ALL reasoning features by good-synthesis quality, **grounded, no LLM** — the way
+to *find* good reasoning instead of eyeballing it. Two stages: (1) keep only features that fire on long
+**contiguous phrases** (single-token firing = lexical/echo → dropped; **1,346 of 8,842** features qualify);
+(2) score each phrase = weighted **mechanism-verbs** + **beyond-prompt named entities** − echo/accession
+density, scored **per-window** so mixed features are flagged. Output: `synth_span_ranked.json`.
+
+**Top candidates the scan discovered (score ranks → confirmed by reading the windows):**
+- **F2124** — membrane trafficking: *"Vps5/Vps17 form a BAR-domain dimer that sculpts endosomal tubules; SNX3
+  supplies PI3P-dependent recruitment; a Rab-driven cycle…"*
+- **F32573** — CCR4–NOT deadenylase: *"Recruitment of the CCR4–NOT deadenylase via CNOT1 positions the enzyme…"*
+- **F25291** — GPCR activation: *"serotonin occupies the orthosteric site, outward movement of TM6… interface for
+  Gαs"* — ⚠️ **MIXED** (frac_synth 0.86; some windows are pure IPR/residue echo).
+- **F15088, F12706** — top-ranked; read to confirm.
+
+**Two failure modes the scorer controls for** (why raw mechanism-density alone isn't enough):
+- **Discourse-connector false positives** — "therefore/thus" fire on answer-formatting templates (e.g. F22404
+  *"therefore the primary molecular function…"*), NOT synthesis. Down-weighted vs real mechanism verbs.
+- **Mixed echo/synthesis features** — flagged by per-window `frac_synth < 1.0` (F25291) instead of averaged out.
+
+**How to use it:** rank by `synth_score` → open the top features on the **reasoning band** → **re-click 🔍**
+(now span-aware) to name the phrase. The gold-standard follow-up is *faithfulness* — does ablating the feature
+change the model's GO answer, or is the synthesis decorative? (causal, not yet run).
+
+---
+
 ## Where each result lives (if you need depth beyond this page)
 | result | doc / file |
 |---|---|
@@ -150,6 +176,7 @@ topology … α-β plait superfamily") were mislabeled by the old ±window auto-
 | cross-modal pairs (all 20 + domain-F1) | `CROSSMODAL_PAIRS.md` |
 | structural domain-F1 (872 feats) | `domain_f1_l30.json` |
 | synthesis vs echo probe | `echo_synthesis_l30.json` |
+| **good-synthesis ranked features** | `synth_span_ranked.json` (via `synth_span_scorer.py`) |
 | bio enrichment (GO+IPR, per-feature AUROC) | `feature_biology_table.json` |
 
 **Validation order if time-crunched:** A (which concepts real) → B (auto-interp the 4 real ones) → D (click
