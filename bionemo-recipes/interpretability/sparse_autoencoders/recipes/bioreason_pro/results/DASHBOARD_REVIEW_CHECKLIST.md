@@ -32,22 +32,34 @@ not mechanism. The 4 ✅ are the only ones worth your time. Full feature-ID list
 
 ---
 
-## B. Features WITHIN the real probes — do they mean the concept? · **reasoning band**
-For each ✅ concept, the probe's nonzero-coef features. Auto-interp them (🔍, accessions auto-stripped) and
-confirm mechanism, not echo.
+## B. Features WITHIN the real probes — rank by SCORE, not by auto-interp label · **reasoning band**
+The probe's nonzero-coef features. **Scoring (trustworthy) ≠ labeling (a hypothesis)** — see the box below.
+Rank each feature by its **label-grounded per-feature AUROC** (predicts the GO concept); use auto-interp only
+as a naming hint and confirm by reading the windows.
 
-**defense → fungus (12 feats):** `36488, 35336, 2808, 23726, 29332, 32785, 7665, 15775, 22156, 2082, 28215, 5047`
+**defense → fungus (12 feats)** — AUROC-ranked (random feature ≈ 0.50):
+
+| tier (per-feature AUROC) | features | meaning |
+|---|---|---|
+| **GENUINE fungal** ≥0.94 | F2808 (0.99), F35336 (0.99), F32785 (0.99), F23726 (0.98), F36488 (0.94) | individually predict fungal defense = the real core + detectors |
+| weak / correlate 0.6–0.72 | F7665 cell-wall, F22156, F5047 motility | marginal |
+| co-occurring ~0.5–0.59 | F2082 chromatin, F15775 autophagy, F29332, F28215 | NOT fungal — L1 picked them as co-predictors |
+
 **defense → bacterium (36 feats, top):** `35336, 38712, 36769, 8824, 2724, 32785, 20730, 22077, 13479, …`
+**fungus ∩ bacterium = {F35336, F2808, F32785}** = shared innate-immune core (biologically sensible).
 
-Validated auto-interp labels (`autointerp_microbial_defense.json`):
-- ✅ **Genuine:** F36488/F35336/F2808 "Defense response to fungus", F32785 "Immune response", F23726
-  "Filamentous fungi", F22077 "Bacterial LPS", F7665 "Cell wall", F15775 "Autophagy".
-- · **Generic co-occurring correlates (~⅓):** F2082 chromatin, F28215 protein-localization, F5047 cell-motility.
-- **fungus ∩ bacterium = {F35336, F2808, F32785}** = shared innate-immune core (biologically sensible).
+> **SCORING vs LABELING — the discipline that governs §B and §C.**
+> - **Score (trust it):** supervised, GO-label-grounded. (i) L1 probe coef = helps *predict* the concept in
+>   combination; (ii) per-feature AUROC = *individually* means the concept. F23726 = 0.975 vs random ≈ 0.50.
+> - **Auto-interp label (hypothesis only):** one unsupervised LLM read of top windows. Noisy — it **missed**
+>   F23726 ("Amino acid transport", but 6/8 windows are *Aspergillus/filamentous fungi/H. sativum*, peak fires on
+>   the species-name tokens), and it **oversells** plausible correlates (F15775 "Autophagy" *sounds* antimicrobial
+>   but AUROC 0.572 = co-occurring, not fungal). A plausible label is the more dangerous failure than an obvious miss.
+> - **Rule:** rank by AUROC → read the windows → auto-interp is just the name suggestion.
 
-**What to check:** a sparse probe selects *predictive* features, not features that *mean* the concept — so expect
-~⅔ genuine defense + ~⅓ correlates. On the reasoning band the genuine ones show mechanism ("antifungal activity
-vs *H. sativum*", "redox gating"); flip to the **prompt band** → just GO-ID echo. That contrast is the finding.
+**What to check:** the top-5 GENUINE features on the reasoning band show mechanism ("antifungal activity vs
+*H. sativum*", "redox gating"); flip to the **prompt band** → just GO-ID echo. The bottom-4 co-occurring ones
+(AUROC ~0.5) are what "a sparse probe selects *predictive* features, not features that *mean* the concept" means.
 
 ---
 
