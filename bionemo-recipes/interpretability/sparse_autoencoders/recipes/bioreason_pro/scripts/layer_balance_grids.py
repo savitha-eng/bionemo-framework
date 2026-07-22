@@ -131,10 +131,14 @@ def main():
             A = ax[r, c]
             pf, tf = d[f"{tag}_pf"], d[f"{tag}_tf"]
             live = (pf > 0) | (tf > 0)
-            A.scatter(tf[live] + eps, pf[live] + eps, s=4, alpha=0.3, c="#334155", edgecolors="none")
+            psel = live & (pf > 0.01) & (tf < 0.001)     # protein-selective population (top-left)
+            rest = live & ~psel
+            A.scatter(tf[rest] + eps, pf[rest] + eps, s=3, alpha=0.18, c="#b8bec6", edgecolors="none")
+            A.scatter(tf[psel] + eps, pf[psel] + eps, s=9, alpha=0.8, c="#2563eb", edgecolors="none",
+                      label="protein-selective")
             A.set_xscale("log"); A.set_yscale("log")
-            A.plot([eps, 1], [eps, 1], ls="--", lw=0.7, c="#94a3b8")
-            A.axhline(0.01, color="#2563eb", lw=0.5, ls=":"); A.axvline(0.001, color="#2563eb", lw=0.5, ls=":")
+            A.plot([eps, 1], [eps, 1], ls="--", lw=0.7, c="#cbd5e1")
+            A.axhline(0.01, color="#9aa3ad", lw=0.5, ls=":"); A.axvline(0.001, color="#9aa3ad", lw=0.5, ls=":")
             A.set_xlim(eps * 0.8, 1); A.set_ylim(eps * 0.8, 1)
             A.set_title(f"L{N} {ttl} — {d[f'{tag}_ps']} protein-sel", fontsize=10)
             if r == nrow - 1:
@@ -156,7 +160,7 @@ def main():
                 ("balanced code", d["emb_bal"])]
         for c, (ttl, emb) in enumerate(embs):
             A = ax[r, c]
-            for cl, name, col in [(0, "protein", "#2563eb"), (1, "text", "#9333ea")]:
+            for cl, name, col in [(0, "protein", "#2563eb"), (1, "text", "#e8710a")]:
                 m = lab == cl
                 A.scatter(emb[m, 0], emb[m, 1], s=4, alpha=0.4, c=col, label=name)
             A.set_title(f"L{N} {ttl}", fontsize=10); A.set_xticks([]); A.set_yticks([])

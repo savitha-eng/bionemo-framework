@@ -9,6 +9,18 @@ import numpy as np, pyarrow.parquet as pq
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from PIL import Image, ImageChops
+
+
+def autocrop(path, pad=14):
+    """Hard-trim white borders so there is zero trailing whitespace."""
+    im = Image.open(path).convert("RGB")
+    bg = Image.new("RGB", im.size, (255, 255, 255))
+    bbox = ImageChops.difference(im, bg).getbbox()
+    if bbox:
+        l, t, r, b = bbox
+        im = im.crop((max(0, l - pad), max(0, t - pad), min(im.width, r + pad), min(im.height, b + pad)))
+        im.save(path)
 
 PUB = ("/data/savithas/phase3-wt/bionemo-recipes/interpretability/sparse_autoencoders/recipes/"
        "bioreason_pro/multimodal_dashboard/public/l30_balanced/feature_examples.parquet")
@@ -169,3 +181,94 @@ ct.sub("reasoning partner (text) — the mechanism the model writes for those pr
 ct.wins(windows(3184, "reasoning", 1))
 fig.savefig(OUT + "fig_crossmodal_alignment.png", dpi=170, facecolor="white", bbox_inches="tight")
 print("wrote fig_crossmodal_alignment.png")
+
+# ===== FIGURE D: auto-interp pipeline diagram =====
+from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
+
+
+def box(ax, cx, cy, w, h, text, fc="#f5f2ec", ec="#c9c3b6", tc=INK, fs=9.5, bold=False):
+    ax.add_patch(FancyBboxPatch((cx - w / 2, cy - h / 2), w, h, boxstyle="round,pad=0.004,rounding_size=0.012",
+                                fc=fc, ec=ec, lw=1.4, transform=ax.transAxes, mutation_aspect=0.45))
+    ax.text(cx, cy, text, transform=ax.transAxes, ha="center", va="center", fontsize=fs, family=MONO,
+            color=tc, fontweight="bold" if bold else "normal", linespacing=1.35)
+
+
+def arrow(ax, x0, y0, x1, y1):
+    ax.add_patch(FancyArrowPatch((x0, y0), (x1, y1), transform=ax.transAxes, arrowstyle="-|>",
+                                 mutation_scale=13, color="#9a948a", lw=1.6))
+
+
+fig = plt.figure(figsize=(9.6, 6.6)); fig.patch.set_facecolor("white")
+ax = fig.add_axes([0, 0, 1, 1]); ax.axis("off")
+ax.text(0.5, 0.965, "The auto-interp pipeline", ha="center", family=MONO, fontsize=15, fontweight="bold", color=INK)
+ax.text(0.5, 0.928, "name a feature from its firing — then never trust the name alone",
+        ha="center", family=MONO, fontsize=9.5, color=MUTED)
+LX, RX, W, H = 0.27, 0.74, 0.40, 0.088
+ax.text(LX, 0.885, "LABELING  (a hypothesis)", ha="center", family=MONO, fontsize=10, fontweight="bold", color="#c26a1a")
+ax.text(RX, 0.885, "SCORING  (trustworthy)", ha="center", family=MONO, fontsize=10, fontweight="bold", color="#5f8f4c")
+LY = [0.80, 0.645, 0.49, 0.335]
+box(ax, LX, LY[0], W, H, "SAE feature  →  top-firing windows\n(select a band: protein / reasoning / ...)")
+box(ax, LX, LY[1], W, H, "strip GO: / IPR: accessions\n(read reasoning, not label echo)")
+box(ax, LX, LY[2], W, H, "mark the full active phrase\n(span-aware, not a fixed window)")
+box(ax, LX, LY[3], W, H, "LLM names the concept", fc="#fdecd9", ec="#e0932f")
+for i in range(3):
+    arrow(ax, LX, LY[i] - H / 2, LX, LY[i + 1] + H / 2)
+box(ax, RX, LY[0], W, H, "protein → GO / InterPro labels")
+box(ax, RX, LY[1], W, H, "per-feature AUROC\n(does it predict the concept?)")
+box(ax, RX, LY[2], W, H, "AUROC score", fc="#e6f0e0", ec="#7fae6b")
+for i in range(2):
+    arrow(ax, RX, LY[i] - H / 2, RX, LY[i + 1] + H / 2)
+box(ax, 0.5, 0.14, 0.86, 0.10,
+    "discipline:  rank by AUROC  →  read the marked windows  →  the LLM label is only a hint",
+    fc="#f5f2ec", ec="#b9b3a6", fs=10.5, bold=True)
+arrow(ax, LX, LY[3] - H / 2, 0.40, 0.14 + 0.05)
+arrow(ax, RX, LY[2] - H / 2, 0.60, 0.14 + 0.05)
+ax.text(0.5, 0.035, 'e.g. F23726 labeled "amino acid transport" (miss) — but AUROC 0.975 → genuinely fungal',
+        ha="center", family=MONO, fontsize=8.5, color=MUTED, style="italic")
+fig.savefig(OUT + "fig_autointerp_pipeline.png", dpi=170, facecolor="white", bbox_inches="tight")
+print("wrote fig_autointerp_pipeline.png")
+
+# ===== FIGURE E: rich fungal feature card (F23726, multi-example, 3 bands, recurring vocab) =====
+fig, c = new_fig(6.0)
+c.header("Feature 23726  —  filamentous fungi (pathogen detector)", big=True)
+c.sub("fungal-defense AUROC 0.975   ·   recurring vocabulary across examples: filamentous · fungi · Aspergillus · Helminthosporium · Peronospora · antifungal")
+c.gap(0.5)
+c.header("Reasoning band  →  names specific fungi + mechanism (multiple proteins)")
+c.wins(windows(23726, "reasoning", 4, ctx=6, maxlen=32))
+c.rule()
+c.header("Prompt band  →  GO-accession echo    ·    Answer band  →  restatement")
+c.sub("prompt (given annotations)")
+c.wins(windows(23726, "prompt", 1))
+c.gap(0.3)
+c.sub("answer (final GO output)")
+c.wins(windows(23726, "answer", 1))
+fig.savefig(OUT + "fig_fungal_feature_card.png", dpi=170, facecolor="white", bbox_inches="tight")
+print("wrote fig_fungal_feature_card.png")
+
+# ===== FIGURE F: domain-F1 localization panel (kinase-led, robust; not kinesin-only) =====
+DOM = [
+    (18647, "Protein kinase domain (IPR000719)", "domain-F1 0.93 · 90 regions · fires on the catalytic motifs (DFG · GTPYY · APE)"),
+    (13950, "RNA-binding domain (RRM)", "domain-F1 0.95 · 60 regions"),
+    (8277, "Zinc finger, C2H2-type", "domain-F1 0.93 · 48 regions"),
+    (4647, "the AUROC-oversell contrast", "AUROC 0.98  BUT  domain-F1 0.00 — fires OUTSIDE any domain (why AUROC alone misleads)"),
+]
+fig, c = new_fig(5.4)
+c.header("Protein-domain features localize  —  domain-F1", big=True)
+c.sub("residue-band firing (amino acids; orange = activation). domain-F1 rewards firing INSIDE the annotated domain, not merely correlating with it.")
+c.gap(0.5)
+for i, (fid, dom, sub) in enumerate(DOM):
+    c.header(f"Feature {fid}  —  {dom}")
+    c.sub(sub)
+    c.wins(windows(fid, "protein", 1, ctx=(12 if fid == 4647 else 2), maxlen=48))
+    if i < len(DOM) - 1:
+        c.rule()
+c.gap(0.2)
+c.sub("(kinesin F18393 scores the highest domain-F1, 0.98, but on only 15 regions — small-n; this kinase / RNA / zinc panel is the robust result.)")
+fig.savefig(OUT + "fig_domain_f1_panel.png", dpi=170, facecolor="white", bbox_inches="tight")
+print("wrote fig_domain_f1_panel.png")
+
+# hard-crop all generated figures
+for f in ["fig_autointerp_walkthrough", "fig_feature_gallery", "fig_crossmodal_alignment",
+          "fig_autointerp_pipeline", "fig_fungal_feature_card", "fig_domain_f1_panel"]:
+    autocrop(OUT + f + ".png")
+print("autocropped all")

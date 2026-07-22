@@ -63,6 +63,9 @@ Two disciplines govern every number below:
 - **The leak floor.** The reasoning text often *states* the function, so a random-initialized SAE already "decodes" it. We train a probe on a random SAE as a **leak floor** and trust only the margin `sae_sparse − random`.
 - **Scoring vs labeling.** We separate **scoring** (label-grounded per-feature AUROC — trustworthy) from **labeling** (an LLM auto-interp read of a feature's top windows — a hypothesis). Our auto-interp pipeline takes a feature's top-firing windows in a chosen band, **strips cited `GO:`/`IPR` accessions** (so the LLM interprets reasoning, not label echo), marks the **full active phrase** (span-aware), and asks for one concept. We treat the label as a hint and always confirm by AUROC + reading the windows — because the pipeline both *misses* (F23726, fungal AUROC 0.975, mislabeled "amino acid transport") and *oversells* (F15775 "autophagy", fungal AUROC only 0.572).
 
+![the auto-interp pipeline](charts/fig_autointerp_pipeline.png)
+> **The auto-interp pipeline.** Two tracks: *labeling* (a hypothesis — read the firing, strip accessions, mark the full phrase, let an LLM name it) and *scoring* (trustworthy — per-feature AUROC against GO/InterPro). The discipline: rank by AUROC, read the marked windows, treat the LLM label as only a hint.
+
 ![auto-interp walkthrough](charts/fig_autointerp_walkthrough.png)
 > **Reading a feature per band.** Feature 36488 (antimicrobial defense) on its **reasoning** band writes genuine mechanism ("defense circuits against fungal invasion… pathogenesis-related promoters integrate ethylene with salicylic acid… pattern-recognition receptor signaling"); the *same* feature on the **prompt** band merely echoes the given `GO:` accessions ("defense response to other organism…"). We interpret the reasoning band only, accessions stripped. Orange = activation strength.
 
@@ -87,6 +90,9 @@ The genuine set has a biological shape: **pathogen-specific detectors** (F23726 
 ![enrichment](charts/enrichment.png)
 > **Per-feature GO+InterPro enrichment.** Best over-represented term per feature with hypergeometric FDR and rank-sum AUROC — the label-grounded scoring behind the tiers above.
 
+![fungal feature card](charts/fig_fungal_feature_card.png)
+> **A pathogen-detector feature (F23726), read across bands.** On the reasoning band it names specific fungi and mechanism across multiple proteins — the recurring vocabulary (*filamentous · fungi · Aspergillus · Helminthosporium · Peronospora · antifungal*) lights up in every example. The prompt band echoes GO accessions; the answer band restates. Fungal-defense AUROC 0.975.
+
 Honest caveat: a sparse probe selects *predictive* features, not features that *mean* the concept (≈⅓ are co-occurring correlates), and the **protein band has no clean defense feature** — defense is a reasoning-band phenomenon.
 
 ### 3.2 Protein-domain features: Fisher enrichment + a localization metric
@@ -103,8 +109,8 @@ But **AUROC is not localization** — a feature can score 0.98 for a domain and 
 
 Across all AUROC-passing structural features, **only ~17% (59 of 872) genuinely localize.** For structural interpretability, trust the localization metric, not the ranking metric.
 
-![per-feature structural](charts/per_feature_structural.png)
-> **Structural features by localization.** The localized minority vs the AUROC-oversell majority.
+![domain-F1 localization panel](charts/fig_domain_f1_panel.png)
+> **Protein-domain features localize.** Residue-band firing for a kinase-led panel — protein kinase (domain-F1 0.93, 90 regions), RRM (0.95, 60), zinc finger C2H2 (0.93, 48) — each fires on the domain's catalytic/structural residues. F4647 (AUROC 0.98, domain-F1 0.00) barely fires and outside any domain — the "AUROC oversell." Kinesin scores highest (0.98) but on only 15 regions, so this panel is the robust result.
 
 ### 3.3 Cross-modal exploration: aligning protein and reasoning features
 
