@@ -46,6 +46,9 @@ A **20–50× increase at every layer** — balancing carves out capacity the na
 ![balancing at layer 24](charts/fig_balance_condensed.png)
 > **Modality balancing at layer 24 (the peak).** Each dot is a feature: x = fraction of text tokens it fires on, y = fraction of protein tokens; blue = protein-selective. Unbalanced (left) gives protein 34 dedicated features; balanced (right) gives 928. All nine layers in Appendix A.
 
+![protein-selective per layer](charts/fig_selectivity_trend.png)
+> **Protein vocabulary across layers.** Protein-selective feature count per layer, balanced vs the natural mix. Balancing lifts protein from ~10–34 dedicated features to ~570–928 at every layer (peak L24), a 20–50× gain.
+
 Two more multimodal-training lessons:
 
 - **Batch-aggregated loss, not per-token** (`--aggregate-loss` + `--normalize-loss`). In a multimodal stream tokens sit at very different distances from the shared center and are reconstructed to very different degrees; a per-token loss ratio starves the minority modality's features (FVU term) and mis-aims dead-latent revival toward already-well-reconstructed tokens (AuxK term). Batch aggregation fixes both. (Single-modality recipes like evo2 can skip it; multimodal cannot.)
