@@ -63,6 +63,9 @@ Two disciplines govern every number below:
 - **The leak floor.** The reasoning text often *states* the function, so a random-initialized SAE already "decodes" it. We train a probe on a random SAE as a **leak floor** and trust only the margin `sae_sparse − random`.
 - **Scoring vs labeling.** We separate **scoring** (label-grounded per-feature AUROC — trustworthy) from **labeling** (an LLM auto-interp read of a feature's top windows — a hypothesis). Our auto-interp pipeline takes a feature's top-firing windows in a chosen band, **strips cited `GO:`/`IPR` accessions** (so the LLM interprets reasoning, not label echo), marks the **full active phrase** (span-aware), and asks for one concept. We treat the label as a hint and always confirm by AUROC + reading the windows — because the pipeline both *misses* (F23726, fungal AUROC 0.975, mislabeled "amino acid transport") and *oversells* (F15775 "autophagy", fungal AUROC only 0.572).
 
+![auto-interp walkthrough](charts/fig_autointerp_walkthrough.png)
+> **Reading a feature per band.** Feature 36488 (antimicrobial defense) on its **reasoning** band writes genuine mechanism ("defense circuits against fungal invasion… pathogenesis-related promoters integrate ethylene with salicylic acid… pattern-recognition receptor signaling"); the *same* feature on the **prompt** band merely echoes the given `GO:` accessions ("defense response to other organism…"). We interpret the reasoning band only, accessions stripped. Orange = activation strength.
+
 ---
 
 ## 3. Results
@@ -112,15 +115,15 @@ Do a protein's domain features connect to what the model *says* about it? We ali
 
 The two methods **disagree** — the pairing's kinesin partners are *not* recruited by the kinesin probe — because one measures co-firing and the other prediction. And a **2×2 causal test settles the interpretation**: clamping a reasoning feature writes its concept into the trace, but the paired protein feature is causally inert. So the cross-modal link is **correlational and prompt-mediated — the model "talks about motors" when the motor detector fires — not a causal protein→reasoning feature flow.** (Consistently, protein and text separate in the raw residual stream at every layer, so there's no fused sub-space for the SAE to find.)
 
-![cross-modal](../analysis/figures/fig2_crossmodal_combined.png)
-> **Cross-modal structure.** Pairing correlations and combined-probe recruitment; the fusion-control 2×2 shows the link is prompt-mediated, not fused.
+![cross-modal alignment](charts/fig_crossmodal_alignment.png)
+> **Cross-modal alignment.** *Top:* per-protein co-activation for two aligned pairs (GPCR r = 0.89, kinesin r = 0.62) — each dot is a protein, a bio feature's activation vs its best-correlated reasoning feature. *Bottom:* what the GPCR pair fires on — the protein detector (F7369) fires on the transmembrane residues, while its reasoning partner (F3184) writes the GPCR mechanism ("rhodopsin-like, 7TM domain… class A"). The alignment is correlational and **prompt-mediated** — the 2×2 causal test shows the reasoning feature writes the concept while the paired protein feature is inert — not a fused feature-to-feature flow.
 
 ### 3.4 Synthesis features: reading genuine mechanism
 
 Beyond named concepts, a grounded scorer (`synth_span_scorer.py`, no LLM) ranks reasoning features by good-synthesis quality — frequency-filtered (drop broadband "reasoning-mode" features), firing on long contiguous phrases, scored for mechanism verbs + inference language + beyond-prompt named entities − echo. It *discovers* mechanistic features automatically: **F12706** (DNA-TF motif recognition), **F15088** (mRNA translation control — poly(A)/eIF4E/CCR4-NOT), **F30993** (transporter alternating-access), **F5221** (RAS signaling — SOS1/RAF).
 
-![synthesis novelty](charts/synthesis_novelty.png)
-> **Synthesis vs echo.** Mechanism/entity density separates genuine synthesis features from accession-echo.
+![feature gallery](charts/fig_feature_gallery.png)
+> **Mechanistic-synthesis features — multi-word reasoning beyond GO terms.** Top-activating reasoning windows for three synthesis-scorer features: mRNA translation control (poly(A)-binding protein · eIF4E/eIF4G · CCR4-NOT deadenylase), transporter alternating-access (outward-open cavity · cystine binding · Na⁺ coordination), and RAS signaling (GEF SOS1 · GAPs RASA1/NF1 · RAF-MEK-ERK cascade). These fire on extended mechanistic *phrases*, not single GO terms. Orange = activation strength.
 
 ---
 
