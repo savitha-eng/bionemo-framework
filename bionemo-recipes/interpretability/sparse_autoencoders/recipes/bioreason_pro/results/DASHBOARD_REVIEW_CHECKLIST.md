@@ -143,23 +143,30 @@ topology … α-β plait superfamily") were mislabeled by the old ±window auto-
 
 ## G. Good-synthesis discovery — the synthesis-quality scorer (NEW) · **reasoning band**
 `synth_span_scorer.py` ranks ALL reasoning features by good-synthesis quality, **grounded, no LLM** — the way
-to *find* good reasoning instead of eyeballing it. Two stages: (1) keep only features that fire on long
-**contiguous phrases** (single-token firing = lexical/echo → dropped; **1,346 of 8,842** features qualify);
-(2) score each phrase = weighted **mechanism-verbs** + **beyond-prompt named entities** − echo/accession
-density, scored **per-window** so mixed features are flagged. Output: `synth_span_ranked.json`.
+to *find* good reasoning instead of eyeballing it. Three filters/stages: (0) **frequency filter** — drop
+BROADBAND features (`act_freq > 0.20`; a feature firing on ~all tokens is a "reasoning-mode" signal, not a
+concept — e.g. F2124 at 94%, F11654 at 32%); sparser is better (`log_freq < −3` preferred). (1) keep only
+features that fire on long **contiguous phrases** (single-token = lexical/echo → dropped; **1,307 of 8,842**
+qualify); (2) score each phrase = **mechanism-verbs** + **inference/conclusion** language + **beyond-prompt
+named entities** − echo/accession density, **per-window** so mixed features are flagged.
+Output: `synth_span_ranked.json` (includes `act_freq`).
 
-**Top candidates the scan discovered (score ranks → confirmed by reading the windows):**
-- **F2124** — membrane trafficking: *"Vps5/Vps17 form a BAR-domain dimer that sculpts endosomal tubules; SNX3
-  supplies PI3P-dependent recruitment; a Rab-driven cycle…"*
-- **F32573** — CCR4–NOT deadenylase: *"Recruitment of the CCR4–NOT deadenylase via CNOT1 positions the enzyme…"*
-- **F25291** — GPCR activation: *"serotonin occupies the orthosteric site, outward movement of TM6… interface for
-  Gαs"* — ⚠️ **MIXED** (frac_synth 0.86; some windows are pure IPR/residue echo).
-- **F15088, F12706** — top-ranked; read to confirm.
+**Top candidates the scan discovered (score ranks → confirmed by reading the windows), all sparse:**
+- **F12706** — DNA-binding TF motif recognition: *"T-rich major-groove signature … T/TTTGTTT motifs … TAAT-centered"*
+- **F15088** — mRNA translation control: *"cytoplasmic poly(A)-binding protein … eIF4E/eIF4G to promote or block initiation … CCR4–NOT"*
+- **F30993** — transporter mechanism: *"alternating-access antiport … APC core forms outward-open cavity … coordinates Na⁺ ions"*
+- **F5221** — RAS signaling: *"GEF such as SOS1, GAPs RASA1/NF1, effectors RAF1/BRAF/PIK3CA … Grb2 to activate RAS–RAF"*
+- **F32573** — CCR4–NOT deadenylase recruitment (via CNOT1).
+- **F25291** — GPCR activation (serotonin → TM6 → Gαs) — ⚠️ **MIXED** (frac_synth 0.86; some windows are IPR echo).
 
-**Two failure modes the scorer controls for** (why raw mechanism-density alone isn't enough):
-- **Discourse-connector false positives** — "therefore/thus" fire on answer-formatting templates (e.g. F22404
-  *"therefore the primary molecular function…"*), NOT synthesis. Down-weighted vs real mechanism verbs.
-- **Mixed echo/synthesis features** — flagged by per-window `frac_synth < 1.0` (F25291) instead of averaged out.
+**Two kinds of good reasoning the scorer values** (both count, they're different):
+- **Mechanism-elaboration** — names molecular players in a mechanism (F12706, F30993, F5221).
+- **Inference / conclusion-drawing** — evidence → conclusion, e.g. **F22404** *"absence of catalytic motifs and
+  the dominance of the MFS transport fold argue for a carrier rather than a channel; consequently the molecular
+  function is…"*. (This was earlier mis-dismissed as boilerplate; it's genuine inference and is now valued.)
+
+**What the scorer controls for:** broadband features (freq filter), single-token/echo (phrase filter), and
+**mixed echo/synthesis** features — flagged by per-window `frac_synth < 1.0` (F25291) rather than averaged out.
 
 **How to use it:** rank by `synth_score` → open the top features on the **reasoning band** → **re-click 🔍**
 (now span-aware) to name the phrase. The gold-standard follow-up is *faithfulness* — does ablating the feature

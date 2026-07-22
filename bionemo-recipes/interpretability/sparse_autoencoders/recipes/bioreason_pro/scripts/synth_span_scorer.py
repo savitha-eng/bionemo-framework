@@ -22,12 +22,20 @@ MECH = re.compile(r'\b(catalyz|recruit|position|potentiat|sculpt|choreograph|med
                   r'stabiliz|integrat|coupl|driv|trigger|activat|inhibit|suppress|promot|initiat|requir|'
                   r'enabl|allow|shap|underli|shuttl|tether|anchor|gat(e|es|ing)|bind|dimeriz|remodel|'
                   r'orchestrat|suppli|form|occup|rearrang|create|nucleat|scaffold)\w*', re.I)
-DISC = re.compile(r'\b(therefore|thus|hence|thereby|accordingly|because|so that|consequently)\w*', re.I)
+# inference / conclusion-drawing is genuine reasoning (evidence -> conclusion), e.g. F22404 "absence of catalytic
+# motifs ... argue for a carrier ... consequently the molecular function is". Valued (0.7), NOT penalized.
+INFER = re.compile(r'\b(therefore|thus|hence|consequently|accordingly|argue|suggest|indicat|impl(y|ies)|'
+                   r'conclud|consistent|defensib|reflect|support)\w*', re.I)
 ECHO = re.compile(r'(GO\s*:?\s*[0-9]|IPR\s*[0-9]|[0-9]{3,})', re.I)
 ENTITY_TOK = re.compile(r'[A-Z]')            # gene/protein-symbol-like fragment (has a capital), robust to BPE
+FREQ_MAX = 0.20      # exclude BROADBAND features (fire on too many tokens = not a specific concept, e.g. F2124
+                     # at 94%, F11654 at 32%). Hard ceiling ~20-30%; sparser (log_freq < -3) is preferred.
 THR_FRAC, MIN_SPAN, MIN_DENS, NEX = 0.35, 4, 0.4, 12
 
 df = pq.read_table(PUB).to_pandas()
+# per-feature activation frequency (to drop broadband features) from the dashboard metadata parquet.
+META = pq.read_table(PUB.replace('feature_examples', 'feature_metadata')).to_pandas().set_index('feature_id')
+freq = META['activation_freq'].to_dict()
 # prompt vocabulary per protein: the GIVEN annotations = tokens in the prompt band. Entities NOT here = novel.
 prompt_vocab = {}
 for pid, sub in df[df.band == 'prompt'].groupby('protein_id'):
@@ -39,6 +47,8 @@ for pid, sub in df[df.band == 'prompt'].groupby('protein_id'):
 rows = df[df.band == 'reasoning']
 out = []
 for fid, sub in rows.groupby('feature_id'):
+    if float(freq.get(int(fid), 1.0)) > FREQ_MAX:      # skip broadband features up front
+        continue
     sub = sub.nlargest(NEX, 'max_activation')
     spans, wq, novelrate = [], [], []
     for _, x in sub.iterrows():
@@ -64,7 +74,7 @@ for fid, sub in rows.groupby('feature_id'):
         pv = prompt_vocab.get(x['protein_id'], set())
         ent = [t for t in span_toks if ENTITY_TOK.search(t) and not ECHO.search(t) and len(t) <= 6]
         novel = [t for t in ent if t.lower() not in pv]        # beyond-prompt named entities
-        mech = len(MECH.findall(w)) + 0.2 * len(DISC.findall(w))
+        mech = len(MECH.findall(w)) + 0.7 * len(INFER.findall(w))   # inference/conclusion valued, not penalized
         echo = len(ECHO.findall(w))
         q = (mech + 0.4 * len(novel) - echo) / nt
         spans.append(slen)
@@ -77,14 +87,15 @@ for fid, sub in rows.groupby('feature_id'):
     mean_q = float(np.mean(wq))
     frac_synth = float(np.mean([q > 0.05 for q in wq]))        # per-window synthesis fraction
     synth_score = mean_q * min(span_len, 40) / 10 * consistency * (0.5 + frac_synth)
-    out.append(dict(feature=int(fid), span_len=round(span_len, 1), n_phrase=len(spans),
+    out.append(dict(feature=int(fid), act_freq=round(float(freq.get(int(fid), 0.0)), 4),
+                    span_len=round(span_len, 1), n_phrase=len(spans),
                     frac_synth_win=round(frac_synth, 2), novel_entity_rate=round(float(np.mean(novelrate)), 3),
                     quality=round(mean_q, 3), synth_score=round(synth_score, 3)))
 out.sort(key=lambda d: -d['synth_score'])
 json.dump(out, open('synth_span_ranked.json', 'w'), indent=1)
-print(f'scored {len(out)} phrase-firing reasoning features (of {rows.feature_id.nunique()})\n')
-print(f'{"rank":>4} {"feat":>7} {"span":>5} {"nphr":>4} {"fracS":>6} {"novEnt":>7} {"qual":>6} {"SCORE":>7}')
+print(f'scored {len(out)} phrase-firing features with act_freq<={FREQ_MAX} (of {rows.feature_id.nunique()})\n')
+print(f'{"rank":>4} {"feat":>7} {"freq":>7} {"span":>5} {"fracS":>6} {"novEnt":>7} {"qual":>6} {"SCORE":>7}')
 for i, d in enumerate(out[:30]):
-    print(f'{i+1:>4} F{d["feature"]:6} {d["span_len"]:5} {d["n_phrase"]:4} {d["frac_synth_win"]:6} '
+    print(f'{i+1:>4} F{d["feature"]:6} {d["act_freq"]:7} {d["span_len"]:5} {d["frac_synth_win"]:6} '
           f'{d["novel_entity_rate"]:7} {d["quality"]:6} {d["synth_score"]:7}')
 print(f'\n... {len(out)} total -> synth_span_ranked.json')
