@@ -257,6 +257,16 @@ c.wins(windows(23726, "answer", 1))
 fig.savefig(OUT + "fig_fungal_feature_card.png", dpi=170, facecolor="white", bbox_inches="tight")
 print("wrote fig_fungal_feature_card.png")
 
+# ===== FIGURE E2: fungal pattern across many proteins (reasoning band only) =====
+fig, c = new_fig(6.2)
+c.header("Feature 23726  —  one fungal signature across many proteins", big=True)
+c.sub("top reasoning windows, each from a different protein · the recurring vocabulary IS the feature · fungal-defense AUROC 0.975 · orange = activation")
+c.sub("recurring across examples: filamentous · fungi · Aspergillus · Helminthosporium · Peronospora · spore germination · antifungal")
+c.gap(0.5)
+c.wins(windows(23726, "reasoning", 7, ctx=5, maxlen=33))
+fig.savefig(OUT + "fig_fungal_pattern.png", dpi=170, facecolor="white", bbox_inches="tight")
+print("wrote fig_fungal_pattern.png")
+
 # ===== FIGURE F: domain-F1 localization panel (nucleic-acid-binding, robust; not kinesin-only) =====
 DOM = [
     (13950, "RNA-binding domain (RRM)", "domain-F1 0.95 · 60 regions · fires on the RNP β-sheet residues"),
@@ -281,6 +291,6 @@ print("wrote fig_domain_f1_panel.png")
 
 # hard-crop all generated figures
 for f in ["fig_autointerp_walkthrough", "fig_feature_gallery", "fig_crossmodal_alignment",
-          "fig_autointerp_pipeline", "fig_fungal_feature_card", "fig_domain_f1_panel"]:
+          "fig_autointerp_pipeline", "fig_fungal_feature_card", "fig_fungal_pattern", "fig_domain_f1_panel"]:
     autocrop(OUT + f + ".png")
 print("autocropped all")

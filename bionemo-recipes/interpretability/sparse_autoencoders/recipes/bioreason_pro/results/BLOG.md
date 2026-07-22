@@ -4,7 +4,7 @@
 
 ## Abstract
 
-BioReason-Pro is a multimodal model that fuses ESM3 protein embeddings, a GO-graph encoder, and a Qwen3-4B reasoning LLM to predict protein function through a written reasoning trace. We train sparse autoencoders (SAEs) on its residual stream and pull the fused representation apart into interpretable features. We find (i) **reasoning-band features that decode genuine biological concepts** above a strict leakage floor — most cleanly a distributed *antimicrobial-defense circuit* with pathogen-specific detectors on a shared innate-immune core; (ii) **protein-domain features that localize**, measured with a domain-F1 metric that separates localized detectors (a kinesin-motor feature, domain-F1 = 0.98) from high-AUROC features that fire *outside* their domain; and (iii) a **cross-modal structure** linking protein features to reasoning features that is correlational and prompt-mediated, not a causal fusion. This required solving a multimodal-training problem — a single dictionary is monopolized by the majority (text) modality, so **loss balancing is required** (it yields 20–50× more protein-selective features). We ship an auto-interp pipeline, a grounded synthesis-quality scorer, and an interactive feature atlas. A side observation: the SAE does not out-decode the raw residual stream on dense probes — the ESM3 encoder is the ceiling — which is why the SAE's value here is *interpretable structure*, not raw decodability.
+BioReason-Pro is a multimodal model that fuses ESM3 protein embeddings, a GO-graph encoder, and a Qwen3-4B reasoning LLM to predict protein function through a written reasoning trace. We train sparse autoencoders (SAEs) on its residual stream and pull the fused representation apart into interpretable features. As a **proof of concept**, we interpret the model over its *pre-generated training-set reasoning traces* (teacher-forced), not fresh inference-time generation. We find (i) **reasoning-band features that decode genuine biological concepts** above a strict leakage floor — most cleanly a distributed *antimicrobial-defense circuit* with pathogen-specific detectors on a shared innate-immune core; (ii) **protein-domain features that localize**, measured with a domain-F1 metric that separates localized detectors (a kinesin-motor feature, domain-F1 = 0.98) from high-AUROC features that fire *outside* their domain; and (iii) a **cross-modal structure** linking protein features to reasoning features that is correlational and prompt-mediated, not a causal fusion. This required solving a multimodal-training problem — a single dictionary is monopolized by the majority (text) modality, so **loss balancing is required** (it yields 20–50× more protein-selective features). We ship an auto-interp pipeline, a grounded synthesis-quality scorer, and an interactive feature atlas. A side observation: the SAE does not out-decode the raw residual stream on dense probes — the ESM3 encoder is the ceiling — which is why the SAE's value here is *interpretable structure*, not raw decodability.
 
 ---
 
@@ -27,6 +27,8 @@ Our contributions:
 ### 2.1 How BioReason-Pro works
 
 BioReason-Pro predicts protein function not as a classifier head but as a **reasoning task**. For a protein it (a) encodes the sequence with **ESM3** into per-residue embeddings, (b) encodes candidate GO structure with a **GO-graph encoder** into a fixed set of `<go>` memory slots, (c) projects both into the token embedding space of a **Qwen3-4B** LLM, and (d) has the LLM generate a natural-language reasoning trace that dissects the protein's domains and mechanisms before emitting GO terms. The consequence for us: the layer-30 residual stream we read is a **fused, multimodal** representation — one token is a protein residue, the next is a `<go>` slot, the next is a reasoning word — and any feature we learn lives in one (or across) those bands. We tag every activation row with its band (`protein` / `text` / `go`) in a row-aligned sidecar so downstream analyses can select a modality.
+
+**Scope (proof of concept).** We extract activations by running BioReason-Pro over the CAFA5 *training* examples with their **pre-generated reasoning traces** (teacher-forced) — not from traces the model generates fresh at inference on held-out proteins. So the reasoning-band features reflect the model *processing* known-good reasoning rather than its own generation. This is deliberately a proof of concept; re-running the pipeline on freshly generated traces over held-out proteins is the natural next step and would test whether these features fire the same way on the model's own reasoning.
 
 ### 2.2 Training a multimodal SAE: loss balancing
 
@@ -95,8 +97,8 @@ The genuine set has a biological shape: **pathogen-specific detectors** (F23726 
 ![enrichment](charts/enrichment.png)
 > **Per-feature GO+InterPro enrichment.** Best over-represented term per feature with hypergeometric FDR and rank-sum AUROC — the label-grounded scoring behind the tiers above.
 
-![fungal feature card](charts/fig_fungal_feature_card.png)
-> **A pathogen-detector feature (F23726), read across bands.** On the reasoning band it names specific fungi and mechanism across multiple proteins — the recurring vocabulary (*filamentous · fungi · Aspergillus · Helminthosporium · Peronospora · antifungal*) lights up in every example. The prompt band echoes GO accessions; the answer band restates. Fungal-defense AUROC 0.975.
+![fungal signature across proteins](charts/fig_fungal_pattern.png)
+> **One pathogen-detector feature (F23726) fires on the same fungal signature across many proteins.** Top reasoning windows from seven different proteins — the recurring vocabulary (*filamentous · fungi · Aspergillus · Helminthosporium · Peronospora · antifungal*) lights up in every one; that recurrence is what makes it a detector. Fungal-defense AUROC 0.975. (Read across bands, the same feature echoes GO accessions on the prompt band and restates on the answer band — see the §2.3 walkthrough.)
 
 Caveat: a sparse probe selects *predictive* features, not features that *mean* the concept (≈⅓ are co-occurring correlates), and the **protein band has no clean defense feature** — defense is a reasoning-band phenomenon.
 
@@ -174,7 +176,8 @@ Three directions follow:
 
 1. **Encoder alignment (Prot2Text-V2).** Align the protein encoder to text before extraction, then re-run the same recipe and re-test both decodability and the SAE-V cross-modal metric.
 2. **A per-modality whitening expert.** Even without re-training the encoder, dividing out the shared high-magnitude protein component before the SAE would de-collapse protein tokens — potentially recovering much of the benefit at far lower cost.
-3. **Richer input modalities.** A codon/DNA model is a more promising substrate: its tokens are far more diverse (self-cosine ~0.55 vs protein's 0.99) and not orthogonal to text (~0.31 vs ~0.0), so genuine cross-modal fusion features may be learnable there in a way they are not for collapsed protein embeddings.
+3. **Fresh generation on held-out proteins.** This study interprets *pre-generated training traces* (teacher-forced). The direct follow-up is to run the same features on traces the model generates itself at inference over held-out proteins — confirming that, e.g., the defense circuit fires on the model's *own* reasoning, not just the training targets it was shown.
+4. **Richer input modalities.** A codon/DNA model is a more promising substrate: its tokens are far more diverse (self-cosine ~0.55 vs protein's 0.99) and not orthogonal to text (~0.31 vs ~0.0), so genuine cross-modal fusion features may be learnable there in a way they are not for collapsed protein embeddings.
 
 ---
 
