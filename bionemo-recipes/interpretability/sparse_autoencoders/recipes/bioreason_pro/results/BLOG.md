@@ -124,7 +124,7 @@ But **AUROC is not localization** — a feature can score 0.98 for a domain and 
 Across all AUROC-passing structural features, **only ~17% (59 of 872) localize.** For structural interpretability, trust the localization metric, not the ranking metric.
 
 ![domain-F1 localization panel](charts/fig_domain_f1_panel.png)
-> **Protein-domain features localize.** Residue-band firing for a nucleic-acid-binding panel — RNA-binding RRM (domain-F1 0.95, 60 regions), zinc finger C2H2 (0.93, 48), helix-loop-helix DNA-binding (0.93, 27) — each fires on the domain's structural residues. F4647 (AUROC 0.98, domain-F1 0.00) barely fires and outside any domain — the "AUROC oversell." Kinesin scores highest (0.98) but on only 15 regions, so this well-supported panel is the robust result.
+> **Protein-domain features localize.** Residue-band firing for a kinase-led panel — protein kinase (domain-F1 0.93, 90 regions, catalytic motifs), RNA-binding RRM (0.95, 60), zinc finger C2H2 (0.93, 48) — each fires on the domain's catalytic/structural residues. F4647 (AUROC 0.98, domain-F1 0.00) barely fires and outside any domain — the "AUROC oversell." Kinesin scores highest (0.98) but on only 15 regions, so this well-supported panel is the robust result.
 
 ### 3.3 Cross-modal exploration: aligning protein and reasoning features
 

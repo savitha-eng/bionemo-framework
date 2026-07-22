@@ -247,9 +247,9 @@ print("wrote fig_fungal_feature_card.png")
 
 # ===== FIGURE F: domain-F1 localization panel (nucleic-acid-binding, robust; not kinesin-only) =====
 DOM = [
+    (18647, "Protein kinase domain (IPR000719)", "domain-F1 0.93 · 90 regions · fires on the catalytic motifs (DFG · GTPYY · APE)"),
     (13950, "RNA-binding domain (RRM)", "domain-F1 0.95 · 60 regions · fires on the RNP β-sheet residues"),
     (8277, "Zinc finger, C2H2-type", "domain-F1 0.93 · 48 regions"),
-    (18162, "Helix-loop-helix DNA-binding", "domain-F1 0.93 · 27 regions"),
     (4647, "the AUROC-oversell contrast", "AUROC 0.98  BUT  domain-F1 0.00 — fires OUTSIDE any domain (why AUROC alone misleads)"),
 ]
 fig, c = new_fig(5.4)
@@ -263,7 +263,7 @@ for i, (fid, dom, sub) in enumerate(DOM):
     if i < len(DOM) - 1:
         c.rule()
 c.gap(0.2)
-c.sub("(kinesin F18393 scores the highest domain-F1, 0.98, but on only 15 regions — small-n; this RNA / zinc / HLH nucleic-acid-binding panel is the robust result.)")
+c.sub("(kinesin F18393 scores the highest domain-F1, 0.98, but on only 15 regions — small-n; this kinase / RNA / zinc panel is the robust result.)")
 fig.savefig(OUT + "fig_domain_f1_panel.png", dpi=170, facecolor="white", bbox_inches="tight")
 print("wrote fig_domain_f1_panel.png")
 
