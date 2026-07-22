@@ -51,11 +51,18 @@ as a naming hint and confirm by reading the windows.
 > **SCORING vs LABELING — the discipline that governs §B and §C.**
 > - **Score (trust it):** supervised, GO-label-grounded. (i) L1 probe coef = helps *predict* the concept in
 >   combination; (ii) per-feature AUROC = *individually* means the concept. F23726 = 0.975 vs random ≈ 0.50.
-> - **Auto-interp label (hypothesis only):** one unsupervised LLM read of top windows. Noisy — it **missed**
->   F23726 ("Amino acid transport", but 6/8 windows are *Aspergillus/filamentous fungi/H. sativum*, peak fires on
->   the species-name tokens), and it **oversells** plausible correlates (F15775 "Autophagy" *sounds* antimicrobial
->   but AUROC 0.572 = co-occurring, not fungal). A plausible label is the more dangerous failure than an obvious miss.
-> - **Rule:** rank by AUROC → read the windows → auto-interp is just the name suggestion.
+> - **TWO label systems, both weak — neither is the score:**
+>   - **Static dashboard `label` = coarse GO-SLIM enrichment** (NOT auto-interp). Only ~59 distinct terms over
+>     10,579 features → collapses onto giants: "catalytic activity" ×875, "regulation of gene expression" ×323,
+>     **"none" ×6122 (58%)**. The slim vocab lacks specific terms, so F23726 (fungal 0.975) → "regulation of gene
+>     expression (0.69)", and F36488 (fungal 0.943, gorgeous synthesis) → **"none"**. Treat the static label as
+>     nearly useless for specific concepts.
+>   - **Auto-interp label (🔍 button, live) = one unsupervised LLM read of top windows.** A hypothesis — it
+>     **missed** F23726 ("Amino acid transport", but 6/8 windows are *Aspergillus/filamentous fungi/H. sativum*)
+>     and **oversells** plausible correlates (F15775 "Autophagy" *sounds* antimicrobial, AUROC 0.572 = co-occurring).
+> - **Rule:** rank by AUROC (score) → read the windows → use auto-interp as a name hint. Ignore the static slim label.
+> - **Fix in flight:** replace the go-slim label with `feature_biology_table.py`'s specific GO+IPR enrichment
+>   (AUROC-scored), gate at AUROC≥0.75 + term-size filter, fall back to auto-interp when "none".
 
 **What to check:** the top-5 GENUINE features on the reasoning band show mechanism ("antifungal activity vs
 *H. sativum*", "redox gating"); flip to the **prompt band** → just GO-ID echo. The bottom-4 co-occurring ones
@@ -120,6 +127,11 @@ synthesis feature." (`echo_synthesis_l30.json`)
 - **Echo / restatement** (GO/IPR accession dumps): F15558, F23456, F32788.
 - **Synthesis / elaboration** (mechanism + relational language): **F23543** ("modulates, catalyze, perturbs,
   dampens, chaperone"), **F38531** ("protein–protein, RNA–protein, membrane–cytoskeleton").
+- **Best defense-synthesis exemplar: F36488** (fungal AUROC 0.943) — genuine plant-immunity mechanism:
+  "redox gating of pattern-recognition… potentiate defense circuits against fungal invasion", "GCC-box occupancy
+  on pathogenesis-related promoters integrates ethylene with salicylic-acid and jasmonic-acid pathways", "AP2/ERF
+  control over defense-associated promoters → defense response to fungus". Score + windows both say genuine
+  fungal-defense synthesis — yet its static label is "none/text-heavy" (the labeling failure, not the feature).
 - Individually-interpretable synthesis-leaning **biology** (real as biology, weak as synthesis, AUROC ~0.56–0.60):
   F11654 Calcium, F16620 Helicase, F35498 Dynein, F29616 Ig-fold, F423 Response-regulator, F36032 Axon, …
 
