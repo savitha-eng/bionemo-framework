@@ -107,15 +107,15 @@ def new_fig(h):
 
 
 # ===== FIGURE A: auto-interp walkthrough (F36488, per-band contrast) =====
-fig, c = new_fig(3.7)
+fig, c = new_fig(5.2)
 c.header("Feature 36488  —  antimicrobial-defense reasoning", big=True)
 c.sub("fungal-defense AUROC 0.943   ·   the SAME feature read on two bands   ·   orange = activation strength")
 c.gap(0.6)
-c.header("Reasoning band  →  genuine mechanism")
-c.wins(windows(36488, "reasoning", 3))
+c.header("Reasoning band  →  genuine mechanism (across many proteins)")
+c.wins(windows(36488, "reasoning", 6, ctx=5, maxlen=34))
 c.rule()
 c.header("Prompt band  →  echoes the given GO accessions")
-c.wins(windows(36488, "prompt", 3))
+c.wins(windows(36488, "prompt", 2))
 fig.savefig(OUT + "fig_autointerp_walkthrough.png", dpi=170, facecolor="white", bbox_inches="tight")
 print("wrote fig_autointerp_walkthrough.png")
 

@@ -30,7 +30,7 @@ BioReason-Pro predicts protein function not as a classifier head but as a **reas
 
 ### 2.2 Training a multimodal SAE: loss balancing
 
-**A multimodal SAE cannot be trained naïvely.** In the natural token mix, protein residues are ~2% of the stream and reasoning text dominates. Left alone, text tokens monopolize the dictionary: they activate essentially the whole live dictionary (~15,800 features at layer 16) while protein collapses into ~230. The SAE "works" — good reconstruction, low dead-latent % — but it has almost no protein vocabulary.
+**A multimodal SAE cannot be trained naïvely.** In the natural token mix, protein residues are ~15% of the stream and reasoning text is ~80% (see the dataset table in §2.3). Left alone, text tokens monopolize the dictionary: they activate essentially the whole live dictionary (~15,800 features at layer 16) while protein collapses into ~230. The SAE "works" — good reconstruction, low dead-latent % — but it has almost no protein vocabulary.
 
 The fix is **modality balancing at load time** (`--balance-modality`): we drop the `<go>` slots (an ablation shows they are model-unused — a fixed ontology reduction, not per-protein terms), and **downsample text to ~50/50 with protein** (text-keep ≈ 0.19). We measure the effect as *protein-selective* features (fires on >1% of protein tokens, <0.1% of text):
 
@@ -57,6 +57,17 @@ Two more multimodal-training lessons:
 ### 2.3 SAE architecture and evaluation discipline
 
 For each `x ∈ ℝ^2560` we train a TopK SAE to a sparse code `z ∈ ℝ^40960` (expansion 16, **k = 128**) with reconstruction + auxiliary-k revival loss. Our reported model is `sae-l30-exp16-balanced`.
+
+**Training data (layer-30 activation store).** The SAE trains on the full CAFA5 training set — **421.3M** activation vectors (~116k proteins, 2,108 shards), split across the three modality bands:
+
+| band | tokens | share |
+|---|---:|---:|
+| protein (ESM3 residues) | 63.0M | 14.9% |
+| reasoning text | 335.0M | 79.5% |
+| `<go>` graph slots | 23.4M | 5.6% |
+| **total** | **421.3M** | |
+
+Balancing keeps all protein tokens and downsamples text to ~50/50 (text-keep ≈ 0.19), with `<go>` dropped — so the SAE **consumes ~373M tokens over 3 epochs** (~124M balanced tokens per epoch, from wandb `consumed_samples`).
 
 Two disciplines govern every number below:
 
@@ -85,7 +96,7 @@ Defense is a *distributed circuit*, not one feature. Ranking the defense→fungu
 | weak / correlate 0.6–0.72 | F7665 cell-wall, F5047 motility, F22156 | marginal |
 | co-occurring ~0.5–0.59 | F2082 chromatin, F15775 autophagy, F28215, F29332 | NOT fungal — the probe picked them as co-predictors |
 
-The genuine set has a biological shape: **pathogen-specific detectors** (F23726 "filamentous fungi"; F22077 "bacterial LPS") on a **shared innate-immune core** (F35336/F2808/F32785 = fungus ∩ bacterium). And it is *genuine reasoning*, not echo: on the reasoning band F36488 fires on "redox gating of pattern-recognition receptors… potentiate defense circuits against fungal invasion… AP2/ERF control over pathogenesis-related promoters"; flip the same feature to the prompt band and it's just echoed `GO:` accessions.
+The genuine set has a biological shape: **pathogen-specific detectors** (F23726 "filamentous fungi"; F22077 "bacterial LPS") on a **shared innate-immune core** (F35336/F2808/F32785 = fungus ∩ bacterium). And it is *genuine reasoning*, not echo: on the reasoning band F36488 fires on genuine mechanism across many proteins — "redox gating of pattern-recognition receptors… potentiate defense circuits against fungal invasion", "GCC-box occupancy on pathogenesis-related promoters integrates ethylene with salicylic acid and jasmonic acid pathways", "β-1,3-glucans… defense response to fungus", "a secretory peroxidase in the cell wall/apoplast functions as a proximal effector"; flip the same feature to the prompt band and it's just echoed `GO:` accessions.
 
 ![enrichment](charts/enrichment.png)
 > **Per-feature GO+InterPro enrichment.** Best over-represented term per feature with hypergeometric FDR and rank-sum AUROC — the label-grounded scoring behind the tiers above.
