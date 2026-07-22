@@ -43,8 +43,8 @@ The fix is **modality balancing at load time** (`--balance-modality`): we drop t
 
 A **20–50× increase at every layer** — balancing carves out capacity the natural mix never gave protein (richest around L22–L24), without starving text.
 
-![balancing selectivity grid](../analysis/figures/fig_layer_selectivity_grid.png)
-> **Per-feature modality selectivity across layers.** Left = unbalanced, right = balanced. The dense stripe of protein-selective features up the left edge of every balanced panel is nearly absent when unbalanced.
+![balancing at layer 24](charts/fig_balance_condensed.png)
+> **Modality balancing at layer 24 (the peak).** Each dot is a feature: x = fraction of text tokens it fires on, y = fraction of protein tokens; blue = protein-selective. Unbalanced (left) gives protein 34 dedicated features; balanced (right) gives 928. All nine layers in Appendix A.
 
 Two more multimodal-training lessons:
 
@@ -121,6 +121,8 @@ Do a protein's domain features connect to what the model *says* about it? We ali
 
 The two methods **disagree** — the pairing's kinesin partners are *not* recruited by the kinesin probe — because one measures co-firing and the other prediction. And a **2×2 causal test settles the interpretation**: clamping a reasoning feature writes its concept into the trace, but the paired protein feature is causally inert. So the cross-modal link is **correlational and prompt-mediated — the model "talks about motors" when the motor detector fires — not a causal protein→reasoning feature flow.** The mediation is concrete: the model's intermediate `go_pred` already carries **68%** of the ground-truth GO terms and the final answer echoes it at **38%**, so the reasoning is anchored on the given annotations — protein and reasoning features co-vary *through the shared prompt*, not through each other. (Consistently, protein and text separate in the raw residual stream at every layer, so there's no fused sub-space for the SAE to find.)
 
+By the stricter **SAE-V** definition of a cross-modal feature (*arXiv 2502.17514*) — a *single* latent genuinely active across both modalities — we find **no examples**: the per-feature cross-modal metric is ≈ 0 for every feature. The alignment we report is co-activation between *separate* protein and reasoning features, not one fused cross-modal feature.
+
 ![cross-modal alignment](charts/fig_crossmodal_alignment.png)
 > **Cross-modal alignment.** *Top:* per-protein co-activation for two aligned pairs (GPCR r = 0.89, kinesin r = 0.62) — each dot is a protein, a bio feature's activation vs its best-correlated reasoning feature. *Bottom:* what the GPCR pair fires on — the protein detector (F7369) fires on the transmembrane residues, while its reasoning partner (F3184) writes the GPCR mechanism ("rhodopsin-like, 7TM domain… class A"). The alignment is correlational and **prompt-mediated** — the 2×2 causal test shows the reasoning feature writes the concept while the paired protein feature is inert — not a fused feature-to-feature flow.
 
@@ -164,3 +166,10 @@ Applying SAEs to a multimodal protein-reasoning model, we recover **interpretabl
 ---
 
 *Sources: `RESULTS_WRITEUP.md`, `MICROBIAL_DEFENSE_RESULTS.md`, `DASHBOARD_REVIEW_CHECKLIST.md`, `PHASE3-LAYER-BALANCING.md`, `CROSSMODAL_PAIRS.md`.*
+
+---
+
+## Appendix A — modality selectivity across all layers
+
+![all-layers selectivity grid](../analysis/figures/fig_layer_selectivity_grid.png)
+> **Per-feature modality selectivity, L14–L32, unbalanced (left) vs balanced (right).** The 20–50× protein-feature gain holds at every layer, peaking at L24 (34 → 928).

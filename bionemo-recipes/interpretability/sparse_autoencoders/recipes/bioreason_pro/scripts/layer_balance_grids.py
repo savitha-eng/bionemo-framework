@@ -125,6 +125,7 @@ def main():
     # ---- selectivity scatter grid ----
     ncol = 2; nrow = len(layers)
     fig, ax = plt.subplots(nrow, ncol, figsize=(9, 3.4 * nrow), sharex=True, sharey=True)
+    ax = np.atleast_2d(ax)   # keep [r, c] indexing valid when a single layer is requested
     for r, N in enumerate(layers):
         d = per_layer[N]
         for c, tag, ttl in [(0, "unbal", "unbalanced"), (1, "bal", "balanced")]:
