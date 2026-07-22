@@ -4,7 +4,7 @@
 
 ## Abstract
 
-BioReason-Pro is a multimodal model that fuses ESM3 protein embeddings, a GO-graph encoder, and a Qwen3-4B reasoning LLM to predict protein function through a written reasoning trace. We train sparse autoencoders (SAEs) on its residual stream and pull the fused representation apart into interpretable features. We find (i) **reasoning-band features that decode genuine biological concepts** above a strict leakage floor — most cleanly a distributed *antimicrobial-defense circuit* with pathogen-specific detectors on a shared innate-immune core; (ii) **protein-domain features that localize**, measured with a domain-F1 metric that separates localized detectors (a kinesin-motor feature, domain-F1 = 0.98) from high-AUROC features that fire *outside* their domain; and (iii) a **cross-modal structure** linking protein features to reasoning features that is correlational and prompt-mediated, not a causal fusion. This required solving a multimodal-training problem — a single dictionary is monopolized by the majority (text) modality, so **loss balancing is mandatory** (it yields 20–50× more protein-selective features). We ship an auto-interp pipeline, a grounded synthesis-quality scorer, and an interactive feature atlas. A side observation: the SAE does not out-decode the raw residual stream on dense probes — the ESM3 encoder is the ceiling — which is why the SAE's value here is *interpretable structure*, not raw decodability.
+BioReason-Pro is a multimodal model that fuses ESM3 protein embeddings, a GO-graph encoder, and a Qwen3-4B reasoning LLM to predict protein function through a written reasoning trace. We train sparse autoencoders (SAEs) on its residual stream and pull the fused representation apart into interpretable features. We find (i) **reasoning-band features that decode genuine biological concepts** above a strict leakage floor — most cleanly a distributed *antimicrobial-defense circuit* with pathogen-specific detectors on a shared innate-immune core; (ii) **protein-domain features that localize**, measured with a domain-F1 metric that separates localized detectors (a kinesin-motor feature, domain-F1 = 0.98) from high-AUROC features that fire *outside* their domain; and (iii) a **cross-modal structure** linking protein features to reasoning features that is correlational and prompt-mediated, not a causal fusion. This required solving a multimodal-training problem — a single dictionary is monopolized by the majority (text) modality, so **loss balancing is required** (it yields 20–50× more protein-selective features). We ship an auto-interp pipeline, a grounded synthesis-quality scorer, and an interactive feature atlas. A side observation: the SAE does not out-decode the raw residual stream on dense probes — the ESM3 encoder is the ceiling — which is why the SAE's value here is *interpretable structure*, not raw decodability.
 
 ---
 
@@ -32,16 +32,7 @@ BioReason-Pro predicts protein function not as a classifier head but as a **reas
 
 **A multimodal SAE cannot be trained naïvely.** In the natural token mix, protein residues are ~15% of the stream and reasoning text is ~80% (see the dataset table in §2.3). Left alone, text tokens monopolize the dictionary: they activate essentially the whole live dictionary (~15,800 features at layer 16) while protein collapses into ~230. The SAE "works" — good reconstruction, low dead-latent % — but it has almost no protein vocabulary.
 
-The fix is **modality balancing at load time** (`--balance-modality`): we drop the `<go>` slots (an ablation shows they are model-unused — a fixed ontology reduction, not per-protein terms), and **downsample text to ~50/50 with protein** (text-keep ≈ 0.19). We measure the effect as *protein-selective* features (fires on >1% of protein tokens, <0.1% of text):
-
-| Layer | protein-selective (unbalanced → balanced) |
-|------:|:-----------------------------------------:|
-| L16 | 12 → **650** |
-| L24 | 34 → **928** (peak) |
-| L30 | 12 → **663** |
-| L32 |  9 → **655** |
-
-A **20–50× increase at every layer** — balancing carves out capacity the natural mix never gave protein (richest around L22–L24), without starving text.
+The fix is **modality balancing at load time** (`--balance-modality`): we drop the `<go>` slots (an ablation shows they are model-unused — a fixed ontology reduction, not per-protein terms), and **downsample text to ~50/50 with protein** (text-keep ≈ 0.19). Measured as *protein-selective* features (fires on >1% of protein tokens, <0.1% of text), balancing lifts protein from ~10–34 dedicated features to **~570–928 at every layer** (peak L24) — a 20–50× increase, richest around L22–L24, and without starving text.
 
 ![balancing at layer 24](charts/fig_balance_condensed.png)
 > **Modality balancing at layer 24 (the peak).** Each dot is a feature: x = fraction of text tokens it fires on, y = fraction of protein tokens; blue = protein-selective. Unbalanced (left) gives protein 34 dedicated features; balanced (right) gives 928. All nine layers in Appendix A.
@@ -107,7 +98,7 @@ The genuine set has a biological shape: **pathogen-specific detectors** (F23726 
 ![fungal feature card](charts/fig_fungal_feature_card.png)
 > **A pathogen-detector feature (F23726), read across bands.** On the reasoning band it names specific fungi and mechanism across multiple proteins — the recurring vocabulary (*filamentous · fungi · Aspergillus · Helminthosporium · Peronospora · antifungal*) lights up in every example. The prompt band echoes GO accessions; the answer band restates. Fungal-defense AUROC 0.975.
 
-Honest caveat: a sparse probe selects *predictive* features, not features that *mean* the concept (≈⅓ are co-occurring correlates), and the **protein band has no clean defense feature** — defense is a reasoning-band phenomenon.
+Caveat: a sparse probe selects *predictive* features, not features that *mean* the concept (≈⅓ are co-occurring correlates), and the **protein band has no clean defense feature** — defense is a reasoning-band phenomenon.
 
 ### 3.2 Protein-domain features: Fisher enrichment + a localization metric
 
@@ -138,7 +129,7 @@ The two methods **disagree** — the pairing's kinesin partners are *not* recrui
 By the stricter **SAE-V** definition of a cross-modal feature (*arXiv 2502.17514*) — a *single* latent genuinely active across both modalities — we find **no examples**: the per-feature cross-modal metric is ≈ 0 for every feature. The alignment we report is co-activation between *separate* protein and reasoning features, not one fused cross-modal feature.
 
 ![cross-modal alignment](charts/fig_crossmodal_alignment.png)
-> **Cross-modal alignment.** *Top:* per-protein co-activation for two aligned pairs (GPCR r = 0.89, kinesin r = 0.62) — each dot is a protein, a bio feature's activation vs its best-correlated reasoning feature. *Bottom:* what the GPCR pair fires on — the protein detector (F7369) fires on the transmembrane residues, while its reasoning partner (F3184) writes the GPCR mechanism ("rhodopsin-like, 7TM domain… class A"). The alignment is correlational and **prompt-mediated** — the 2×2 causal test shows the reasoning feature writes the concept while the paired protein feature is inert — not a fused feature-to-feature flow.
+> **Cross-modal alignment.** *Top:* per-protein co-activation for two pairs (GPCR r = 0.89, kinesin r = 0.62); each dot is a protein. *Bottom:* the GPCR pair — the protein detector (F7369) fires on the transmembrane residues, while its reasoning partner (F3184) writes the GPCR mechanism ("rhodopsin-like, 7TM domain… class A").
 
 ### 3.4 Synthesis features: reading genuine mechanism
 
@@ -173,7 +164,21 @@ Interpretability is exploratory, so we ship a browser-based atlas: per-band firi
 
 ---
 
-## 6. Conclusion
+## 6. Discussion: what an aligned protein encoder would unlock
+
+Two of our findings point the same way. The SAE does not out-decode the raw stream (§4), and no feature is genuinely cross-modal (§3.3) — both trace to one cause: the **ESM3 protein representation is collapsed** (token self-cosine ≈ 0.99). Collapsed tokens are hard to tell apart per-token (so decodability saturates and protein can't fill a balanced dictionary without dead latents), and they sit in a separate, low-diversity region of the residual stream from text (so there is no shared sub-space in which a single fused cross-modal feature could live).
+
+This predicts what a **text-aligned protein encoder** would change — one trained to place protein representations in the same space as their text descriptions (Prot2Text-style). Alignment would (i) spread protein tokens apart, recovering per-token decodability and letting protein fill a balanced dictionary, and (ii) put protein and reasoning into a shared geometry where an SAE-V-style feature — one latent active on both a protein's residues *and* the text about it — could form. Vision is the instructive contrast: MAIRA-2's Matryoshka-SAE recovered clean cross-modal clinical concepts because its image encoder is text-aligned and high-diversity, whereas a Matryoshka SAE on *our* stream never surfaced cross-modal features and, if anything, starved the minority modality further. The bottleneck is the encoder, not the SAE variant.
+
+Three directions follow:
+
+1. **Encoder alignment (Prot2Text-V2).** Align the protein encoder to text before extraction, then re-run the same recipe and re-test both decodability and the SAE-V cross-modal metric.
+2. **A per-modality whitening expert.** Even without re-training the encoder, dividing out the shared high-magnitude protein component before the SAE would de-collapse protein tokens — potentially recovering much of the benefit at far lower cost.
+3. **Richer input modalities.** A codon/DNA model is a more promising substrate: its tokens are far more diverse (self-cosine ~0.55 vs protein's 0.99) and not orthogonal to text (~0.31 vs ~0.0), so genuine cross-modal fusion features may be learnable there in a way they are not for collapsed protein embeddings.
+
+---
+
+## 7. Conclusion
 
 Applying SAEs to a multimodal protein-reasoning model, we recover **interpretable structure across all three modalities**: reasoning-band concepts that pass a strict leakage test (a distributed antimicrobial-defense circuit), protein-domain features that *localize* (domain-F1), and a cross-modal alignment between them that we show is prompt-mediated rather than causal. The enabling method is loss balancing — a single dictionary must be forced to give the minority modality room. The limitation is that the SAE does not out-decode the raw stream, because the protein encoder is collapsed; the value is not decodability but a set of *readable, localizable, steerable* features and a clear picture of where the limit is. All training artifacts, the auto-interp pipeline, the synthesis scorer, and the feature atlas are open-sourced.
 
